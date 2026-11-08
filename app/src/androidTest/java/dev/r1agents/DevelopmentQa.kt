@@ -215,6 +215,61 @@ internal class DevelopmentQa(private val test: Instrumentation) {
                     step("Md streaming ${kb}KB, passo peggiore: %.1f ms".format(worst))
                 }
             }
+            // Credenziali: un campo segreto mostra puntini (setSingleLine toglieva la maschera), uno normale no.
+            run {
+                val make = MainActivity::class.java.getDeclaredMethod("field", String::class.java, String::class.java, Boolean::class.javaPrimitiveType, Boolean::class.javaPrimitiveType).apply { isAccessible = true }
+                var masked = false; var plain = true
+                ui {
+                    val secret = make.invoke(activity!!, "chiave", "abc123", false, true) as android.widget.EditText
+                    val normal = make.invoke(activity!!, "nome", "abc123", false, false) as android.widget.EditText
+                    masked = secret.transformationMethod is android.text.method.PasswordTransformationMethod
+                    plain = normal.transformationMethod is android.text.method.PasswordTransformationMethod
+                }
+                check(masked) { "Credenziali: il campo segreto mostra il testo in chiaro" }
+                check(!plain) { "Credenziali: un campo normale è mascherato" }
+            }
+            step("credenziali: campi segreti mascherati: OK")
+            // Pressione: righe e schede non si riempiono di colore (solo un leggero movimento).
+            run {
+                var coloured = ""
+                ui {
+                    val a = activity!!
+                    val cases = listOf("row" to a.row("prova", dev.r1os.host.ui.Theme.accent, icon = "lock") {}, "bigRow" to a.bigRow("lock", "prova", "sotto", dev.r1os.host.ui.Theme.accent) {})
+                    for ((name, v) in cases) {
+                        val t = android.os.SystemClock.uptimeMillis()
+                        v.layout(0, 0, 400, 160)
+                        v.dispatchTouchEvent(android.view.MotionEvent.obtain(t, t, android.view.MotionEvent.ACTION_DOWN, 200f, 80f, 0))
+                        val bg = v.background; val fill = (bg as? android.graphics.drawable.InsetDrawable)?.drawable ?: bg
+                        if (fill is Jelly) coloured += "$name "
+                        v.dispatchTouchEvent(android.view.MotionEvent.obtain(t, t + 50, android.view.MotionEvent.ACTION_CANCEL, 200f, 80f, 0))
+                    }
+                }
+                check(coloured.isEmpty()) { "Pressione: si riempie di colore: $coloured" }
+            }
+            step("pressione di righe e schede senza riempimenti colorati: OK")
+            // Volo del buddy: finché c'è il clone in volo, il buddy della pagina d'arrivo non deve vedersi (niente doppioni).
+            run {
+                val flightChat = db.newChat(agent.id)
+                var doubled = 0; var frames = 0
+                val stackField = MainActivity::class.java.getDeclaredField("stack").apply { isAccessible = true }
+                val viewOf = Class.forName("dev.r1agents.MainActivity\$Screen").getDeclaredMethod("getView").apply { isAccessible = true }
+                val root = activity!!.window.decorView.rootView
+                val check = android.view.ViewTreeObserver.OnPreDrawListener {
+                    val top = (stackField.get(activity) as List<*>).lastOrNull()?.let { viewOf.invoke(it) as View }
+                    val clones = views(root).count { it.tag == "buddy-flight" && it.isShown && it.alpha > .05f }
+                    val own = top?.let { t -> views(t).count { it is dev.r1os.host.ui.CharacterView && it.tag == "scene-buddy" && it.isShown && it.alpha > .05f } } ?: 0
+                    if (clones > 0) { frames++; if (own > 0) doubled++ }
+                    true
+                }
+                ui { root.viewTreeObserver.addOnPreDrawListener(check); test.callActivityOnNewIntent(activity!!, Intent(ctx, MainActivity::class.java).putExtra("open_chat", flightChat).putExtra("open_agent", agent.id)) }
+                Thread.sleep(2200)
+                ui { root.viewTreeObserver.removeOnPreDrawListener(check) }
+                android.util.Log.i("R1PERF", "volo: $frames frame con clone, $doubled con doppione")
+                check(doubled == 0) { "Volo: buddy doppio in $doubled di $frames frame" }
+                run { val st = MainActivity::class.java.getDeclaredField("stack").apply { isAccessible = true }; if ((st.get(activity) as List<*>).size > 1) { ui { activity!!.onBackPressed() }; Thread.sleep(900) } }
+                db.deleteChat(flightChat)
+            }
+            step("volo del buddy: mai due buddy insieme: OK")
             // Modalità automatica: la direttiva si esegue da sola una volta sola (qui una nota, innocua).
             run {
                 val auto = MainActivity::class.java.getDeclaredMethod("autoRunActions", String::class.java).apply { isAccessible = true }

@@ -630,6 +630,9 @@
     <string name="ui_a4c6e62a2b" formatted="false">"riassumi le mie note"</string>
     <string name="ui_a7623e2fdf" formatted="false">"accesa"</string>
     <string name="ui_533deb16e2" formatted="false">"spenta"</string>
+    <string name="ui_7b4f2d1fe7" formatted="false">"blocco schermo di Android"</string>
+    <string name="ui_544aacf142" formatted="false">"scegli «nessuno» per usare solo il PIN dell\'app"</string>
+    <string name="ui_7d0f161c22" formatted="false">"Impostazioni di sicurezza non disponibili"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

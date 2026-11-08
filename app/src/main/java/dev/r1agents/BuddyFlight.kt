@@ -79,6 +79,8 @@ internal class BuddyFlight(
             if (towards == 0f) homeBounds.set(liveBounds) else chatBounds.set(liveBounds)
         }
         progress = value.coerceIn(0f, 1f)
+        // Finché il volo dura, in scena c'è un solo buddy: comparse, capolini o rientri della pagina non possono riaccendere gli originali.
+        if (!disposed) { homeAvatar.alpha = 0f; chatAvatar.alpha = 0f; retired.forEach { it.alpha = 0f } }
         clone.copyScenePoseFrom(if (progress >= .35f) chatAvatar else homeAvatar)
         val flight = Theme.SETTLE.getInterpolation(progress)
         val alpha = fade.getInterpolation(progress)

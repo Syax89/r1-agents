@@ -80,7 +80,7 @@ class RoutineService : Service() {
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
                     getSystemService(android.app.NotificationManager::class.java).notify(1000 + chat.toInt(),
                         Notification.Builder(ctx, Sched.CH_INFO).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("${agent.name} · ${r.name}")
-                            .setContentText(text.take(120)).setStyle(Notification.BigTextStyle().bigText(text.take(600))).setContentIntent(open).setAutoCancel(true).build())
+                            .setContentText(text.take(120)).setStyle(Notification.BigTextStyle().bigText(text.take(600))).setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(open).setAutoCancel(true).build())
                 }
             } finally { stopSelf() }
         }

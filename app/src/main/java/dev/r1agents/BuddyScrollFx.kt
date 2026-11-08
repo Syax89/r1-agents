@@ -94,9 +94,9 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
     private fun progress(y: Int) = (y.toFloat() / baseH.coerceAtLeast(1)).coerceIn(0f, 1f)
     /** La riga si restringe da piena a 44 dp mentre scorri: il buddy viene "spinto in su" e la lista guadagna spazio. */
     private fun rowHeight(p: Float) = (baseH - (baseH - density * 44f) * p).toInt().coerceAtLeast((density * 44f).toInt())
-    private fun fit(r: View, p: Float) { if (root == null) return; val lp = r.layoutParams ?: return; val h = rowHeight(p); if (lp.height != h) { lp.height = h; r.layoutParams = lp } }
+    private fun fit(r: View, p: Float) { if (root == null) return; val clip = p > 0f; (r as? ViewGroup)?.let { g -> if (g.clipChildren != clip) g.clipChildren = clip }; (r.parent as? ViewGroup)?.let { g -> if (g.clipChildren != clip) g.clipChildren = clip } /* scorrendo, il buddy resta mezza sfera sul bordo della riga: mai sopra le schede */; val lp = r.layoutParams ?: return; val h = rowHeight(p); if (lp.height != h) { lp.height = h; r.layoutParams = lp } }
     /** Centro sul bordo inferiore della riga a fine corsa: resta mezza sfera con gli occhi, il resto è coperto dalle righe. */
-    private fun restY(p: Float) = rowHeight(p) / 2f * p
+    private fun restY(p: Float) = (rowHeight(p) / 2f - (if (root != null) density * 10f else 0f)) * p   // con la testata fissa il centro resta dentro il ritaglio: occhi sempre visibili
     private fun applyRest() {
         val cv = buddy ?: return; val r = row ?: return
         val p = progress(scroll.scrollY)

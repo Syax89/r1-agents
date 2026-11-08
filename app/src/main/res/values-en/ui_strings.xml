@@ -630,6 +630,9 @@
     <string name="ui_a4c6e62a2b" formatted="false">"summarize my notes"</string>
     <string name="ui_a7623e2fdf" formatted="false">"on"</string>
     <string name="ui_533deb16e2" formatted="false">"off"</string>
+    <string name="ui_7b4f2d1fe7" formatted="false">"Android screen lock"</string>
+    <string name="ui_544aacf142" formatted="false">"choose “None” to use only the app PIN"</string>
+    <string name="ui_7d0f161c22" formatted="false">"Security settings unavailable"</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>

@@ -637,6 +637,9 @@ internal object UiCatalog {
         UiEntry(R.string.ui_a4c6e62a2b, "riassumi le mie note"),
         UiEntry(R.string.ui_a7623e2fdf, "accesa"),
         UiEntry(R.string.ui_533deb16e2, "spenta"),
+        UiEntry(R.string.ui_7b4f2d1fe7, "blocco schermo di Android"),
+        UiEntry(R.string.ui_544aacf142, "scegli «nessuno» per usare solo il PIN dell'app"),
+        UiEntry(R.string.ui_7d0f161c22, "Impostazioni di sicurezza non disponibili"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

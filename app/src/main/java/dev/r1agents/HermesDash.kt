@@ -194,7 +194,7 @@ class HermesDash(private val p: SharedPreferences) {
         setState(State.OFF)
     }
 
-    private fun stored(a: Long) = p.getString("dash_sid_$a", null)
+    private fun stored(a: Long) = p.getString("dash_sid_$a", null)?.let { Vault.open(it) }?.takeIf { it.isNotEmpty() }
     fun needsIntro(a: Long) = stored(a) == null
     fun forget(a: Long) { p.edit().remove("dash_sid_$a").apply(); sessions.remove(a) }
 
@@ -314,7 +314,7 @@ class HermesDash(private val p: SharedPreferences) {
         val runtimeId = r.optString("session_id")
         check(runtimeId.isNotBlank()) { "Hermes non ha restituito una sessione valida" }
         sessions[key] = runtimeId
-        p.edit().putString("dash_sid_$key", hsid).apply()
+        p.edit().putSecret("dash_sid_$key", hsid).apply()
         r.optJSONArray("open_requests")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let { o -> if (o.optString("method") in listOf("approval", "clarify")) deliver(SrvRequest(o.get("id"), o.getString("method"), o.optJSONObject("params") ?: JSONObject())) } }
         val arr = r.optJSONArray("messages") ?: return emptyList()
         return (0 until arr.length()).map { arr.getJSONObject(it) }.filter { it.optString("role") in listOf("user", "assistant") && it.optString("text").isNotBlank() }
@@ -342,7 +342,7 @@ class HermesDash(private val p: SharedPreferences) {
         }
         val r = rpc("session.create", scope(profile))
         val sid = r.getString("session_id")
-        r.optString("stored_session_id").takeIf { it.isNotEmpty() }?.let { p.edit().putString("dash_sid_$key", it).apply(); onStored?.invoke(key, it) }
+        r.optString("stored_session_id").takeIf { it.isNotEmpty() }?.let { p.edit().putSecret("dash_sid_$key", it).apply(); onStored?.invoke(key, it) }
         sessions[key] = sid
         return sid
     }

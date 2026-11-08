@@ -141,6 +141,10 @@ class MainActivity : Activity() {
             cue(null, -24f, 0f, force = true)
             col.postDelayed({ cue(null, 24f, 0f, force = true) }, Motion.BASE * 2)
         }
+        // Il blocco di Android è una scelta del sistema: l'app non lo cambia, porta solo alla pagina giusta ("nessuno" lascia il posto al PIN dell'app).
+        col.addView(row(UiText.text(this@MainActivity, R.string.ui_7b4f2d1fe7), Theme.accent, sub = UiText.text(this@MainActivity, R.string.ui_544aacf142), icon = "lock") {
+            try { startActivity(Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { snack(UiText.text(this@MainActivity, R.string.ui_7d0f161c22)) }
+        })
         if (!pinEnabled()) col.addView(row(UiText.text(this@MainActivity, R.string.ui_e067157f40), Theme.accent, icon = "lock") { pinSetup() })
         else {
             col.addView(row(UiText.text(this@MainActivity, R.string.ui_8c9d3158f9), Theme.accent, icon = "sliders") { pinPrompt(UiText.text(this@MainActivity, R.string.ui_c64ec43f51)) { pin -> Io.run { val ok = PinHash.verify(pin, prefs.getString("app_pin_hash", "").orEmpty()); runOnUiThread { if (ok) pinSetup() else snack(UiText.text(this@MainActivity, R.string.ui_1265e93b8f)) } } } })
@@ -1220,6 +1224,8 @@ class MainActivity : Activity() {
         inputType = if (multi) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         else if (secret) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD else InputType.TYPE_CLASS_TEXT
         if (multi) { minLines = 3; gravity = Gravity.TOP } else { setSingleLine(true); imeOptions = EditorInfo.IME_ACTION_DONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI }   // Invio chiude la tastiera
+        // setSingleLine toglie la maschera della password: la si rimette (le credenziali restano puntini) e niente suggerimenti/autofill.
+        if (secret) { transformationMethod = android.text.method.PasswordTransformationMethod.getInstance(); importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO }
     }
 
     private fun hideKeyboard() { (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).hideSoftInputFromWindow(window.decorView.windowToken, 0) }

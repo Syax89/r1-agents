@@ -627,5 +627,8 @@
   "cosa devo fare oggi?": "what do I need to do today?",
   "riassumi le mie note": "summarize my notes",
   "accesa": "on",
-  "spenta": "off"
+  "spenta": "off",
+  "blocco schermo di Android": "Android screen lock",
+  "scegli «nessuno» per usare solo il PIN dell'app": "choose “None” to use only the app PIN",
+  "Impostazioni di sicurezza non disponibili": "Security settings unavailable"
 }

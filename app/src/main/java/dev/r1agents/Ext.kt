@@ -115,8 +115,9 @@ object Motion {
     /** Pressione: si stringe appena e torna con un piccolo rimbalzo. */
     fun press(v: View, down: Boolean) {
         v.animate().cancel()
-        if (down) v.animate().scaleX(0.97f).scaleY(0.97f).setDuration(PRESS).setInterpolator(Theme.EASE_OUT).start()
-        else v.animate().scaleX(1f).scaleY(1f).setDuration(BASE).setInterpolator(Theme.POP).start()
+        // Come un dito sull'acqua: la scheda si avvalla appena (1,5%) e risale piano, senza rimbalzi.
+        if (down) v.animate().scaleX(0.985f).scaleY(0.985f).setDuration(FAST).setInterpolator(Theme.EASE_OUT).start()
+        else v.animate().scaleX(1f).scaleY(1f).setDuration(SLOW).setInterpolator(Theme.EASE_OUT).start()
     }
     /** Un errore: scossa breve e smorzata (come un "no" con la testa), da dopo l'ingresso. */
     fun shake(v: View) {
@@ -172,17 +173,17 @@ object Motion {
     /** Chi guarda gli elementi (il buddy compagno dei menu): avvisato a ogni tocco e a ogni cambio di fuoco della rotella. */
     var onAttention: ((View) -> Unit)? = null
     /** Inclinazione massima verso il dito (gradi): la scheda si "affossa" dove la tocchi. */
-    private const val TILT = 4.5f
+    private const val TILT = 1.6f
     private fun tilt(v: View, e: android.view.MotionEvent) {
         if (v.width <= 0 || v.height <= 0 || v.height > v.resources.displayMetrics.density * 220f || reduced(v.context)) return
         val nx = ((e.x / v.width) * 2f - 1f).coerceIn(-1f, 1f); val ny = ((e.y / v.height) * 2f - 1f).coerceIn(-1f, 1f)
         v.cameraDistance = v.resources.displayMetrics.density * 900f
         v.rotationY = nx * TILT; v.rotationX = -ny * TILT
-        v.translationX = nx * v.resources.displayMetrics.density * 1.5f
+        v.translationX = nx * v.resources.displayMetrics.density * 0.6f
     }
     private fun untilt(v: View) {
         if (v.rotationX == 0f && v.rotationY == 0f && v.translationX == 0f) return
-        v.animate().rotationX(0f).rotationY(0f).translationX(0f).scaleX(1f).scaleY(1f).setDuration(BASE).setInterpolator(Theme.POP).start()
+        v.animate().rotationX(0f).rotationY(0f).translationX(0f).scaleX(1f).scaleY(1f).setDuration(SLOW).setInterpolator(Theme.EASE_OUT).start()
     }
     fun touch(v: View, e: android.view.MotionEvent) {
         if (e.action == android.view.MotionEvent.ACTION_DOWN) { onAttention?.invoke(v); lastTap = java.lang.ref.WeakReference(v); lastTapAt = android.os.SystemClock.uptimeMillis() }
@@ -219,7 +220,7 @@ fun Context.row(label: String, accent: Int, bold: Boolean = false, sub: String? 
     }
     paint(false)
     l.setOnFocusChangeListener { _, f -> paint(f) }
-    l.setOnTouchListener { v, e -> if (e.action == android.view.MotionEvent.ACTION_DOWN) paint(true) else if (e.action == android.view.MotionEvent.ACTION_UP || e.action == android.view.MotionEvent.ACTION_CANCEL) paint(false); Motion.touch(v, e); false }
+    l.setOnTouchListener { v, e -> Motion.touch(v, e); false }   // al tocco solo un movimento lieve: niente riempimenti colorati
     return l
 }
 
@@ -255,7 +256,7 @@ fun Context.button(label: String, accent: Int, primary: Boolean = true, small: B
             setPadding(dpi(hp), dpi(v), dpi(hp), dpi(v))
         }
         setOnFocusChangeListener { _, f -> paint(f) }
-        setOnTouchListener { v, e -> if (e.action == android.view.MotionEvent.ACTION_DOWN) paint(true) else if (e.action == android.view.MotionEvent.ACTION_UP || e.action == android.view.MotionEvent.ACTION_CANCEL) paint(false); Motion.touch(v, e); false }
+        setOnTouchListener { v, e -> Motion.touch(v, e); false }   // al tocco solo un movimento lieve: niente riempimenti colorati
         setOnClickListener { onClick() }
     }
 }
@@ -380,7 +381,7 @@ fun Context.iconButton(kind: String, accent: Int, filled: Boolean = true, size: 
         isClickable = true; defaultFocusHighlightEnabled = false; isFocusable = true
         contentDescription = when (kind) { "back" -> UiText.text(context, R.string.ui_e5844b95db); "plus" -> UiText.text(context, R.string.ui_7f4849bfb0); "send" -> UiText.text(context, R.string.ui_d554d69f55); "mic" -> UiText.text(context, R.string.ui_1cbfd76bb1); "close" -> UiText.text(context, R.string.ui_78be0e73b2); "more" -> UiText.text(context, R.string.ui_bcfaf5fac6); "attach" -> UiText.text(context, R.string.ui_0fd7b04a53); "check" -> UiText.text(context, R.string.ui_3cd50c52c0); else -> kind }
         background = android.graphics.drawable.StateListDrawable().apply {
-            addState(intArrayOf(android.R.attr.state_pressed), on); addState(intArrayOf(android.R.attr.state_focused), on); addState(intArrayOf(), rest)
+            addState(intArrayOf(android.R.attr.state_focused), on); addState(intArrayOf(), rest)
         }
         addView(IconView(context, kind, if (filled) Theme.ON_ACCENT else accent, Theme.ON_ACCENT), android.widget.FrameLayout.LayoutParams(dpi(size), dpi(size)).also { it.setMargins(0, 0, 0, 0) })
         layoutParams = android.widget.LinearLayout.LayoutParams(dpi(size), dpi(size))
@@ -519,11 +520,10 @@ private fun android.view.View.cardInput(accent: Int, radius: Float, chip: androi
     isFocusable = true; isClickable = true; setOnClickListener { onClick() }
     setOnFocusChangeListener { _, f -> cardPaint(this, accent, radius, chip, title, sub, f) }
     setOnTouchListener { v, e ->
-        if (e.action == android.view.MotionEvent.ACTION_DOWN) cardPaint(this, accent, radius, chip, title, sub, true)
-        else if (e.action == android.view.MotionEvent.ACTION_UP || e.action == android.view.MotionEvent.ACTION_CANCEL) cardPaint(this, accent, radius, chip, title, sub, false)
+        // Al tocco niente riempimento colorato: la scheda si avvalla appena (Motion.touch) e l'icona si alza di un soffio.
         if (chip != null) {
-            if (e.action == android.view.MotionEvent.ACTION_DOWN) chip.animate().cancel().also { chip.animate().scaleX(1.14f).scaleY(1.14f).setDuration(Motion.PRESS).setInterpolator(Theme.EASE_OUT).start() }
-            else if (e.action == android.view.MotionEvent.ACTION_UP || e.action == android.view.MotionEvent.ACTION_CANCEL) chip.animate().scaleX(1f).scaleY(1f).setDuration(Motion.BASE).setInterpolator(Theme.POP).start()
+            if (e.action == android.view.MotionEvent.ACTION_DOWN) chip.animate().cancel().also { chip.animate().scaleX(1.04f).scaleY(1.04f).setDuration(Motion.FAST).setInterpolator(Theme.EASE_OUT).start() }
+            else if (e.action == android.view.MotionEvent.ACTION_UP || e.action == android.view.MotionEvent.ACTION_CANCEL) chip.animate().scaleX(1f).scaleY(1f).setDuration(Motion.SLOW).setInterpolator(Theme.EASE_OUT).start()
         }
         Motion.touch(v, e); false
     }
