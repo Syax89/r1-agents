@@ -1,0 +1,635 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from tools/i18n/catalog.json. Keep both languages in sync. -->
+<resources>
+    <string name="ui_9ae88045a8" formatted="false">"Sveglie e timer"</string>
+    <string name="ui_26876f7e13" formatted="false">"una volta"</string>
+    <string name="ui_bf2f34b0ac" formatted="false">"ogni giorno"</string>
+    <string name="ui_b2a5d7ca89" formatted="false">"Manca il permesso per il microfono."</string>
+    <string name="ui_7cdb40b380" formatted="false">"Il riconoscimento vocale ha bisogno della rete."</string>
+    <string name="ui_4ddcb61a11">"Non ho capito (errore %1$s)."</string>
+    <string name="ui_85da8e16e5">"ti ascolto… %1$ss"</string>
+    <string name="ui_f29f43c703">"Non riesco a usare il microfono (%1$s)."</string>
+    <string name="ui_333bdf5763" formatted="false">"Chiave Groq non valida."</string>
+    <string name="ui_895511bdf5" formatted="false">"Limite di Groq raggiunto: riprova tra poco."</string>
+    <string name="ui_7613169a51" formatted="false">"Chiave non valida."</string>
+    <string name="ui_9457120454">"Groq ha risposto HTTP %1$s."</string>
+    <string name="ui_bfc309c98a">"Non raggiungibile: %1$s"</string>
+    <string name="ui_46343f38a5" formatted="false">"Apri R1 Agents una volta e concedi il microfono."</string>
+    <string name="ui_91864135d3" formatted="false">"OK: chiave valida"</string>
+    <string name="ui_89eb8f4b8b" formatted="false">"da 4 a 8 cifre"</string>
+    <string name="ui_33ca8b8dd4" formatted="false">"inserisci da 4 a 8 cifre"</string>
+    <string name="ui_857ef10d0f" formatted="false">"scegli un PIN"</string>
+    <string name="ui_e829f8e940" formatted="false">"ripeti il PIN"</string>
+    <string name="ui_8bbb3165d5" formatted="false">"i PIN non coincidono"</string>
+    <string name="ui_875796699c" formatted="false">"PIN attivato"</string>
+    <string name="ui_0510dd2670" formatted="false">"sblocca r1agents"</string>
+    <string name="ui_b755b3224f" formatted="false">"il PIN protegge l’accesso all’app"</string>
+    <string name="ui_88e8187f09">"riprova tra %1$s secondi"</string>
+    <string name="ui_ff1cd8227a" formatted="false">"troppi tentativi · attendi 30 secondi"</string>
+    <string name="ui_1265e93b8f" formatted="false">"PIN errato"</string>
+    <string name="ui_8d9a0badab" formatted="false">"Il PIN viene richiesto quando torni nell’app. Con il blocco attivo, screenshot e anteprima nelle app recenti sono protetti. Conserva il PIN: non è previsto un recupero."</string>
+    <string name="ui_e067157f40" formatted="false">"attiva PIN"</string>
+    <string name="ui_8c9d3158f9" formatted="false">"cambia PIN"</string>
+    <string name="ui_c64ec43f51" formatted="false">"PIN attuale"</string>
+    <string name="ui_d8ebc0990d" formatted="false">"disattiva PIN"</string>
+    <string name="ui_4a2e30175e" formatted="false">"blocca adesso"</string>
+    <string name="ui_4bd3645750" formatted="false">"QR non valido"</string>
+    <string name="ui_f9558c4eaa" formatted="false">"Dove salvo il file?"</string>
+    <string name="ui_7fd8d27a3b" formatted="false">"Come lo chiamo?"</string>
+    <string name="ui_9beb5b4584" formatted="false">"Hermes vuole eseguire un comando sul PC."</string>
+    <string name="ui_403a7969bc" formatted="false">"testo vocale"</string>
+    <string name="ui_3265eeab7c" formatted="false">"scrivi o parla…"</string>
+    <string name="ui_edec2bab85" formatted="false">"promemoria\nchiama domani mattina"</string>
+    <string name="ui_7c1cae1c78" formatted="false">"ricollego a Hermes…"</string>
+    <string name="ui_4814f6f7f6" formatted="false">"collegamento Hermes interrotto"</string>
+    <string name="ui_f24ee25561" formatted="false">"Hermes è di nuovo collegato"</string>
+    <string name="ui_82cadbc6bc" formatted="false">"buddy al lavoro"</string>
+    <string name="ui_d8acdda628" formatted="false">"cerco informazioni…"</string>
+    <string name="ui_13ff277389" formatted="false">"leggo il documento…"</string>
+    <string name="ui_42f7d1f613" formatted="false">"eseguo un comando…"</string>
+    <string name="ui_da7baa1280" formatted="false">"aggiorno la memoria…"</string>
+    <string name="ui_a97b8607e0" formatted="false">"aspetto la tua scelta"</string>
+    <string name="ui_b7424e2d4b" formatted="false">"anteprima buddy"</string>
+    <string name="ui_84e49980f7" formatted="false">"ti ascolto…\n↑ annulla · rilascia per rivedere"</string>
+    <string name="ui_79b0b7c1f7" formatted="false">"trascrivo la registrazione…"</string>
+    <string name="ui_2cda854d46" formatted="false">"foto.jpg · pronta da inviare"</string>
+    <string name="ui_771c3a2e1a" formatted="false">"invio documento.pdf…"</string>
+    <string name="ui_bef0afceff" formatted="false">"invio il messaggio…"</string>
+    <string name="ui_4435ce3621" formatted="false">"registrazione annullata"</string>
+    <string name="ui_991379a059" formatted="false">"- **tre** punti\n- uno `codice`\n- fine"</string>
+    <string name="ui_3025b59543" formatted="false">"prova markdown"</string>
+    <string name="ui_226902e015" formatted="false">"# Titolo\nTesto con **grassetto**, *corsivo* e `codice`.\n\n- primo punto\n- secondo **importante**\n1. uno\n2. due\n\n```\nfun main() {\n    println(\"ciao\")\n}\n```\nFine."</string>
+    <string name="ui_74be1d4823" formatted="false">"permesso richiesto"</string>
+    <string name="ui_76522a8687" formatted="false">"Hermes vuole eseguire un\'azione."</string>
+    <string name="ui_9522540105" formatted="false">"consenti una volta"</string>
+    <string name="ui_f0a1e830c8" formatted="false">"per questa sessione"</string>
+    <string name="ui_2818f5e9df" formatted="false">"consenti sempre"</string>
+    <string name="ui_72f473fe9e" formatted="false">"l\'agente ha una domanda"</string>
+    <string name="ui_53881ea12c" formatted="false">"ho bisogno di una tua indicazione"</string>
+    <string name="ui_f20fd57dff">"domanda %1$s di %2$s"</string>
+    <string name="ui_6c766bf934" formatted="false">"carico la chat…"</string>
+    <string name="ui_cd083a17e7">"Cronologia non letta: %1$s"</string>
+    <string name="ui_d4758167e0">"carico le chat di %1$s…"</string>
+    <string name="ui_af1c39a0e8">"Sessioni non lette: %1$s"</string>
+    <string name="ui_8bd1630032" formatted="false">"ferma l’attività prima di eliminare la chat"</string>
+    <string name="ui_b1a1efd9f5" formatted="false">"nuovo agente"</string>
+    <string name="ui_1cbfd76bb1" formatted="false">"tieni premuto e parla"</string>
+    <string name="ui_9c6c16c4f7" formatted="false">"crea un agente"</string>
+    <string name="ui_ead8aeac15" formatted="false">"Leggo i modelli…"</string>
+    <string name="ui_473ec0d778" formatted="false">"Hermes non ha elencato modelli."</string>
+    <string name="ui_589110f583">"errore: %1$s"</string>
+    <string name="ui_99f20c7f7e" formatted="false">"modello costoso"</string>
+    <string name="ui_8e62ad1ad1">"usa %1$s"</string>
+    <string name="ui_e308e43542">"modello: %1$s"</string>
+    <string name="ui_86c0062891" formatted="false">" · in uso"</string>
+    <string name="ui_c85846ed60" formatted="false">"↓ nuova risposta"</string>
+    <string name="ui_2f38b99da3">"Errore: %1$s"</string>
+    <string name="ui_03fdb016df" formatted="false">"comprimi il contesto"</string>
+    <string name="ui_68cbd39916" formatted="false">"annulla l\'ultimo scambio"</string>
+    <string name="ui_d4c120052e" formatted="false">"cambia modello…"</string>
+    <string name="ui_9b4e9826bc" formatted="false">"cambia modello"</string>
+    <string name="ui_cbaa97c396" formatted="false">"nome del modello"</string>
+    <string name="ui_391532bba7" formatted="false">"altro comando…"</string>
+    <string name="ui_166425b50b" formatted="false">"es. /usage"</string>
+    <string name="ui_889569e420" formatted="false">"messaggi precedenti"</string>
+    <string name="ui_799d550ed7">"ingrandisci %1$s"</string>
+    <string name="ui_0d423ada7a">"riduci %1$s"</string>
+    <string name="ui_7f4849bfb0" formatted="false">"nuova chat"</string>
+    <string name="ui_00c9325b04" formatted="false">"rinomina la chat"</string>
+    <string name="ui_12aa930947">"compressione: %1$s"</string>
+    <string name="ui_09af77c5ae" formatted="false">"crea un ramo della chat"</string>
+    <string name="ui_7f784011b7" formatted="false">"Biforco la chat…"</string>
+    <string name="ui_798b410cf8" formatted="false">" (ramo)"</string>
+    <string name="ui_f3596da8e1" formatted="false">"archivio la chat…"</string>
+    <string name="ui_0f2784f610" formatted="false">"archiviazione non riuscita · chat conservata"</string>
+    <string name="ui_d2ba27adf3" formatted="false">"Nessun sotto-agente al lavoro."</string>
+    <string name="ui_12fe7179c8" formatted="false">"sotto-agente fermato"</string>
+    <string name="ui_b26f1e7af3" formatted="false">"non trovato"</string>
+    <string name="ui_217f40a226" formatted="false">"guida il sotto-agente"</string>
+    <string name="ui_04f5089419" formatted="false">"cosa deve fare"</string>
+    <string name="ui_550a3f682d" formatted="false">"indicazione inviata"</string>
+    <string name="ui_5f694433cb" formatted="false">"altri comandi"</string>
+    <string name="ui_da45045b61">"%1$s\npronto da inviare"</string>
+    <string name="ui_3433289441">"%1$s ci sta lavorando…"</string>
+    <string name="ui_7c81e146df" formatted="false">"allegati inviati · attendo la risposta…"</string>
+    <string name="ui_b121797238" formatted="false">"collegamento in aggiornamento"</string>
+    <string name="ui_c723f3fd80" formatted="false">"questa chat è ancora al lavoro"</string>
+    <string name="ui_c767defaed">"preparo %1$s allegati…"</string>
+    <string name="ui_1410a06bb9" formatted="false">"invio non riuscito · tocca il messaggio per riprovare"</string>
+    <string name="ui_8eb654d9af" formatted="false">"\n\ntocca per riprovare"</string>
+    <string name="ui_60da80eba1">"%1$s\n↑ annulla · rilascia per rivedere"</string>
+    <string name="ui_1b534b080c" formatted="false">"nessuna registrazione inviata"</string>
+    <string name="ui_3afbd0834d" formatted="false">"rilascia per rivedere · scorri in alto per annullare"</string>
+    <string name="ui_4d225fc3f1" formatted="false">"Questo dispositivo non ha il riconoscimento vocale."</string>
+    <string name="ui_aaa045009b" formatted="false">"scatta una foto"</string>
+    <string name="ui_9ef61a89bf" formatted="false">"immagine dalla galleria"</string>
+    <string name="ui_21cb865bd3" formatted="false">"collegamento interrotto · riapri la chat"</string>
+    <string name="ui_f819674502" formatted="false">"\n\ntocca per ricaricare la chat"</string>
+    <string name="ui_77cfbcff1e" formatted="false">"ti ascolto…"</string>
+    <string name="ui_466ea7d8a2" formatted="false">"rilascia per rivedere il testo\nscorri in alto per annullare"</string>
+    <string name="ui_3aed9bbb3f" formatted="false">"file non scrivibile"</string>
+    <string name="ui_01c4e3b47f">"Esportato: %1$s. Chiavi e password non sono incluse."</string>
+    <string name="ui_9bf3187280">"Esportazione fallita: %1$s"</string>
+    <string name="ui_d48b80b23c" formatted="false">"File troppo grande."</string>
+    <string name="ui_0003bfadca" formatted="false">"file non leggibile"</string>
+    <string name="ui_23a3dc3076" formatted="false">"File non valido."</string>
+    <string name="ui_3550dfcfd5" formatted="false">"La fotocamera non ha salvato la foto."</string>
+    <string name="ui_4f12505835" formatted="false">"Tipo di file non supportato: immagini, PDF e file di testo."</string>
+    <string name="ui_10afdd5e00" formatted="false">"Allegato non letto."</string>
+    <string name="ui_7c032d1cfb" formatted="false">"importa dati"</string>
+    <string name="ui_242765df7c">"Il file contiene %1$s.\n\nChiavi API, password del dashboard e accesso a Nous non sono nel file: vanno reinseriti. Allegati, foto di sfondo e chat di Hermes (che stanno sul PC) non sono inclusi."</string>
+    <string name="ui_17b0bf8e19" formatted="false">"aggiungi ai dati attuali"</string>
+    <string name="ui_688ccaab33" formatted="false">"«Sostituisci» cancella prima agenti, chat, note, sveglie e routine che hai ora."</string>
+    <string name="ui_01885652ec" formatted="false">"sostituisci tutto"</string>
+    <string name="ui_edb48d717f">"Importato: %1$s."</string>
+    <string name="ui_690ea096f1">"Importazione fallita: %1$s"</string>
+    <string name="ui_1fe81db21a" formatted="false">"Nessuna app fotocamera trovata."</string>
+    <string name="ui_8078441d49" formatted="false">"Niente da condividere (tipo non supportato)."</string>
+    <string name="ui_62dde8cda6" formatted="false">"Nessun agente: creane uno prima."</string>
+    <string name="ui_263a8abb66" formatted="false">"invia a…"</string>
+    <string name="ui_ccb44386f7" formatted="false">"scrivi o tieni premuto e parla"</string>
+    <string name="ui_7811d136c1" formatted="false">"traduci in"</string>
+    <string name="ui_1158299b45" formatted="false">"tieni e parla"</string>
+    <string name="ui_82392454fe" formatted="false">"scrivi una nota o dettala"</string>
+    <string name="ui_e4923b7b6f" formatted="false">"tieni e detta"</string>
+    <string name="ui_e48edacfc6" formatted="false">"nessuna nota"</string>
+    <string name="ui_9630587e64" formatted="false">"Scrivi o detta una nota: gli agenti possono aggiungerne."</string>
+    <string name="ui_1456190f29" formatted="false">"schermata iniziale"</string>
+    <string name="ui_18da3e53ab" formatted="false">"sfondo di"</string>
+    <string name="ui_660ca97329" formatted="false">"scegli una foto"</string>
+    <string name="ui_e2344072da">"velo %1$s%%"</string>
+    <string name="ui_1b435ea125" formatted="false">"nel glance mostra"</string>
+    <string name="ui_149d78e63c" formatted="false">"prossima routine"</string>
+    <string name="ui_2b295425f3" formatted="false">"ultima nota"</string>
+    <string name="ui_dbf977e9ce" formatted="false">"città per il meteo"</string>
+    <string name="ui_1fa7ec8671" formatted="false">"salva città"</string>
+    <string name="ui_5a5ad2039c" formatted="false">"pulsante laterale"</string>
+    <string name="ui_41b75bd493" formatted="false">"allineamento orologio"</string>
+    <string name="ui_3b72eca895" formatted="false">"a sinistra"</string>
+    <string name="ui_d6b2c56f12" formatted="false">"al centro"</string>
+    <string name="ui_8e6720c901" formatted="false">"solo testo"</string>
+    <string name="ui_5777f60da9" formatted="false">"leggi le risposte"</string>
+    <string name="ui_5393e82f8d" formatted="false">"riconoscimento vocale"</string>
+    <string name="ui_6d3fd91ed0" formatted="false">"chiave API di Groq"</string>
+    <string name="ui_b5b1267dab" formatted="false">"lingua (it, en… vuoto = automatica)"</string>
+    <string name="ui_41a6b92e3b" formatted="false">"salva e prova"</string>
+    <string name="ui_08e8413321" formatted="false">"Mentre tieni premuto l\'app registra; al rilascio l\'audio viene inviato a Groq (api.groq.com) per la trascrizione e poi cancellato dal dispositivo."</string>
+    <string name="ui_c3c6e6b033" formatted="false">"Nella chat tieni premuto \"tieni e parla\" per dettare. Il riconoscimento vocale e la lettura usano i servizi del dispositivo."</string>
+    <string name="ui_c167ec74e0" formatted="false">" · in carica"</string>
+    <string name="ui_c1f893519d">"sveglia %1$s"</string>
+    <string name="ui_1f5f0d75b2" formatted="false">"chat dell’agente"</string>
+    <string name="ui_7bdba79e65" formatted="false">"creane un altro"</string>
+    <string name="ui_fa1f94b99f" formatted="false">"sveglie, timer, note"</string>
+    <string name="ui_6a107bf8d4" formatted="false">"fornitore, aspetto, dati"</string>
+    <string name="ui_a6bb6ebc6b" formatted="false">"nessuna attiva"</string>
+    <string name="ui_cad10e601d" formatted="false">"nessuno in corso"</string>
+    <string name="ui_1a5f5b15a3">"%1$s in corso"</string>
+    <string name="ui_9383d2036e" formatted="false">"scrivi o parla"</string>
+    <string name="ui_aeccaf118f">"%1$s salvate"</string>
+    <string name="ui_4161247449">"%1$s %2$s · prompt programmati"</string>
+    <string name="ui_e76de1bbe6" formatted="false">"nessuna sveglia"</string>
+    <string name="ui_4b236bc373" formatted="false">"Tocca «nuova sveglia» per crearne una."</string>
+    <string name="ui_0777f42593" formatted="false">"nuova sveglia"</string>
+    <string name="ui_a138cb1da6" formatted="false">"etichetta (facoltativa)"</string>
+    <string name="ui_cfd2c18236" formatted="false">"nessun giorno scelto: suona una volta sola"</string>
+    <string name="ui_aac3dd2ce9">"%1$s secondi"</string>
+    <string name="ui_991e4aeded" formatted="false">"1 ora"</string>
+    <string name="ui_90cde61af0">"%1$s ore"</string>
+    <string name="ui_ff2bd7fd8f">"%1$s ora e mezza"</string>
+    <string name="ui_82b4a5dab1" formatted="false">"nessuna routine"</string>
+    <string name="ui_1b43ea6de4" formatted="false">"Una routine manda una richiesta a un agente all\'ora che scegli."</string>
+    <string name="ui_16be2701de" formatted="false">"nuova routine"</string>
+    <string name="ui_c9ec307ac9" formatted="false">"nome, es. riassunto del mattino"</string>
+    <string name="ui_2eb86892f8" formatted="false">"cosa deve fare l\'agente"</string>
+    <string name="ui_8037c3e45e" formatted="false">"Scrivi cosa deve fare."</string>
+    <string name="ui_46053fe150" formatted="false">"prova ora"</string>
+    <string name="ui_1bc14085f3" formatted="false">"Avviata: la risposta arriva come notifica."</string>
+    <string name="ui_1bb7fcaedb" formatted="false">"timer finito"</string>
+    <string name="ui_8d6a685440" formatted="false">"rimanda 10 min"</string>
+    <string name="ui_1aad585811">"%1$s min fa"</string>
+    <string name="ui_21d1dcf49a">"%1$s h fa"</string>
+    <string name="ui_1b030d23ea">"%1$s g fa"</string>
+    <string name="ui_45c37524b3" formatted="false">"un po\' di tutto"</string>
+    <string name="ui_4d3d99856c" formatted="false">" · sta lavorando"</string>
+    <string name="ui_6e3552c6eb" formatted="false">"chat meno recenti"</string>
+    <string name="ui_abec4365e1">"%1$s in più"</string>
+    <string name="ui_a299eba5bf" formatted="false">"di lui"</string>
+    <string name="ui_7b938546c6" formatted="false">"ancora niente"</string>
+    <string name="ui_fd7448c50e" formatted="false">"aspetto e personalità"</string>
+    <string name="ui_e573d2350b" formatted="false">"forma, colore, occhi, istruzioni"</string>
+    <string name="ui_07832915bd" formatted="false">"gestisci chat"</string>
+    <string name="ui_2ad1ad3777" formatted="false">"elimina quelle che non servono"</string>
+    <string name="ui_a61739c1b8" formatted="false">"sposta prima"</string>
+    <string name="ui_18e4c8d6fb" formatted="false">"sposta dopo"</string>
+    <string name="ui_39ced40b15" formatted="false">"tocca ancora per rimuovere"</string>
+    <string name="ui_ff36018e8f" formatted="false">"chat e memoria andranno perse"</string>
+    <string name="ui_9abd0dbc2a" formatted="false">"aggiungi una nota"</string>
+    <string name="ui_635a84c89c">"%1$s la legge a ogni chat. Può aggiungere note da solo quando gli chiedi di ricordare."</string>
+    <string name="ui_2a838553c5" formatted="false">"L\'agente aggiunge note qui quando gli chiedi di ricordare."</string>
+    <string name="ui_fdb6359504" formatted="false">"nessuna chat"</string>
+    <string name="ui_66bebee3af" formatted="false">"tocca ancora per eliminare"</string>
+    <string name="ui_d8b94a17c8">"%1$s messaggi · %2$s"</string>
+    <string name="ui_5f3fa10d52" formatted="false">"tocca ancora: elimina tutte"</string>
+    <string name="ui_92b3efd6d5" formatted="false">"elimina tutte"</string>
+    <string name="ui_6ee82c757b" formatted="false">"a cosa serve, come parla…"</string>
+    <string name="ui_5000750434" formatted="false">"a cosa serve"</string>
+    <string name="ui_f209be3b5a" formatted="false">"Dai un nome all\'agente (lettere e cifre)."</string>
+    <string name="ui_7eced4aef8" formatted="false">"Esiste già un agente con questo nome."</string>
+    <string name="ui_3267135c48" formatted="false">"Creo il profilo su Hermes…"</string>
+    <string name="ui_55684ca59e">"Profilo non creato: %1$s"</string>
+    <string name="ui_e05f08f5bb" formatted="false">"accedi a nous"</string>
+    <string name="ui_ab51840837" formatted="false">"inquadralo con il telefono, oppure apri"</string>
+    <string name="ui_b6b51de0f5" formatted="false">"e inserisci il codice"</string>
+    <string name="ui_af341a1d55" formatted="false">"un attimo…"</string>
+    <string name="ui_d450171bd7" formatted="false">"fatto, puoi parlare con hermes"</string>
+    <string name="ui_30fe006e29" formatted="false">"collega Hermes"</string>
+    <string name="ui_a4a9d83109">"utente: %1$s\n\nControlla l’indirizzo. La password verrà inserita nella schermata successiva."</string>
+    <string name="ui_197bbb6280" formatted="false">"da inserire"</string>
+    <string name="ui_b4630216c8" formatted="false">"usa questo collegamento"</string>
+    <string name="ui_6a0ee75384" formatted="false">"collegamento non modificato"</string>
+    <string name="ui_ddcf65537c" formatted="false">"QR non leggibile"</string>
+    <string name="ui_e416804a5e" formatted="false">"prima inserisci l’indirizzo"</string>
+    <string name="ui_6157f65d6b" formatted="false">"collegamento QR"</string>
+    <string name="ui_19e8e1e64e" formatted="false">"QR del collegamento Hermes"</string>
+    <string name="ui_ccbb348a08">"%1$s\n%2$s\nLa password non è nel QR."</string>
+    <string name="ui_14d48b2cdd" formatted="false">"collega con QR"</string>
+    <string name="ui_1bdaa9d7c8" formatted="false">"scatta il QR"</string>
+    <string name="ui_e5f9aa3385" formatted="false">"scegli dalla galleria"</string>
+    <string name="ui_bd82ba58da" formatted="false">"mostra il collegamento attuale"</string>
+    <string name="ui_9a5eff5842" formatted="false">"in uso"</string>
+    <string name="ui_2da4f9ab0d">"%1$s · in uso"</string>
+    <string name="ui_f3589f24a4" formatted="false">"fotocamera, galleria o altro dispositivo"</string>
+    <string name="ui_e4edbc6b81" formatted="false">"indirizzo, es. 192.168.1.20:9119"</string>
+    <string name="ui_e074fcb38e" formatted="false">"dashboard di hermes"</string>
+    <string name="ui_f120652037" formatted="false">"Sul PC, in ~/.hermes/.env: HERMES_DASHBOARD_BASIC_AUTH_USERNAME, _PASSWORD e _SECRET (32+ caratteri casuali). Poi avvia: hermes dashboard --host 0.0.0.0 --no-open. In rete locale va bene http; fuori casa usa https (un indirizzo pubblico in chiaro viene rifiutato). La password è salvata cifrata nel Keystore del dispositivo."</string>
+    <string name="ui_f4e4b935cf" formatted="false">"accesso web"</string>
+    <string name="ui_c7770892d2" formatted="false">"● connesso a Nous"</string>
+    <string name="ui_8b19beadc3" formatted="false">"accedi con Nous"</string>
+    <string name="ui_1bf30cdcd1" formatted="false">"via portal.nousresearch.com"</string>
+    <string name="ui_96ed6b40c3" formatted="false">"chiave API (in alternativa)"</string>
+    <string name="ui_c65a02daf4" formatted="false">"chiave API"</string>
+    <string name="ui_1d8ca53d81" formatted="false">"Hermes via Nous Portal (portal.nousresearch.com). Il nome del modello cambia con le release: controllalo sul portale."</string>
+    <string name="ui_8ae4c57b7e" formatted="false">"mi collego…"</string>
+    <string name="ui_0a79810a06" formatted="false">"errore di collegamento"</string>
+    <string name="ui_4a85016ff2" formatted="false">"non collegato"</string>
+    <string name="ui_f613d8d937" formatted="false">"indirizzo mancante"</string>
+    <string name="ui_79b1c92384" formatted="false">"connesso a Nous"</string>
+    <string name="ui_09099b15ae" formatted="false">"chiave impostata · "</string>
+    <string name="ui_a80f6d0b7b" formatted="false">"modello predefinito"</string>
+    <string name="ui_649e90a1ed" formatted="false">"chiave mancante"</string>
+    <string name="ui_5851d53b86" formatted="false">"account hermes"</string>
+    <string name="ui_6ef97386ba" formatted="false">"non disponibile"</string>
+    <string name="ui_b2a183c667" formatted="false">"chiaro o scuro, colore, font"</string>
+    <string name="ui_2cddbe429a" formatted="false">"esporta e importa"</string>
+    <string name="ui_273893985c" formatted="false">"esporta in un file"</string>
+    <string name="ui_26962ddc5b" formatted="false">"importa da un file…"</string>
+    <string name="ui_c10e8db395" formatted="false">"PIN attivo"</string>
+    <string name="ui_db99ab2043" formatted="false">"blocco con PIN"</string>
+    <string name="ui_18b999e9d9">"versione %1$s · design e personaggi da r1os (MIT)"</string>
+    <string name="ui_391553b02f" formatted="false">"r1agents è un\'app autonoma per Rabbit R1: parla con Claude, Hermes o qualunque servizio compatibile OpenAI direttamente dal dispositivo, senza daemon né root.\n\nIl design, i personaggi e molte animazioni vengono da r1os di M4cs (licenza MIT). La trascrizione vocale usa Groq Whisper se imposti una chiave."</string>
+    <string name="ui_a789d492e3" formatted="false">"annulla il testo vocale"</string>
+    <string name="ui_4f71047608" formatted="false">"testo pronto · modifica e invia"</string>
+    <string name="ui_419e3b6963" formatted="false">"Hermes al lavoro"</string>
+    <string name="ui_2b8633a8ce" formatted="false">"un’attività in corso"</string>
+    <string name="ui_c4f9dbb908">"%1$s attività in corso"</string>
+    <string name="ui_1bf3b5b1e6" formatted="false">"ferma attività"</string>
+    <string name="ui_8d8c941a3d" formatted="false">"Hermes (dashboard sul PC)"</string>
+    <string name="ui_91e1a2f47b" formatted="false">"Personalizzato (OpenAI-compat.)"</string>
+    <string name="ui_1d737f7249">"invio %1$s…"</string>
+    <string name="ui_f903c436b1" formatted="false">"PDF troppo grande per Hermes (massimo 10 MB)."</string>
+    <string name="ui_701757cf71">"Tipo di file non supportato: %1$s"</string>
+    <string name="ui_cbc77a1037">"Manca la chiave API di %1$s. Inseriscila o accedi dalle Impostazioni."</string>
+    <string name="ui_206dfece7c">"Manca l\'indirizzo di %1$s. Inseriscilo dalle Impostazioni."</string>
+    <string name="ui_6a6c58684d" formatted="false">"errore API"</string>
+    <string name="ui_a5312833be" formatted="false">"solo https"</string>
+    <string name="ui_d0896a30ef" formatted="false">"host non pubblico"</string>
+    <string name="ui_ee523c9a7c" formatted="false">"redirect vuoto"</string>
+    <string name="ui_704aac8780" formatted="false">"troppi redirect"</string>
+    <string name="ui_3fadbc598d" formatted="false">"collegamento già in aggiornamento"</string>
+    <string name="ui_7ab7a06520" formatted="false">"attendi la fine delle attività prima di cambiare collegamento"</string>
+    <string name="ui_8ec9ddab56" formatted="false">"Hermes attende una tua scelta"</string>
+    <string name="ui_7675071e74" formatted="false">"Apri l’app per rispondere"</string>
+    <string name="ui_8687ac1bcd">"Non posso avviare il lavoro in background: %1$s"</string>
+    <string name="ui_44108762c4" formatted="false">"errore Hermes"</string>
+    <string name="ui_8705176d8e" formatted="false">"Servizio non disponibile"</string>
+    <string name="ui_2ed139b29b" formatted="false">"Ripresa non riuscita"</string>
+    <string name="ui_83578e8412" formatted="false">"risposta pronta"</string>
+    <string name="ui_3d45dcb794" formatted="false">"attività non completata · apri la chat per riprendere"</string>
+    <string name="ui_6d6d4c0342" formatted="false">"Lavoro Hermes"</string>
+    <string name="ui_d10cb378a4" formatted="false">"Risposte e richieste Hermes"</string>
+    <string name="ui_306859402f" formatted="false">"indirizzo del dashboard non valido"</string>
+    <string name="ui_ba976121d9" formatted="false">"usa un indirizzo HTTP o HTTPS valido"</string>
+    <string name="ui_40f902aa9e" formatted="false">"il collegamento non deve contenere password, token o percorsi"</string>
+    <string name="ui_614c72e72f" formatted="false">"porta non valida"</string>
+    <string name="ui_bd58856e37" formatted="false">"per un server pubblico serve HTTPS"</string>
+    <string name="ui_b230eda84d" formatted="false">"nome utente non valido"</string>
+    <string name="ui_16c383abf8" formatted="false">"QR troppo lungo"</string>
+    <string name="ui_bd3c5a4143" formatted="false">"QR di collegamento non valido"</string>
+    <string name="ui_4e16dbb64e" formatted="false">"campi QR sconosciuti o duplicati"</string>
+    <string name="ui_f3596226bc" formatted="false">"versione QR non supportata"</string>
+    <string name="ui_a83d24376b" formatted="false">"indirizzo assente nel QR"</string>
+    <string name="ui_18bf521783" formatted="false">"immagine non leggibile"</string>
+    <string name="ui_0fcc5cff26" formatted="false">"QR non trovato: avvicina la fotocamera e riprova"</string>
+    <string name="ui_a1d94b645e">"%1$s agenti, %2$s chat, %3$s note, %4$s sveglie, %5$s routine e %6$s impostazioni"</string>
+    <string name="ui_2efc1ff10e" formatted="false">"Il file non è un\'esportazione di R1 Agents."</string>
+    <string name="ui_7d99a4134c" formatted="false">"Il file viene da una versione più recente dell\'app: aggiorna l\'app."</string>
+    <string name="ui_5c6d1ac4e6" formatted="false">"routine in corso"</string>
+    <string name="ui_3840841f9d" formatted="false">"Codice scaduto: riprova."</string>
+    <string name="ui_018ec0ae61" formatted="false">"Accesso rifiutato."</string>
+    <string name="ui_3a01a056d7">"errore %1$s"</string>
+    <string name="ui_08d522885c" formatted="false">"Non hai fatto l\'accesso a Nous. Aprilo dalle Impostazioni."</string>
+    <string name="ui_a251d15690" formatted="false">"Sessione Nous scaduta: accedi di nuovo dalle Impostazioni."</string>
+    <string name="ui_39297cfcdb">"Nous Portal non raggiungibile (HTTP %1$s). Riprova tra poco."</string>
+    <string name="ui_45127113bc">"parla a %1$s: smetto quando taci"</string>
+    <string name="ui_254cea3151" formatted="false">"Non riesco a leggere il file."</string>
+    <string name="ui_42d3532318" formatted="false">"File troppo grande (massimo 20 MB)."</string>
+    <string name="ui_4832135535">"Non riesco a leggere l\'immagine %1$s."</string>
+    <string name="ui_958226c9ef" formatted="false">"percorso non valido"</string>
+    <string name="ui_9015e62255" formatted="false">"quasi sereno"</string>
+    <string name="ui_3b10512840" formatted="false">"poco nuvoloso"</string>
+    <string name="ui_419044d245" formatted="false">"neve a tratti"</string>
+    <string name="ui_75b08a977a" formatted="false">"città non trovata"</string>
+    <string name="ui_d92e98d0ef" formatted="false">"esegue un comando"</string>
+    <string name="ui_2c67672d6f" formatted="false">"cerca sul web"</string>
+    <string name="ui_74440a06e8" formatted="false">"legge una pagina"</string>
+    <string name="ui_515a873f1f" formatted="false">"legge un file"</string>
+    <string name="ui_140c884f79" formatted="false">"scrive un file"</string>
+    <string name="ui_5a9bf9f820" formatted="false">"cerca nei file"</string>
+    <string name="ui_cfb8445f89" formatted="false">"aggiorna la memoria"</string>
+    <string name="ui_613905ac5b" formatted="false">"chiede a un sotto-agente"</string>
+    <string name="ui_580e70e641" formatted="false">"crea un\'immagine"</string>
+    <string name="ui_911f4bcdcc" formatted="false">"aggiorna l\'elenco"</string>
+    <string name="ui_8d63091015" formatted="false">"ha una domanda"</string>
+    <string name="ui_8e8fcf365d" formatted="false">"Inserisci l\'indirizzo del dashboard."</string>
+    <string name="ui_672be275ec" formatted="false">"Indirizzo pubblico senza https: la password viaggerebbe in chiaro. Usa https://… oppure un indirizzo di rete locale o Tailscale."</string>
+    <string name="ui_da58d2ea8a">"Il server ha risposto HTTP %1$s: è il dashboard di Hermes?"</string>
+    <string name="ui_f45dc8b088" formatted="false">"Risposta inattesa: è il dashboard di Hermes?"</string>
+    <string name="ui_b831d55c56" formatted="false">"Il dashboard è in ascolto solo su questo PC. Avvialo con --host 0.0.0.0 e imposta utente e password (vedi sotto)."</string>
+    <string name="ui_814fd20e78" formatted="false">"Il dashboard non ha il login con utente e password: imposta HERMES_DASHBOARD_BASIC_AUTH_*."</string>
+    <string name="ui_4751d0265c" formatted="false">"Utente o password errati."</string>
+    <string name="ui_e87b44f23b" formatted="false">"Troppi tentativi: aspetta un momento."</string>
+    <string name="ui_fb83cdc785">"Accesso rifiutato (HTTP %1$s)."</string>
+    <string name="ui_cd60d0f699">"Ticket negato (HTTP %1$s)."</string>
+    <string name="ui_d8b1aa41c0" formatted="false">"Collegamento modificato"</string>
+    <string name="ui_58ee0ff671">"Dashboard non raggiungibile (%1$s). PC acceso, stessa rete, dashboard avviato?"</string>
+    <string name="ui_390c5ad6f4">"chiuso (%1$s %2$s)"</string>
+    <string name="ui_28bb219e19" formatted="false">"errore di rete"</string>
+    <string name="ui_4df8e3f35b" formatted="false">"connessione persa"</string>
+    <string name="ui_2a366b480e" formatted="false">"Hermes non risponde."</string>
+    <string name="ui_fff735cb7f">"Questa versione di Hermes non supporta «%1$s»: aggiorna il dashboard."</string>
+    <string name="ui_e6f78dc825" formatted="false">"Hermes non ha restituito una sessione valida"</string>
+    <string name="ui_5ef0e267be" formatted="false">"(nessun output)"</string>
+    <string name="ui_659ed61c06">"Connessione con Hermes persa: %1$s"</string>
+    <string name="ui_fda88cf625" formatted="false">"Hermes ha impiegato troppo."</string>
+    <string name="ui_533713f62e" formatted="false">"Elenco attività Hermes non valido"</string>
+    <string name="ui_5a1300adcc" formatted="false">"Connessione con Hermes persa."</string>
+    <string name="ui_9cd507553b" formatted="false">"Il turno continua su Hermes: riapri la chat per riprenderlo."</string>
+    <string name="ui_2cd524b195" formatted="false">"piano gratuito"</string>
+    <string name="ui_da7cedd821">"saldo %1$s"</string>
+    <string name="ui_e5f06c4d48">"saldo $%1$s"</string>
+    <string name="ui_352f93856b" formatted="false">"accesso attivo"</string>
+    <string name="ui_940f2fcab3" formatted="false">"account non collegato"</string>
+    <string name="ui_318cd9e228" formatted="false">"OK: connesso a Hermes"</string>
+    <string name="ui_3cd50c52c0" formatted="false">"conferma"</string>
+    <string name="ui_9cb9b85e99" formatted="false">"annulla"</string>
+    <string name="ui_e01eaf5dd1" formatted="false">"sblocca"</string>
+    <string name="ui_7384eb5911" formatted="false">"verifico…"</string>
+    <string name="ui_9729d2de44" formatted="false">"sicurezza"</string>
+    <string name="ui_3a9126a4ea" formatted="false">"Documenti"</string>
+    <string name="ui_bb96ed5cc3" formatted="false">"Scrivania"</string>
+    <string name="ui_ef204ead21" formatted="false">"Altro"</string>
+    <string name="ui_82f7240a9a" formatted="false">"collegamento"</string>
+    <string name="ui_3b225a819e" formatted="false">"scheda"</string>
+    <string name="ui_0ea049a68d" formatted="false">"Riepilogo"</string>
+    <string name="ui_a7712b5b03" formatted="false">"chiudi"</string>
+    <string name="ui_cc123cba38" formatted="false">"esegui"</string>
+    <string name="ui_fb80edc0ec" formatted="false">"nega"</string>
+    <string name="ui_d554d69f55" formatted="false">"invia"</string>
+    <string name="ui_90070cdbc6" formatted="false">"risposta"</string>
+    <string name="ui_6653fb8a8e" formatted="false">"salta"</string>
+    <string name="ui_00ea95d6d1" formatted="false">"errore"</string>
+    <string name="ui_64ac619989" formatted="false">"fornitore"</string>
+    <string name="ui_151a6c958d" formatted="false">"messaggio"</string>
+    <string name="ui_2eba76fd11" formatted="false">"Copiato"</string>
+    <string name="ui_bcfaf5fac6" formatted="false">"comandi"</string>
+    <string name="ui_ed549af454" formatted="false">"comando"</string>
+    <string name="ui_0fd7b04a53" formatted="false">"allega"</string>
+    <string name="ui_eef051cd40" formatted="false">"rinomina"</string>
+    <string name="ui_a87537ff47" formatted="false">"titolo"</string>
+    <string name="ui_9ea5d517e7" formatted="false">"Rinominata"</string>
+    <string name="ui_6bec3945e2" formatted="false">"modello"</string>
+    <string name="ui_9c76b629d1" formatted="false">"comprimo…"</string>
+    <string name="ui_2e5a083bde" formatted="false">"archivia"</string>
+    <string name="ui_5f7b655465" formatted="false">"sotto-agenti"</string>
+    <string name="ui_78be0e73b2" formatted="false">"ferma"</string>
+    <string name="ui_b6a0d0a674" formatted="false">"guida…"</string>
+    <string name="ui_f18cdbd92f" formatted="false">"rifiutata"</string>
+    <string name="ui_7656d6d3ad" formatted="false">"file…"</string>
+    <string name="ui_c16231c65d" formatted="false">"inglese"</string>
+    <string name="ui_dbc2918e90" formatted="false">"spagnolo"</string>
+    <string name="ui_ecec83d94d" formatted="false">"francese"</string>
+    <string name="ui_3debdc5730" formatted="false">"tedesco"</string>
+    <string name="ui_a75cc28566" formatted="false">"portoghese"</string>
+    <string name="ui_2cadc3e1f6" formatted="false">"giapponese"</string>
+    <string name="ui_e307996be6" formatted="false">"cinese"</string>
+    <string name="ui_0a72cbd38b" formatted="false">"russo"</string>
+    <string name="ui_d6ce8144fc" formatted="false">"arabo"</string>
+    <string name="ui_4f2896dd37" formatted="false">"italiano"</string>
+    <string name="ui_2a5a02c2b8" formatted="false">"traduco…"</string>
+    <string name="ui_1a8a49ab36" formatted="false">"traduttore"</string>
+    <string name="ui_111b8e65f9" formatted="false">"traduci"</string>
+    <string name="ui_18d1967ba7" formatted="false">"leggi"</string>
+    <string name="ui_6c15f34ba8" formatted="false">"aggiungi"</string>
+    <string name="ui_dcfbe248ac" formatted="false">"togli"</string>
+    <string name="ui_20d6155d10" formatted="false">"aspetto"</string>
+    <string name="ui_b828c7599e" formatted="false">"modo"</string>
+    <string name="ui_67d1d02f39" formatted="false">"scuro"</string>
+    <string name="ui_e7e35d97b7" formatted="false">"chiaro"</string>
+    <string name="ui_bdbffaa426" formatted="false">"accento"</string>
+    <string name="ui_3d9a5cdfac" formatted="false">"orologio"</string>
+    <string name="ui_a17c9aaa61" formatted="false">"data"</string>
+    <string name="ui_1a3700624b" formatted="false">"batteria"</string>
+    <string name="ui_4b15f21af0" formatted="false">"sveglia"</string>
+    <string name="ui_4028f305d5" formatted="false">"meteo"</string>
+    <string name="ui_72c7396959" formatted="false">"voce"</string>
+    <string name="ui_843e6206e1" formatted="false">"dispositivo"</string>
+    <string name="ui_369c3bf02a" formatted="false">"Provo…"</string>
+    <string name="ui_6bceb5c35b" formatted="false">"strumenti"</string>
+    <string name="ui_0c375bfee9" formatted="false">"impostazioni"</string>
+    <string name="ui_70b85f50fe" formatted="false">"sveglie"</string>
+    <string name="ui_c51048b732" formatted="false">"note"</string>
+    <string name="ui_c03424c65e" formatted="false">"attiva"</string>
+    <string name="ui_1e6385e37a" formatted="false">"attive"</string>
+    <string name="ui_aacd348c9b" formatted="false">"giorni"</string>
+    <string name="ui_3517056179" formatted="false">"salva"</string>
+    <string name="ui_4a28ceb2d8" formatted="false">"elimina"</string>
+    <string name="ui_faa3ef8f2f" formatted="false">"durata"</string>
+    <string name="ui_1e70b53208" formatted="false">"avvia"</string>
+    <string name="ui_e53435e667" formatted="false">"minuto"</string>
+    <string name="ui_61d73c1f14" formatted="false">"minuti"</string>
+    <string name="ui_168fedf261" formatted="false">"agente"</string>
+    <string name="ui_de4da44e7e" formatted="false">"nome"</string>
+    <string name="ui_d3610cf483" formatted="false">"richiesta"</string>
+    <string name="ui_b6ea728a1e" formatted="false">"adesso"</string>
+    <string name="ui_947032528d" formatted="false">"messaggi"</string>
+    <string name="ui_7333237b9c" formatted="false">"memoria"</string>
+    <string name="ui_235936fba8" formatted="false">"rimuovi"</string>
+    <string name="ui_80c34c3af8" formatted="false">"forma"</string>
+    <string name="ui_4fd52272a1" formatted="false">"colore"</string>
+    <string name="ui_d5fea1049c" formatted="false">"finitura"</string>
+    <string name="ui_5298edb3b5" formatted="false">"occhi"</string>
+    <string name="ui_6ebc1b6951" formatted="false">"niente"</string>
+    <string name="ui_81d613b06c" formatted="false">"istruzioni"</string>
+    <string name="ui_6ed04a5eb7" formatted="false">"riprova"</string>
+    <string name="ui_e5844b95db" formatted="false">"indietro"</string>
+    <string name="ui_6b696c71a8" formatted="false">"connesso"</string>
+    <string name="ui_6b4422410d" formatted="false">"utente"</string>
+    <string name="ui_ee4b96bfac" formatted="false">"accesso"</string>
+    <string name="ui_3b9b4c05a8" formatted="false">"accedi"</string>
+    <string name="ui_c75e7e5ea0" formatted="false">"esci"</string>
+    <string name="ui_47d34ef65f" formatted="false">"indirizzo"</string>
+    <string name="ui_26d3536b7e" formatted="false">"collegato"</string>
+    <string name="ui_11720c9cf2" formatted="false">"leggo…"</string>
+    <string name="ui_2953d06507" formatted="false">"dati"</string>
+    <string name="ui_03b76df6e0" formatted="false">"informazioni"</string>
+    <string name="ui_420971995b" formatted="false">"sereno"</string>
+    <string name="ui_f7fad6ab4f" formatted="false">"nuvoloso"</string>
+    <string name="ui_3fd12bca7e" formatted="false">"nebbia"</string>
+    <string name="ui_21f9888beb" formatted="false">"pioggerella"</string>
+    <string name="ui_3e0fb35ffc" formatted="false">"pioggia"</string>
+    <string name="ui_394104b42f" formatted="false">"neve"</string>
+    <string name="ui_edc380a605" formatted="false">"rovesci"</string>
+    <string name="ui_3e0d668759" formatted="false">"temporale"</string>
+    <string name="ui_bbdcd42e31" formatted="false">"lun-ven"</string>
+    <string name="ui_de4a8ea6f8" formatted="false">"voce a schermo"</string>
+    <string name="ui_2245aa74cd" formatted="false">"Usa il microfono sullo schermo. Il tasto laterale resta gestito dal sistema."</string>
+    <string name="ui_1909c29a8f" formatted="false">"lingua dell’app"</string>
+    <string name="ui_7df11394ff" formatted="false">"La lingua cambia solo l’interfaccia, non i tuoi messaggi o le istruzioni degli agenti."</string>
+    <string name="ui_5397794b8d">"OK: connesso a Hermes %1$s"</string>
+    <string name="ui_9f8232d0cb" formatted="false">"Groq Whisper non è configurato."</string>
+    <string name="ui_ab9e87232e" formatted="false">"tocca per cambiare fornitore"</string>
+    <string name="ui_ac288cfd8d" formatted="false">"trascrivo…"</string>
+    <string name="ui_1f1c954e90" formatted="false">"(nessuna risposta)"</string>
+    <string name="ui_63255f1b12" formatted="false">"Hermes non ha prodotto una risposta: riprova."</string>
+    <string name="ui_48947903de" formatted="false">"Il messaggio non è arrivato a Hermes: riprova."</string>
+    <string name="ui_f0e07e26a5" formatted="false">"File di aggiornamento non valido."</string>
+    <string name="ui_84e62dec0f" formatted="false">"L\'aggiornamento è per un\'altra app o versione."</string>
+    <string name="ui_1320f7c837" formatted="false">"Indirizzo non valido: serve https."</string>
+    <string name="ui_483f5c9b20">"Controllo non riuscito: %1$s"</string>
+    <string name="ui_1a5c3e2bf7" formatted="false">"Il file scaricato non corrisponde a quello annunciato."</string>
+    <string name="ui_4b07cc5415" formatted="false">"La firma dell\'aggiornamento è diversa da quella installata: Android non lo installerebbe sopra questa app. Esporta i dati e reinstalla."</string>
+    <string name="ui_f43d53399f" formatted="false">"aggiornamenti"</string>
+    <string name="ui_e438a6ee2f" formatted="false">"indirizzo del file update.json (https)"</string>
+    <string name="ui_56169e629e" formatted="false">"controlla aggiornamenti"</string>
+    <string name="ui_3d49cf80ba">"Sei aggiornato (versione %1$s)."</string>
+    <string name="ui_5fe0888cab">"Versione %1$s disponibile"</string>
+    <string name="ui_922654d58f" formatted="false">"scarica e installa"</string>
+    <string name="ui_2cf76d597f" formatted="false">"Scarico l\'aggiornamento…"</string>
+    <string name="ui_9d4279bfc6" formatted="false">"Consenti a R1 Agents di installare app, poi riprova."</string>
+    <string name="ui_eb668afd93" formatted="false">"L\'installazione parte: conferma sul dispositivo."</string>
+    <string name="ui_bc1ba41905" formatted="false">"controllo…"</string>
+    <string name="ui_d5f4254e31">"Chiedi qualcosa a %1$s"</string>
+    <string name="ui_ccd94418dd" formatted="false">"Scrivi qui sotto o tieni premuto il microfono."</string>
+    <string name="ui_9ba991e55f">"chiede a %1$s"</string>
+    <string name="ui_9d6297af1f" formatted="false">"Riassumi le mie note"</string>
+    <string name="ui_48b918b31b" formatted="false">"Che ore sono a Tokyo?"</string>
+    <string name="ui_591845331b" formatted="false">"Spiegami una cosa in due righe"</string>
+    <string name="ui_d3aff5ed26" formatted="false">"Ruota la rotella o scorri per cambiare agente."</string>
+    <string name="ui_ac87b5e012" formatted="false">"feriali"</string>
+    <string name="ui_505eabdfb8" formatted="false">"weekend"</string>
+    <string name="ui_0b43b978c7">"suona tra %1$s"</string>
+    <string name="ui_0ad2d49935">"tra %1$s"</string>
+    <string name="ui_2b804594a6">"scade alle %1$s"</string>
+    <string name="ui_ac53b3388a" formatted="false">"copia"</string>
+    <string name="ui_2060f21a0f" formatted="false">"cerca…"</string>
+    <string name="ui_1f6c580980">"%1$s modelli"</string>
+    <string name="ui_86e6aa070e" formatted="false">"attività pianificate"</string>
+    <string name="ui_63f78e0d5f" formatted="false">"sincronizzate con Hermes"</string>
+    <string name="ui_f4266e420f" formatted="false">"nuova attività"</string>
+    <string name="ui_6ac0c607ab" formatted="false">"nessuna attività pianificata"</string>
+    <string name="ui_83e9847a79" formatted="false">"Pianifica un prompt che Hermes esegue da solo, anche a schermo spento."</string>
+    <string name="ui_7bafdb870a" formatted="false">"esegui ora"</string>
+    <string name="ui_cdf273e773" formatted="false">"attività avviata"</string>
+    <string name="ui_d1afa9b15a" formatted="false">"in pausa"</string>
+    <string name="ui_e400388645" formatted="false">"leggo da Hermes…"</string>
+    <string name="ui_d2d5097861" formatted="false">"competenze"</string>
+    <string name="ui_9fb9f54c76" formatted="false">"nessuna competenza"</string>
+    <string name="ui_b30f24d128" formatted="false">"si ripete ai giorni scelti; senza giorni parte una volta sola"</string>
+    <string name="ui_babc4a5bbf">"prossima tra %1$s"</string>
+    <string name="ui_d304528aa4">"ultima: %1$s"</string>
+    <string name="ui_7ca2785861">"attiva o disattiva quelle di %1$s"</string>
+    <string name="ui_25d155617f">"Hermes non ha accettato: %1$s"</string>
+    <string name="ui_86750eb32f">"Non riesco a leggere da Hermes: %1$s"</string>
+    <string name="ui_5d4cc25f40" formatted="false">"Il backup contiene dati mancanti o non validi."</string>
+    <string name="ui_7d1043473d" formatted="false">"app"</string>
+    <string name="ui_be6f615b92" formatted="false">"tutte le tue app"</string>
+    <string name="ui_7a0971edfc" formatted="false">"cerca un\'app o chiedi all\'agente"</string>
+    <string name="ui_b207efeb7b" formatted="false">"preferite"</string>
+    <string name="ui_9fa3124899" formatted="false">"tutte le app"</string>
+    <string name="ui_6835df38c6" formatted="false">"apri"</string>
+    <string name="ui_8e2d0510c8" formatted="false">"aggiungi ai preferiti"</string>
+    <string name="ui_d314ad0a4a" formatted="false">"togli dai preferiti"</string>
+    <string name="ui_90bc562f40" formatted="false">"info app"</string>
+    <string name="ui_aa9d8eccb4" formatted="false">"disinstalla"</string>
+    <string name="ui_c024fcc5f9">"chiedi a %1$s: «%2$s»"</string>
+    <string name="ui_9ba5c1d281" formatted="false">"nessuna app trovata"</string>
+    <string name="ui_eddfb6c071" formatted="false">"è la schermata iniziale: tocca per cambiarla"</string>
+    <string name="ui_5993e82081" formatted="false">"non è la schermata iniziale: tocca per sceglierla"</string>
+    <string name="ui_f2c6915e4c" formatted="false">"non riesco ad aprire questa app"</string>
+    <string name="ui_a0ea3faf55">"apro %1$s"</string>
+    <string name="ui_950486e052" formatted="false">"recenti"</string>
+    <string name="ui_449d113dca" formatted="false">"rotella in orizzontale"</string>
+    <string name="ui_bae7591bb2" formatted="false">"normale"</string>
+    <string name="ui_a9d1bc7eca" formatted="false">"invertita"</string>
+    <string name="ui_10315f3cb1" formatted="false">"fotocamera"</string>
+    <string name="ui_32be769c09" formatted="false">"scrivi o detta una nota"</string>
+    <string name="ui_e8250ed32d" formatted="false">"attività di hermes"</string>
+    <string name="ui_2515690daf" formatted="false">"routine pianificate sul PC"</string>
+    <string name="ui_98a3cf7659" formatted="false">"non trovo la fotocamera"</string>
+    <string name="ui_9449f5bbc8" formatted="false">"sta lavorando…"</string>
+    <string name="ui_70ac6d7132" formatted="false">"ti aspetta"</string>
+    <string name="ui_c7c47efe18" formatted="false">"%1$d in corso"</string>
+    <string name="ui_d54c848c40">"prossima: %1$s tra %2$s"</string>
+    <string name="ui_a6c333ad12" formatted="false">"nulla in corso"</string>
+    <string name="ui_486b575ab9" formatted="false">"hermes"</string>
+    <string name="ui_a27ab2d196" formatted="false">"agenti"</string>
+    <string name="ui_3bab362b6a" formatted="false">"impostazioni android"</string>
+    <string name="ui_db09e3de46" formatted="false">"wifi, bluetooth, schermo e altro"</string>
+    <string name="ui_2d73049f78" formatted="false">"cosa sa fare l\'agente"</string>
+    <string name="ui_3b73f5eb84" formatted="false">"%1$d attive su Hermes"</string>
+    <string name="ui_6ef46e17aa">"apri %1$s"</string>
+    <string name="ui_922c82d62c">"timer di %1$s"</string>
+    <string name="ui_a21efabed5">"sveglia alle %1$s"</string>
+    <string name="ui_24c8ab553b" formatted="false">"accendi la torcia"</string>
+    <string name="ui_1a839844ee" formatted="false">"spegni la torcia"</string>
+    <string name="ui_510a578c56" formatted="false">"salva una nota"</string>
+    <string name="ui_77027ea210">"pannello %1$s"</string>
+    <string name="ui_dab426e957">"fatto: %1$s"</string>
+    <string name="ui_606d15c3e0">"non riesco: %1$s"</string>
+    <string name="ui_793ade4b26" formatted="false">"azioni dell\'agente"</string>
+    <string name="ui_9e67d0a179" formatted="false">"automatiche"</string>
+    <string name="ui_22938aeb5f" formatted="false">"spente"</string>
+    <string name="ui_e641f081b3" formatted="false">"%1$d s"</string>
+    <string name="ui_32b259a068" formatted="false">"%1$d min"</string>
+    <string name="ui_f31be6b4f3" formatted="false">"%1$d h"</string>
+    <string name="ui_4d538300d5" formatted="false">"controlli"</string>
+    <string name="ui_3dd6153b9c" formatted="false">"torcia, wifi, volume e altro"</string>
+    <string name="ui_4d897fa9ab" formatted="false">"torcia"</string>
+    <string name="ui_cc908be0bc" formatted="false">"wifi e internet"</string>
+    <string name="ui_9b0034aa24" formatted="false">"bluetooth"</string>
+    <string name="ui_d387fc8d57" formatted="false">"volume"</string>
+    <string name="ui_aa486e4653" formatted="false">"schermo e luminosità"</string>
+    <string name="ui_78362540f0" formatted="false">"modalità aereo"</string>
+    <string name="ui_d3acbe1a50" formatted="false">"suoni e non disturbare"</string>
+    <string name="ui_6640d5daa3">"batteria %1$d%% · %2$s"</string>
+    <string name="ui_74cd9507a1" formatted="false">"in carica"</string>
+    <string name="ui_82d34ed5bc" formatted="false">"a batteria"</string>
+    <string name="ui_ac647b8dc0">"spazio libero %1$s"</string>
+    <string name="ui_b7671340f7" formatted="false">"chiedi all\'agente"</string>
+    <string name="ui_bd01a2994e" formatted="false">"cosa devo fare oggi?"</string>
+    <string name="ui_a4c6e62a2b" formatted="false">"riassumi le mie note"</string>
+    <string name="ui_a7623e2fdf" formatted="false">"accesa"</string>
+    <string name="ui_533deb16e2" formatted="false">"spenta"</string>
+    <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
+    <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
+</resources>

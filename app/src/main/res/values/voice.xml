@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_close">chiudi modalità vocale</string>
+    <string name="voice_hold">tieni premuto e parla</string>
+    <string name="voice_release">rilascia per inviare · ↑ annulla</string>
+    <string name="voice_ready">sono qui, parliamo</string>
+    <string name="voice_listening">ti ascolto…</string>
+    <string name="voice_transcribing">sto capendo le tue parole…</string>
+    <string name="voice_wait">un momento…</string>
+    <string name="voice_thinking">ci penso…</string>
+    <string name="voice_responding">ti rispondo…</string>
+    <string name="voice_working">ci sto lavorando…</string>
+    <string name="voice_speaking">ti sto parlando…</string>
+    <string name="voice_stop">interrompi risposta</string>
+    <string name="voice_cancelled">annullato · riproviamo?</string>
+    <string name="voice_error">qualcosa non va · puoi riprovare</string>
+    <string name="voice_existing_turn">sto già lavorando nella chat</string>
+    <string name="voice_mic_unavailable">Microfono non pronto. Verifica il permesso e il servizio voce nelle impostazioni, poi tieni premuto di nuovo.</string>
+    <string name="voice_sound_on">voce sì</string>
+    <string name="voice_sound_off">voce no</string>
+    <string name="voice_enable_sound">attiva lettura delle risposte</string>
+    <string name="voice_disable_sound">disattiva lettura delle risposte</string>
+    <string name="voice_audio_unavailable">voce non disponibile · leggi il fumetto</string>
+    <string name="voice_read_chat">lettura delle risposte in chat</string>
+    <string name="voice_read_fullscreen">lettura nella modalità vocale</string>
+    <string name="voice_read_fullscreen_hint">Il buddy legge le risposte sul Rabbit. Questa scelta resta salvata.</string>
+    <string name="voice_engine_help">Per leggere le risposte serve un motore vocale Android. Su questo Rabbit non è installato.</string>
+    <string name="voice_audio_missing_engine">voce non disponibile · manca il motore</string>
+    <string name="voice_audio_volume_muted">volume multimediale a zero</string>
+</resources>

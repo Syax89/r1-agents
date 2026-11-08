@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="432" height="432" viewBox="0 0 108 108">
+<defs>
+<clipPath id="c"><circle cx="54" cy="54" r="48"/></clipPath>
+<radialGradient id="bg" cx="54" cy="62" r="86" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#3A2414"/><stop offset=".55" stop-color="#171A20"/><stop offset="1" stop-color="#0E1013"/></radialGradient>
+<radialGradient id="halo" cx="54" cy="56" r="30" gradientUnits="userSpaceOnUse"><stop offset=".6" stop-color="#FE5F00" stop-opacity=".33"/><stop offset="1" stop-color="#FE5F00" stop-opacity="0"/></radialGradient>
+<linearGradient id="b" x1="38" y1="36" x2="72" y2="78" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FF9A4D"/><stop offset=".55" stop-color="#FE5F00"/><stop offset="1" stop-color="#D63A00"/></linearGradient>
+</defs>
+<g clip-path="url(#c)"><rect width="108" height="108" fill="url(#bg)"/>
+<circle cx="54" cy="56" r="30" fill="url(#halo)"/><circle cx="54" cy="56" r="21" fill="url(#b)"/>
+<path d="M42,45c3,-6 9,-9 15,-9c-7,1 -12,5 -14,11z" fill="#fff" fill-opacity=".25"/>
+<ellipse cx="46" cy="52" rx="3.2" ry="4.6" fill="#1A0C04"/><ellipse cx="62" cy="52" rx="3.2" ry="4.6" fill="#1A0C04"/>
+<circle cx="47" cy="50.5" r="1" fill="#fff"/><circle cx="63" cy="50.5" r="1" fill="#fff"/></g></svg>

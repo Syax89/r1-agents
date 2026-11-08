@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "packageName": "dev.r1agents",
+  "versionCode": 7,
+  "versionName": "0.5.0",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.0/r1agents-release-signed.apk",
+  "sha256": "b9cf8e147586af43aab240673edf5aae784d0d482cb6861c50a8caa9e71c8d5b",
+  "sizeBytes": 1321287,
+  "notes": "0.5.0: launcher agente-centrico per Rabbit R1: carosello, cassetto app con ricerca, azioni dispositivo dell'agente, controlli Android, integrazione Hermes, buddy più leggero a riposo."
+}

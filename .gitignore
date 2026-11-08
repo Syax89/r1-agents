@@ -1,0 +1,13 @@
+.gradle/
+**/build/
+local.properties
+smoke-out/
+work/
+*.apk
+*.idsig
+*.jks
+*.keystore
+*.p12
+*password*.txt
+signing-private/
+.DS_Store

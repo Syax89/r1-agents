@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Il dashboard di Hermes sul PC parla http in chiaro sulla rete di casa. web_fetch resta solo https (vedi Engine.kt). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

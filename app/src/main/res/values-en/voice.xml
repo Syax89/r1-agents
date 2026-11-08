@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_close">Close voice mode</string>
+    <string name="voice_hold">Hold to talk</string>
+    <string name="voice_release">Release to send · ↑ cancel</string>
+    <string name="voice_ready">I’m here, let’s talk</string>
+    <string name="voice_listening">Listening…</string>
+    <string name="voice_transcribing">Understanding your words…</string>
+    <string name="voice_wait">One moment…</string>
+    <string name="voice_thinking">Thinking…</string>
+    <string name="voice_responding">Replying…</string>
+    <string name="voice_working">Working on it…</string>
+    <string name="voice_speaking">Speaking…</string>
+    <string name="voice_stop">Stop response</string>
+    <string name="voice_cancelled">Cancelled · try again?</string>
+    <string name="voice_error">Something went wrong · try again</string>
+    <string name="voice_existing_turn">Already working in this chat</string>
+    <string name="voice_mic_unavailable">Microphone not ready. Check permission and voice service in settings, then hold again.</string>
+    <string name="voice_sound_on">Voice on</string>
+    <string name="voice_sound_off">Voice off</string>
+    <string name="voice_enable_sound">Enable spoken replies</string>
+    <string name="voice_disable_sound">Mute spoken replies</string>
+    <string name="voice_audio_unavailable">Audio unavailable · read the balloon</string>
+    <string name="voice_read_chat">read chat replies aloud</string>
+    <string name="voice_read_fullscreen">read replies in voice mode</string>
+    <string name="voice_read_fullscreen_hint">The buddy reads replies on the Rabbit. This preference is saved.</string>
+    <string name="voice_engine_help">Reading replies requires an Android speech engine. None is installed on this Rabbit.</string>
+    <string name="voice_audio_missing_engine">voice unavailable · speech engine missing</string>
+    <string name="voice_audio_volume_muted">media volume is muted</string>
+</resources>
