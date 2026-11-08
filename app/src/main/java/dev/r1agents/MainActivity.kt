@@ -1658,6 +1658,7 @@ class MainActivity : Activity() {
         }
         val codeBg = Theme.withAlpha(Theme.FG, 0.14f)
         val chipRows = java.util.WeakHashMap<View, LinearLayout>()
+        val mdCaches = java.util.WeakHashMap<View, Md.Cache>()
         fun actionChips(v: View, acts: List<DeviceActions.Action>) {
             if (acts.isEmpty()) return
             val row = chipRows.getOrPut(v) { LinearLayout(this@MainActivity).apply { orientation = LinearLayout.HORIZONTAL } }
@@ -1671,7 +1672,9 @@ class MainActivity : Activity() {
             if (error) { v.text = UiText.owned(this@MainActivity, raw); return }
             if (mine) { v.text = raw; return }
             val p = DeviceActions.parse(raw)
-            v.text = Md.render(p.text.ifBlank { p.actions.joinToString(", ") { describeAction(it) } }, codeBg)
+            val body = p.text.ifBlank { p.actions.joinToString(", ") { describeAction(it) } }
+            val mc = mdCaches.getOrPut(v) { Md.Cache() }
+            v.text = Md.render(body, codeBg, mc)
             actionChips(v, p.actions)
         }
         // Chat vuota: invece di una pagina nera, un invito con l'agente (sparisce al primo messaggio).

@@ -44,6 +44,27 @@ object Md {
         return out
     }
 
+    /** Memoria per lo streaming: la parte già completa (fino all'ultima riga vuota fuori dai blocchi di codice) non si rifà. */
+    class Cache { internal var src = ""; internal var out = SpannableStringBuilder() }
+
+    /** Come [render], ma durante lo streaming rifà solo la coda ancora in arrivo: il costo smette di crescere con la lunghezza. */
+    fun render(src: String, codeBg: Int, cache: Cache): CharSequence {
+        val lines = src.split('\n')
+        var fences = 0; var cut = -1
+        for ((i, l) in lines.withIndex()) {
+            if (l.trimStart().startsWith("```")) fences++
+            if (l.isEmpty() && fences % 2 == 0 && i < lines.lastIndex) cut = i
+        }
+        if (cut < 1) return render(src, codeBg)
+        val head = lines.subList(0, cut + 1).joinToString("\n")
+        if (cache.src != head) {
+            if (cache.src.isNotEmpty() && head.startsWith(cache.src + "\n")) cache.out.append('\n').append(render(head.substring(cache.src.length + 1), codeBg))
+            else cache.out = SpannableStringBuilder(render(head, codeBg))
+            cache.src = head
+        }
+        return SpannableStringBuilder(cache.out).append('\n').append(render(lines.subList(cut + 1, lines.size).joinToString("\n"), codeBg))
+    }
+
     /** **grassetto**, *corsivo*, _corsivo_, `codice` dentro una riga. */
     private fun inline(out: SpannableStringBuilder, s: String, codeBg: Int = 0x33808080) {
         var i = 0

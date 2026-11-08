@@ -205,6 +205,14 @@ internal class DevelopmentQa(private val test: Instrumentation) {
                     val ms = (System.nanoTime() - t0) / 10 / 1e6
                     android.util.Log.i("R1PERF", "Md.render ${kb}KB = %.1f ms".format(ms))
                     step("Md.render ${kb}KB: %.1f ms".format(ms))
+                    // Streaming: il testo cresce a pezzi; il risultato deve restare identico al render completo, ma con costo quasi costante.
+                    val cache = Md.Cache(); var inc = 0.0; var worst = 0.0
+                    for (n in txt.indices step 400) {
+                        val part = txt.substring(0, minOf(txt.length, n + 400))
+                        val a = System.nanoTime(); val got = Md.render(part, 0x22ffffff, cache); inc = (System.nanoTime() - a) / 1e6; if (n > 0) worst = maxOf(worst, inc)
+                        check(got.toString() == Md.render(part, 0x22ffffff).toString()) { "Md streaming: testo diverso dal render completo a $n" }
+                    }
+                    step("Md streaming ${kb}KB, passo peggiore: %.1f ms".format(worst))
                 }
             }
             // Modalità automatica: la direttiva si esegue da sola una volta sola (qui una nota, innocua).
