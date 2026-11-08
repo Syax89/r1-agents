@@ -24,4 +24,4 @@ Carosello orizzontale (fotocamera, impostazioni con martello, app, strumenti, tr
 
 Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni android», stato Hermes dal vivo su home e standby, funzione «competenze», doppia pressione del tasto laterale per parlare.
 
-0.5.0: i livelli statici del buddy (corpo, vestiti) sono texture della GPU: a home ferma il RenderThread passa da 35–48% a meno dell'1,3%, frame janky da 4,3% a 0%. PropView anima solo quando è visibile. Baseline e strumenti in `tools/perf.py` (risultati in `work/perf/`).
+0.5.1 (code 8): i livelli statici del buddy (corpo, vestiti) sono texture della GPU: a home ferma il RenderThread passa da 35–48% a meno dell'1,3%, frame janky da 4,3% a 0%. PropView anima solo quando è visibile. Baseline e strumenti in `tools/perf.py` (risultati in `work/perf/`).
