@@ -659,6 +659,30 @@
     <string name="ui_2718314a3d" formatted="false">"avvisi dalle attività di Hermes"</string>
     <string name="ui_768e8b058b" formatted="false">"controlla ogni 30 minuti e avvisa quando un\'attività pianificata ha girato"</string>
     <string name="ui_e35f849a62" formatted="false">"attività eseguita"</string>
+    <string name="ui_af2b0de88b" formatted="false">"tocca ancora per confermare"</string>
+    <string name="ui_6503aaa0d4" formatted="false">"chiave API o accesso rifiutati: controlla le impostazioni"</string>
+    <string name="ui_db32442bd0" formatted="false">"non riesco a raggiungere il server: controlla rete e indirizzo"</string>
+    <string name="ui_423e5043b2" formatted="false">"il server non risponde in tempo"</string>
+    <string name="ui_0d3b9428e5" formatted="false">"troppe richieste: riprova tra poco"</string>
+    <string name="ui_a8a7633f72" formatted="false">"il server ha avuto un problema"</string>
+    <string name="ui_8cec984fbd" formatted="false">"risposta in corso: premi ancora indietro per interromperla"</string>
+    <string name="ui_406565f0d9" formatted="false">"risposta interrotta"</string>
+    <string name="ui_78cb0ec0e3" formatted="false">"azioni del telefono: cosa può fare l\'agente"</string>
+    <string name="ui_1b496fbbd9" formatted="false">"carattere"</string>
+    <string name="ui_7ef76e6237" formatted="false">"tinta unita"</string>
+    <string name="ui_8e3547d8f5" formatted="false">"tinta"</string>
+    <string name="ui_c59119b0bf" formatted="false">"sfumatura"</string>
+    <string name="ui_5cf2b74e33" formatted="false">"mosaico"</string>
+    <string name="ui_0eb57679c4" formatted="false">"foto"</string>
+    <string name="ui_5e5f6a3ffb" formatted="false">"benvenuto: da dove cominci?"</string>
+    <string name="ui_688aad2b45" formatted="false">"scegli il fornitore e la chiave"</string>
+    <string name="ui_936217976e" formatted="false">"imposta un PIN (facoltativo)"</string>
+    <string name="ui_bc159b0503" formatted="false">"più tardi"</string>
+    <string name="ui_39d0eed3d8" formatted="false">"attività non riuscita"</string>
+    <string name="ui_e4062a46e5" formatted="false">"ultima volta: %1$s"</string>
+    <string name="ui_c6afddbe7d" formatted="false">"copia il comando"</string>
+    <string name="ui_032d1653f8" formatted="false">"comando copiato"</string>
+    <string name="ui_c599cdc3c1" formatted="false">"scorri di lato per fotocamera, app e strumenti · tieni premuto l\'agente per il suo spazio"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

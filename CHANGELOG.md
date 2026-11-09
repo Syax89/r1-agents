@@ -45,3 +45,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.11 (code 18): pagina attività unica in modalità Hermes: sotto i cron del dashboard anche le routine locali di questo telefono.
 
 0.5.12 (code 19): avvisi opzionali dalle attività di Hermes (Sicurezza, spenti di default): ogni 30 minuti controlla i cron e notifica quelli che hanno girato, con anteprima privata.
+
+0.5.13 (code 20): rifinitura UX da analisi del codice: bersagli da 48 dp e testi più leggibili (contrasti del tema chiaro), conferma a doppio tocco per archivia/elimina cron/svuota registro/elimina nota/rimuovi allegato, errori in parole semplici con "riprova" e menu sul pallino Hermes, uscita dalla chat con risposta in corso con conferma, stato "interrotta", Markdown con liste numerate, citazioni e link, Aspetto con etichette tradotte, benvenuto al primo avvio, esito dei cron e comando Hermes copiabile.

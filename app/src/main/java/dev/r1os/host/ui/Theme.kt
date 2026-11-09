@@ -119,10 +119,10 @@ object Theme {
         accent = colorOf(accentName)
         fontName = if (font == "rubik" || font in FAMILIES) font else "rubik"
         if (light) {
-            BG = Color.parseColor("#f3f2ef"); FG = Color.parseColor("#16171a"); MUTED = Color.parseColor("#6c717a")
+            BG = Color.parseColor("#f3f2ef"); FG = Color.parseColor("#16171a"); MUTED = Color.parseColor("#575c65")
             LINE = Color.parseColor("#dcdcd8"); CARD = Color.WHITE; FOCUS = Color.parseColor("#e7e6e2")
             SURFACE = Color.argb(250, 255, 255, 255); PANEL = Color.parseColor("#e8e7e3"); SHEET = Color.parseColor("#fbfaf8")
-            SUBTLE = Color.parseColor("#c9c8c3"); ICON = Color.parseColor("#4b5059"); BAD_TEXT = BAD
+            SUBTLE = Color.parseColor("#b5b4af"); ICON = Color.parseColor("#4b5059"); BAD_TEXT = Color.parseColor("#c62828")
         } else {
             BG = Color.BLACK; FG = Color.parseColor("#f2f2f2"); MUTED = Color.parseColor("#8a8f98")
             LINE = Color.parseColor("#22252b"); CARD = Color.parseColor("#1a1c21"); FOCUS = Color.parseColor("#15171b")

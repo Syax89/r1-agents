@@ -10,4 +10,10 @@ class CronWatchTest {
         assertEquals(listOf("a", "d"), CronWatch.newRuns(jobs, mapOf("a" to 90L, "b" to 50L), false).map { it.id })
     }
     @Test fun alPrimoGiroNessunAvviso() { assertEquals(0, CronWatch.newRuns(listOf(job("a", 100)), emptyMap(), true).size) }
+
+    @Test fun esitoFallito() {
+        fun job(st: String) = HermesJob("a", "n", "p", "s", true, "", 0, 1, st, "")
+        org.junit.Assert.assertTrue(job("error: boom").failed())
+        org.junit.Assert.assertFalse(job("ok").failed())
+    }
 }

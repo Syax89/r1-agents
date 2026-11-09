@@ -15,6 +15,9 @@ import android.text.style.TypefaceSpan
 object Md {
     private val heading = Regex("^(#{1,3})\\s+(.*)$")
     private val bullet = Regex("^(\\s*)[-*+]\\s+(.*)$")
+    private val numbered = Regex("^(\\s*)(\\d{1,3})[.)]\\s+(.*)$")
+    private val quote = Regex("^>\\s?(.*)$")
+    private val link = Regex("^\\[([^\\]]+)]\\((https?://[^)\\s]+)\\)")
 
     fun render(src: String, codeBg: Int): CharSequence {
         val out = SpannableStringBuilder()
@@ -37,6 +40,8 @@ object Md {
                     out.setSpan(RelativeSizeSpan(if (m.groupValues[1].length == 1) 1.2f else 1.1f), start, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
                 bullet.matches(line) -> { val m = bullet.find(line)!!; out.append(m.groupValues[1]).append("\u2022 "); inline(out, m.groupValues[2]) }
+                numbered.matches(line) -> { val m = numbered.find(line)!!; out.append(m.groupValues[1]).append(m.groupValues[2]).append(". "); inline(out, m.groupValues[3]) }
+                quote.matches(line) -> { val m = quote.find(line)!!; out.append("\u258e "); inline(out, m.groupValues[1]); out.setSpan(StyleSpan(Typeface.ITALIC), start, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) }
                 else -> inline(out, line)
             }
             if (i < lines.lastIndex) out.append('\n')
@@ -78,6 +83,10 @@ object Md {
                 s[i] == '`' && s.indexOf('`', i + 1) > i + 1 -> {
                     val e = s.indexOf('`', i + 1); val st = out.length
                     out.append(s, i + 1, e); span(st, TypefaceSpan("monospace")); span(st, BackgroundColorSpan(codeBg)); i = e + 1
+                }
+                s[i] == '[' && link.find(s.substring(i)) != null -> {
+                    val m = link.find(s.substring(i))!!; val st = out.length
+                    out.append(m.groupValues[1]); span(st, android.text.style.UnderlineSpan()); i += m.value.length
                 }
                 (s[i] == '*' || s[i] == '_') && i + 1 < s.length && s[i + 1] != ' ' && s.indexOf(s[i], i + 1) > i + 1 &&
                     (i == 0 || !s[i - 1].isLetterOrDigit()) -> {

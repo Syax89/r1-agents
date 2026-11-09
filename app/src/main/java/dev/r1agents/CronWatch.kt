@@ -42,7 +42,7 @@ object CronWatch {
         val nm = ctx.getSystemService(NotificationManager::class.java)
         fresh.take(5).forEach { j ->
             nm.notify(0x46000000 or (j.id.hashCode() and 0xffffff), Notification.Builder(ctx, Sched.CH_INFO).setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle(if (locked) "R1 Agents" else j.name).setContentText(UiText.text(ctx, R.string.ui_e35f849a62))
+                .setContentTitle(if (locked) "R1 Agents" else j.name).setContentText(UiText.text(ctx, if (j.failed()) R.string.ui_39d0eed3d8 else R.string.ui_e35f849a62))
                 .setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(open).setAutoCancel(true).build())
         }
     }

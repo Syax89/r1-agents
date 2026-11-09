@@ -33,7 +33,7 @@ class MainActivity : Activity() {
     private lateinit var hermesRuntime: HermesRuntime
     private lateinit var root: FrameLayout
     private class Screen(val view: View, val keys: ((KeyEvent) -> Boolean)? = null, val onLeave: (() -> Unit)? = null, val onShow: (() -> Unit)? = null, val isChat: Boolean = false,
-                         val scope: Scope = Scope(), val onResume: (() -> Unit)? = null, val chatKey: Long? = null, val buddyContext: BuddySceneContext = BuddySceneContext.READ, val isVoice: Boolean = false, val onSuspend: (() -> Unit)? = null) {
+                         val scope: Scope = Scope(), val onResume: (() -> Unit)? = null, val chatKey: Long? = null, val buddyContext: BuddySceneContext = BuddySceneContext.READ, val isVoice: Boolean = false, val onSuspend: (() -> Unit)? = null, val leaveGuard: (() -> Boolean)? = null) {
         /** Da dove si e' aperta (il rettangolo dell'elemento toccato, nel root): chiudendola torna li'. */
         var pendingEntry: android.view.ViewTreeObserver.OnPreDrawListener? = null
         var posedBuddy: CharacterView? = null
@@ -718,6 +718,25 @@ class MainActivity : Activity() {
         v.animate().alpha(0f).translationY(dp(18f)).setDuration(Motion.BASE).withEndAction { root.removeView(v); if (snackView === v) snackView = null }.start()
     }
     /** Un messaggio breve in basso: pillola chiara sul tema scuro (e scura sul chiaro), con ingresso a molla; sparisce da sola. */
+    /** Errore in parole semplici: causa nota se riconosciuta, altrimenti il messaggio originale. */
+    private fun errorText(e: Throwable): String = when (ErrorKind.of(e)) {
+        ErrorKind.KEY -> UiText.text(this, R.string.ui_6503aaa0d4)
+        ErrorKind.NETWORK -> UiText.text(this, R.string.ui_db32442bd0)
+        ErrorKind.TIMEOUT -> UiText.text(this, R.string.ui_423e5043b2)
+        ErrorKind.RATE -> UiText.text(this, R.string.ui_0d3b9428e5)
+        ErrorKind.SERVER -> UiText.text(this, R.string.ui_a8a7633f72)
+        ErrorKind.OTHER -> UiText.message(this, e.message) ?: UiText.text(this, R.string.ui_00ea95d6d1)
+    }
+
+    private var armedKey: String? = null
+    private var armedAt = 0L
+    /** Azione distruttiva: il primo tocco avvisa, il secondo entro 4 secondi la esegue. */
+    private fun confirmTap(key: String, act: () -> Unit) {
+        val now = android.os.SystemClock.uptimeMillis()
+        if (armedKey == key && now - armedAt < 4000) { armedKey = null; act() }
+        else { armedKey = key; armedAt = now; snack(UiText.text(this, R.string.ui_af2b0de88b)) }
+    }
+
     private fun snack(message: String?, long: Boolean = false) {
         val text = message?.takeIf { it.isNotBlank() } ?: return
         root.post {
@@ -1199,6 +1218,7 @@ class MainActivity : Activity() {
         if (pinGate != null) { if (gateWanted()) leaveLockedChat() else if (!isDefaultLauncher()) finish(); return }
         overlays.keys.lastOrNull()?.let { overlayBack[it]?.invoke(); return }   // prima le finestre sopra tutto (permessi, menu)
         if (pttView != null) { pttClose(); return }
+        if (stack.size > 1 && stack.last().leaveGuard?.invoke() == true) return
         if (stack.size > 1) pop() else if (!isDefaultLauncher()) finish()   // come ogni app indietro esce; da schermata iniziale non esce (come ogni launcher)
     }
 
@@ -1276,8 +1296,24 @@ class MainActivity : Activity() {
         fun land() { sq.snapTo(0.07f); sq.animateTo(0f, 320f, 0.4f) }
     }
 
+    private var welcomeChecked = false
+    /** Primo avvio: una sola volta, se non c'è ancora un fornitore configurato, propone da dove cominciare. */
+    private fun maybeWelcome() {
+        if (welcomeChecked) return
+        welcomeChecked = true
+        if (packageName.endsWith(".qa") || prefs.getBoolean("welcomed", false)) return
+        prefs.edit().putBoolean("welcomed", true).apply()
+        val cur = settings.provider
+        if (cur.id == "dashboard" || settings.key(cur).isNotBlank() || nous.loggedIn) return
+        sheet(UiText.text(this, R.string.ui_5e5f6a3ffb), listOf(
+            UiText.text(this, R.string.ui_688aad2b45) to { push(providerScreen()) },
+            UiText.text(this, R.string.ui_936217976e) to { if (!pinEnabled()) pinSetup() },
+            UiText.text(this, R.string.ui_bc159b0503) to {}))
+    }
+
     private fun home(): Screen {
         val scope = Scope()
+        window.decorView.postDelayed({ if (scope.alive) maybeWelcome() }, 1200)
         var stopHomeState: (() -> Unit)? = null
         var agents = visibleAgents()
         val stage = FrameLayout(this).apply { defaultFocusHighlightEnabled = false }
@@ -1406,7 +1442,7 @@ class MainActivity : Activity() {
             if (hermesMode()) Lane("jobs", UiText.text(this@MainActivity, R.string.ui_e8250ed32d), UiText.text(this@MainActivity, R.string.ui_2515690daf), "jobs") { push(routinesScreen()) } else null,
         )
         var lanePos = 0
-        val laneCaption = text(13f, 700, Theme.MUTED).apply { gravity = Gravity.CENTER; letterSpacing = 0.08f }
+        val laneCaption = text(15f, 700, Theme.FG).apply { gravity = Gravity.CENTER; letterSpacing = 0.08f }
         val laneLayer = FrameLayout(this).apply { visibility = View.INVISIBLE; defaultFocusHighlightEnabled = false }
         stage.addView(laneLayer, FrameLayout.LayoutParams(-1, -1))
         val laneDots = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
@@ -1564,7 +1600,7 @@ class MainActivity : Activity() {
             true
         }
         stage.addView(pill, FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply { bottomMargin = dpi(6f) })
-        stage.addView(iconButton("more", Theme.accent, filled = false, size = 40f) { menu() }, FrameLayout.LayoutParams(dpi(40f), dpi(40f), Gravity.TOP or Gravity.END))
+        stage.addView(iconButton("more", Theme.accent, filled = false, size = 48f) { menu() }, FrameLayout.LayoutParams(dpi(48f), dpi(48f), Gravity.TOP or Gravity.END))
 
         // Dito: il carosello segue il dito (con un po' di resistenza ai capi) e al rilascio si ferma sull'agente piu' vicino, o va avanti di uno con uno scatto.
         // Rotella (r1-wheel-touch): un agente ogni ~36 dp. Tocco sul grande = apre la chat; su un vicino = lo porta al centro. Pressione lunga = spazio.
@@ -1664,13 +1700,16 @@ class MainActivity : Activity() {
             paintDot(); stopHomeState = dash.watchState { runOnUiThread { if (scope.alive) paintDot() } }
             // Il pallino e' piccolo: sta in una zona da 40 dp che, toccata, dice a parole lo stato del collegamento.
             val dotBox = FrameLayout(this).apply {
+                contentDescription = "stato Hermes"
                 addView(dot, FrameLayout.LayoutParams(dpi(12f), dpi(12f), Gravity.CENTER))
-                setOnClickListener { snack(UiText.text(this@MainActivity, when (dash.state) { HermesDash.State.READY -> R.string.ui_f24ee25561; HermesDash.State.CONNECTING -> R.string.ui_7c1cae1c78; else -> R.string.ui_4814f6f7f6 })) }
+                setOnClickListener { if (dash.state == HermesDash.State.ERROR || dash.state == HermesDash.State.OFF) sheet(UiText.text(this@MainActivity, R.string.ui_4814f6f7f6), listOf(UiText.text(this@MainActivity, R.string.ui_6ed04a5eb7) to { Io.run { runCatching { dash.profiles() } } }, UiText.text(this@MainActivity, R.string.ui_64ac619989) to { push(providerScreen()) })) else snack(UiText.text(this@MainActivity, when (dash.state) { HermesDash.State.READY -> R.string.ui_f24ee25561; else -> R.string.ui_7c1cae1c78 })) }
             }
-            stage.addView(dotBox, FrameLayout.LayoutParams(dpi(40f), dpi(40f), Gravity.TOP or Gravity.END).apply { topMargin = dpi(5f); rightMargin = dpi(34f) })
+            stage.addView(dotBox, FrameLayout.LayoutParams(dpi(48f), dpi(48f), Gravity.TOP or Gravity.END).apply { rightMargin = dpi(52f) })
         }
         // Prima volta con piu' di un agente: un suggerimento una volta sola.
         if (agents.size > 1 && !prefs.getBoolean("hint_home_seen", false)) stage.postDelayed({ if (scope.alive && stack.lastOrNull()?.scope === scope) { prefs.edit().putBoolean("hint_home_seen", true).apply(); snack(UiText.text(this@MainActivity, R.string.ui_d3aff5ed26), long = true) } }, 1800)
+        // Una volta sola, anche con un agente solo: il carosello laterale e il tocco prolungato non si scoprono da soli.
+        if (agents.isNotEmpty() && !packageName.endsWith(".qa") && prefs.getBoolean("hint_home_seen", false) && !prefs.getBoolean("hint_lane_seen", false)) stage.postDelayed({ if (scope.alive && stack.lastOrNull()?.scope === scope) { prefs.edit().putBoolean("hint_lane_seen", true).apply(); snack(UiText.text(this@MainActivity, R.string.ui_c599cdc3c1), long = true) } }, 2600L)
         val now = System.currentTimeMillis()
         if (hermesMode() && (agents.isEmpty() || now - lastProfileSync > 60_000L)) { lastProfileSync = now; syncProfiles(scope,
             { err -> if (agents.isEmpty()) { emptyNote = err; rebuild() } },
@@ -1903,7 +1942,7 @@ class MainActivity : Activity() {
         lateinit var openAttach: () -> Unit
         val menuBtn = iconButton("more", accent, filled = false, size = 48f) {
             val items = ArrayList<Pair<String, () -> Unit>>()
-            items += UiText.text(this@MainActivity, R.string.ui_7f4849bfb0) to { if (!busy) replaceTop(chat(agent, db.newChat(agent.id))) }
+            items += UiText.text(this@MainActivity, R.string.ui_7f4849bfb0) to { if (!busy) replaceTop(chat(agent, db.newChat(agent.id))) else snack(UiText.text(this@MainActivity, R.string.ui_8cec984fbd)) }
             items += UiText.text(this@MainActivity, R.string.ui_0fd7b04a53) to { openAttach() }
             items += (if (!pinEnabled()) UiText.text(this@MainActivity, R.string.ui_dc815e9fc7) else if (chatId.toString() in lockedChats()) UiText.text(this@MainActivity, R.string.ui_9d86e57fdb) else UiText.text(this@MainActivity, R.string.ui_768a2cb129)) to {
                 if (!pinEnabled()) pinSetup() else { val on = chatId.toString() !in lockedChats(); setChatLocked(chatId, on); if (on) pinUnlocked = true; cue(if (on) "nod" else "wink", force = true) }
@@ -1917,7 +1956,7 @@ class MainActivity : Activity() {
                     snack(UiText.text(this@MainActivity, R.string.ui_7f784011b7))
                     Io.run { try { val nh = dash.branch(hs, agent.profile); val id = db.upsertChat(agent.id, nh, (db.chats(agent.id).firstOrNull { it.id == chatId }?.title ?: "chat").take(50) + UiText.text(this@MainActivity, R.string.ui_798b410cf8), System.currentTimeMillis(), 0); runOnUiThread { if (chatScope.alive) openChat(agent, id) } } catch (e: Exception) { runOnUiThread { if (chatScope.alive) snack(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1), long = true) } } }
                 }
-                if (hs.isNotEmpty() && !busy) items += UiText.text(this@MainActivity, R.string.ui_2e5a083bde) to {
+                if (hs.isNotEmpty() && !busy) items += UiText.text(this@MainActivity, R.string.ui_2e5a083bde) to { confirmTap("archive$chatId") {
                     chatFeedback("upload", UiText.text(this@MainActivity, R.string.ui_f3596da8e1))
                     Io.run {
                         try {
@@ -1926,7 +1965,7 @@ class MainActivity : Activity() {
                             runOnUiThread { if (chatScope.alive) pop() }
                         } catch (e: Exception) { runOnUiThread { if (chatScope.alive) chatFeedback("error", UiText.text(this@MainActivity, R.string.ui_0f2784f610)) } }
                     }
-                }
+                } }
                 items += UiText.text(this@MainActivity, R.string.ui_5f7b655465) to { Io.run { val subs = try { dash.subagents(chatId, agent.profile) } catch (e: Exception) { runOnUiThread { snack(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1), long = true) }; return@run }
                     runOnUiThread {
                         if (subs.isEmpty()) { snack(UiText.text(this@MainActivity, R.string.ui_d2ba27adf3)); return@runOnUiThread }
@@ -1969,7 +2008,7 @@ class MainActivity : Activity() {
             pending.toList().forEach { a ->
                 chips.addView(text(14f, 600).keepCase().apply {
                     text = "📎 ${a.name.take(22)}  ✕"; setPadding(dpi(12f), dpi(8f), dpi(12f), dpi(8f)); background = roundRect(Theme.CARD, dp(14f)); isClickable = true
-                    setOnClickListener { pending.remove(a); a.file.delete(); refreshChips(); if (buddyStage.mode in listOf("file", "photo")) buddyStage.dismiss() }
+                    setOnClickListener { confirmTap("att${a.name}") { pending.remove(a); a.file.delete(); refreshChips(); if (buddyStage.mode in listOf("file", "photo")) buddyStage.dismiss() } }
                 }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
             }
             if (pending.isEmpty()) Motion.hide(chipsScroll) else Motion.show(chipsScroll)
@@ -2057,7 +2096,7 @@ class MainActivity : Activity() {
                     runOnUiThread {
                         if (!chatScope.alive || engine !== turnEngine) return@runOnUiThread
                         buddyStage.flash("error", UiText.text(this@MainActivity, R.string.ui_1410a06bb9), 2400); headChar.tag = "x"; headChar.show(agent, "error"); headChar.react("surprised"); if (!got.get()) list.removeView(reply)
-                        add((UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1)) + UiText.text(this@MainActivity, R.string.ui_8eb654d9af), false, error = true).setOnClickListener { v -> if (!busy) { list.removeView(v); submit(lastUser, retry = true) } }
+                        add(errorText(e) + UiText.text(this@MainActivity, R.string.ui_8eb654d9af), false, error = true).setOnClickListener { v -> if (!busy) { list.removeView(v); submit(lastUser, retry = true) } }
                         bottom()
                     }
                 }
@@ -2068,7 +2107,7 @@ class MainActivity : Activity() {
                 runOnUiThread { if (!chatScope.alive || engine !== turnEngine) return@runOnUiThread; busy = false; Motion.hide(activity); updateAction(); if (headChar.tag != "x") { buddyStage.dismiss(); headChar.show(agent, "idle"); if (got.get()) headChar.react("giggle") }; if (!got.get() && reply.parent != null && reply.text.isEmpty()) list.removeView(reply) }
             }
         }
-        sendBtn = send; stopBtn = iconButton("close", Theme.BAD, size = 52f) { if (hermesRuntime.active(chatId) != null) hermesRuntime.cancel(chatId) else engine?.cancel() }.apply { visibility = View.GONE }
+        sendBtn = send; stopBtn = iconButton("close", Theme.BAD, size = 52f) { if (hermesRuntime.active(chatId) != null) hermesRuntime.cancel(chatId) else engine?.cancel(); snack(UiText.text(this@MainActivity, R.string.ui_406565f0d9)) }.apply { visibility = View.GONE }
         send.setOnClickListener { submit(input.text.toString()) }
         input.setOnEditorActionListener { _, a, _ -> if (a == EditorInfo.IME_ACTION_SEND) { submit(input.text.toString()); true } else false }
         val bar = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
@@ -2233,7 +2272,7 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { input.requestFocus(); true }
                 else -> false
             }
-        }, scope = chatScope, onLeave = { prefs.edit().apply { val d = input.text.toString(); if (d.isBlank() || busy) remove("draft_$chatId") else putString("draft_$chatId", d) }.apply(); stopSmooth(); connectionAlive = false; stopConnectionWatch(); buddyStage.dismiss(); avatarSlot.removeCallbacks(collapseAvatar); avatarMotion?.cancel(); engine?.let { it.cancel(); localTurns.remove(it) }; stopTaskWatch?.invoke(); onVoice = null; cancelActiveMic = null; pttHandler = null; attachHook = null; pending.forEach { it.file.delete() }; pending.clear(); voiceCancelled = true; voice.cancel(); tts?.stop() }, isChat = true, chatKey = chatId, onSuspend = { if (voiceActive) suspendVoice() })
+        }, scope = chatScope, onLeave = { prefs.edit().apply { val d = input.text.toString(); if (d.isBlank() || busy) remove("draft_$chatId") else putString("draft_$chatId", d) }.apply(); stopSmooth(); connectionAlive = false; stopConnectionWatch(); buddyStage.dismiss(); avatarSlot.removeCallbacks(collapseAvatar); avatarMotion?.cancel(); engine?.let { it.cancel(); localTurns.remove(it) }; stopTaskWatch?.invoke(); onVoice = null; cancelActiveMic = null; pttHandler = null; attachHook = null; pending.forEach { it.file.delete() }; pending.clear(); voiceCancelled = true; voice.cancel(); tts?.stop() }, isChat = true, chatKey = chatId, onSuspend = { if (voiceActive) suspendVoice() }, leaveGuard = { if (busy && !hermesMode()) { val now = android.os.SystemClock.uptimeMillis(); if (armedKey == "leave" && now - armedAt < 4000) false else { armedKey = "leave"; armedAt = now; snack(UiText.text(this@MainActivity, R.string.ui_8cec984fbd)); true } } else false })
     }
 
     /** Il microfono scelto in Aspetto e voce: Groq Whisper (se c'è la chiave) o il riconoscimento del dispositivo. */
@@ -2737,7 +2776,7 @@ class MainActivity : Activity() {
                 card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
                     addView(text(17f, 500).keepCase().apply { text = t })
                     addView(text(12f, 500, Theme.MUTED).apply { text = ago(ts) }) }, LinearLayout.LayoutParams(0, -2, 1f))
-                card.addView(button(UiText.text(this@MainActivity, R.string.ui_dcfbe248ac), Theme.BAD, small = true) { Motion.dismiss(card) { cue(null, 0f, 8f); db.deleteNote(id); stack.last().onShow?.invoke() } })
+                card.addView(button(UiText.text(this@MainActivity, R.string.ui_dcfbe248ac), Theme.BAD, small = true) { confirmTap("note$id") { Motion.dismiss(card) { cue(null, 0f, 8f); db.deleteNote(id); stack.last().onShow?.invoke() } } })
                 col.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
             }
         }
@@ -2753,7 +2792,7 @@ class MainActivity : Activity() {
             options.forEach { (id, label) ->
                 val on = id == current
                 row.addView(text(15f, 700).apply {
-                    text = label; setPadding(dpi(14f), dpi(10f), dpi(14f), dpi(10f)); isClickable = true
+                    text = label; setPadding(dpi(14f), dpi(13f), dpi(14f), dpi(13f)); isClickable = true; isSelected = on; minHeight = dpi(48f); gravity = Gravity.CENTER_VERTICAL
                     setTextColor(if (on) Theme.ON_ACCENT else Theme.FG); background = roundRect(if (on) Theme.accent else Theme.FOCUS, dp(14f))
                     if (font) typeface = Theme.fontOf(id, 700)
                     setOnClickListener { if (!on) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "idle_after") { prefs.edit().putString("idle_after", id).apply(); stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) } }
@@ -2770,29 +2809,29 @@ class MainActivity : Activity() {
             Theme.COLORS.forEach { (n, c) ->
                 val on = n == Theme.accentName
                 addView(View(this@MainActivity).apply {
-                    background = android.graphics.drawable.GradientDrawable().apply { setColor(c); cornerRadius = dp(15f); if (on) setStroke(dpi(3f), Theme.FG) }
-                    isClickable = true; setOnClickListener { if (!on) applyLook("look_accent", n) } }, LinearLayout.LayoutParams(dpi(30f), dpi(30f)).apply { marginEnd = dpi(9f) })
+                    background = android.graphics.drawable.GradientDrawable().apply { setColor(c); cornerRadius = dp(20f); if (on) setStroke(dpi(3f), Theme.FG) }
+                    contentDescription = n; isSelected = on; isClickable = true; setOnClickListener { if (!on) applyLook("look_accent", n) } }, LinearLayout.LayoutParams(dpi(40f), dpi(40f)).apply { marginEnd = dpi(8f) })
             } }) })
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_449d113dca)))
         col.addView(chips(listOf("normal" to UiText.text(this@MainActivity, R.string.ui_bae7591bb2), "flip" to UiText.text(this@MainActivity, R.string.ui_a9d1bc7eca)), if (r1WheelLandscapeFlip) "flip" else "normal", "wheel_flip"))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_2c24e821f5)))
         col.addView(chips(listOf("1" to UiText.text(this@MainActivity, R.string.ui_3eb8a90885), "2" to UiText.text(this@MainActivity, R.string.ui_47742d68e8), "5" to UiText.text(this@MainActivity, R.string.ui_b45ebd80de), "10" to UiText.text(this@MainActivity, R.string.ui_4605ee7759), "never" to UiText.text(this@MainActivity, R.string.ui_ea4440bd94)), prefs.getString("idle_after", "1")!!, "idle_after"))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_793ade4b26)))
+        col.addView(label(UiText.text(this@MainActivity, R.string.ui_78cb0ec0e3)))
         col.addView(chips(listOf("ask" to UiText.text(this@MainActivity, R.string.ui_3cd50c52c0), "auto" to UiText.text(this@MainActivity, R.string.ui_9e67d0a179), "off" to UiText.text(this@MainActivity, R.string.ui_22938aeb5f)), DeviceActions.mode, "dev_actions"))
-        col.addView(label("font"))
+        col.addView(label(UiText.text(this@MainActivity, R.string.ui_1b496fbbd9)))
         col.addView(chips((listOf("rubik") + Theme.FAMILIES.keys).map { it to it }, prefs.getString("look_font", "rubik")!!, "look_font", font = true))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_1456190f29))); col.addView(chips(listOf("glance" to UiText.text(this@MainActivity, R.string.ui_3d9a5cdfac), "home" to "home"), prefs.getString("start", "home")!!, "start"))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_18da3e53ab)))
         col.addView(chips(listOf("glance" to UiText.text(this@MainActivity, R.string.ui_3d9a5cdfac), "home" to "home"), prefs.getString("bg_edit", "glance")!!, "bg_edit"))
         val scr = prefs.getString("bg_edit", "glance")!!
-        col.addView(chips(listOf("plain", "tint", "gradient", "mesh", "photo").map { it to it }, prefs.getString("bg_$scr", "plain")!!, "bg_$scr"), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+        col.addView(chips(listOf("plain" to UiText.text(this@MainActivity, R.string.ui_7ef76e6237), "tint" to UiText.text(this@MainActivity, R.string.ui_8e3547d8f5), "gradient" to UiText.text(this@MainActivity, R.string.ui_c59119b0bf), "mesh" to UiText.text(this@MainActivity, R.string.ui_5cf2b74e33), "photo" to UiText.text(this@MainActivity, R.string.ui_0eb57679c4)), prefs.getString("bg_$scr", "plain")!!, "bg_$scr"), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
         if (prefs.getString("bg_$scr", "plain") in listOf("gradient", "mesh")) {
             col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@MainActivity).apply {
                 palettes.keys.forEach { n ->
                     val on = n == prefs.getString("bgp_$scr", "sunset")
                     addView(View(this@MainActivity).apply {
                         background = android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TL_BR, palettes.getValue(n).map { Color.parseColor(it) }.toIntArray()).apply { cornerRadius = dp(15f); if (on) setStroke(dpi(3f), Theme.FG) }
-                        isClickable = true; setOnClickListener { if (!on) applyLook("bgp_$scr", n) } }, LinearLayout.LayoutParams(dpi(36f), dpi(30f)).apply { marginEnd = dpi(9f); topMargin = dpi(8f) })
+                        isClickable = true; setOnClickListener { if (!on) applyLook("bgp_$scr", n) } }, LinearLayout.LayoutParams(dpi(40f), dpi(40f)).apply { marginEnd = dpi(8f); topMargin = dpi(4f) })
                 } }) })
         }
         if (prefs.getString("bg_$scr", "plain") == "photo") {
@@ -3493,6 +3532,7 @@ class MainActivity : Activity() {
             if (j.schedule.isNotBlank()) parts += j.schedule
             if (!j.enabled) parts += UiText.text(this@MainActivity, R.string.ui_d1afa9b15a)
             else if (j.nextRun > 0) parts += UiText.text(this@MainActivity, R.string.ui_babc4a5bbf, relativeIn(j.nextRun - System.currentTimeMillis()))
+            if (j.lastRun > 0) parts += UiText.text(this@MainActivity, R.string.ui_e4062a46e5, (if (j.failed()) UiText.text(this@MainActivity, R.string.ui_39d0eed3d8) else ago(j.lastRun)))
             return parts.joinToString(" · ")
         }
         fun card(j: HermesJob): View {
@@ -3512,7 +3552,7 @@ class MainActivity : Activity() {
                         Io.run { try { dash.cronAction(j, "trigger"); runOnUiThread { cue("bounce", force = true); snack(UiText.text(this@MainActivity, R.string.ui_cdf273e773)) } } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, UiText.message(this@MainActivity, e.message)), long = true) } } }
                     },
                     SheetItem(UiText.text(this@MainActivity, R.string.ui_4a28ceb2d8), icon = "close", danger = true) {
-                        Io.run { try { dash.cronDelete(j); jobsCache = jobsCache?.filter { it.id != j.id }; runOnUiThread { stack.lastOrNull()?.onShow?.invoke() } } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, UiText.message(this@MainActivity, e.message)), long = true) } } }
+                      sheet(UiText.text(this@MainActivity, R.string.ui_66bebee3af), listOf(UiText.text(this@MainActivity, R.string.ui_4a28ceb2d8) to { Io.run { try { dash.cronDelete(j); jobsCache = jobsCache?.filter { it.id != j.id }; runOnUiThread { stack.lastOrNull()?.onShow?.invoke() } } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, UiText.message(this@MainActivity, e.message)), long = true) } } } }))
                     },
                 ), subtitle = j.prompt.replace('\n', ' ').take(90))
             }
@@ -3527,10 +3567,11 @@ class MainActivity : Activity() {
         }
         val cached = jobsCache
         if (cached != null) render(cached) else holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645)))
-        Io.run {
+        fun load(): Unit = Io.run {
             try { val jobs = dash.cronJobs(); jobsCache = jobs; runOnUiThread { if (holder.isAttachedToWindow) render(jobs) } }
-            catch (e: Exception) { runOnUiThread { if (holder.isAttachedToWindow && jobsCache == null) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_86750eb32f, UiText.message(this@MainActivity, e.message)))) } } }
+            catch (e: Exception) { runOnUiThread { if (holder.isAttachedToWindow) { if (jobsCache == null) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_86750eb32f, errorText(e)))); holder.addView(button(UiText.text(this@MainActivity, R.string.ui_6ed04a5eb7), Theme.accent) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645))); load() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) }) } else snack(errorText(e)) } } }
         }
+        load()
     }
 
     /** Nuova attivita' pianificata su Hermes: profilo (agente), nome, richiesta, ora e giorni (senza giorni parte una volta sola). */
@@ -3691,7 +3732,7 @@ class MainActivity : Activity() {
             col.addView(row(describeAction(a), if (e.ok) Theme.accent else Theme.BAD, sub = ago(e.time) + if (e.ok) "" else " · " + UiText.text(this@MainActivity, R.string.ui_7ef44652ba), icon = if (e.ok) "check" else "close") { },
                 LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
         }
-        if (list.isNotEmpty()) col.addView(button(UiText.text(this@MainActivity, R.string.ui_1dcba78d37), Theme.BAD) { ActionLog.clear(prefs); pop() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
+        if (list.isNotEmpty()) col.addView(button(UiText.text(this@MainActivity, R.string.ui_1dcba78d37), Theme.BAD) { confirmTap("actlog") { ActionLog.clear(prefs); pop() } }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
     }
 
     private fun memoryScreen(agent: Agent): Screen {
@@ -4092,10 +4133,14 @@ class MainActivity : Activity() {
                     }
                 }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
                 col.addView(status)
-                col.addView(text(12f, 500, Theme.MUTED).keepCase().apply {
+                col.addView(text(14f, 500, Theme.MUTED).keepCase().apply {
                     text = UiText.text(this@MainActivity, R.string.ui_f120652037)
                     setPadding(dpi(4f), dpi(10f), 0, 0)
                 })
+                col.addView(button(UiText.text(this@MainActivity, R.string.ui_c6afddbe7d), toolAccent, primary = false, small = true) {
+                    (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("hermes", "hermes dashboard --host 0.0.0.0 --no-open"))
+                    snack(UiText.text(this@MainActivity, R.string.ui_032d1653f8))
+                }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
                 return
             }
             if (cur.id == "hermes") {
@@ -4170,7 +4215,7 @@ class MainActivity : Activity() {
         })
         // Aggiornamenti: solo su richiesta, da un indirizzo https scelto dall'utente (il file update.json prodotto da tools/publish-update.py).
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_f43d53399f)))
-        val address = field(UiText.text(this@MainActivity, R.string.ui_e438a6ee2f), prefs.getString("update_url", "").orEmpty()).apply { setSingleLine(true); inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI }
+        val address = field(UiText.text(this@MainActivity, R.string.ui_e438a6ee2f), prefs.getString("update_url", "").orEmpty().ifBlank { "https://raw.githubusercontent.com/Syax89/r1-agents/main/update.json" }).apply { setSingleLine(true); inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI }
         val status = text(14f, 600, Theme.MUTED).keepCase().apply { setPadding(dpi(4f), dpi(8f), dpi(4f), 0) }
         col.addView(address)
         col.addView(button(UiText.text(this@MainActivity, R.string.ui_56169e629e), Theme.colorOf("blue")) { checkUpdates(address.text.toString().trim(), status) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })

@@ -7,6 +7,9 @@ import org.json.JSONObject
 class HermesJob(val id: String, val name: String, val prompt: String, val schedule: String, val enabled: Boolean, val state: String,
                 val nextRun: Long, val lastRun: Long, val lastStatus: String, val profile: String)
 
+/** L'ultima esecuzione e' fallita? Il dashboard non ha un campo fisso: si guarda il testo dello stato. */
+fun HermesJob.failed(): Boolean = lastStatus.lowercase().let { it.contains("error") || it.contains("fail") || it.contains("errore") || it.contains("timeout") }
+
 /** Una competenza (skill) di un profilo Hermes, attivabile o disattivabile. */
 class HermesSkill(val name: String, val description: String, val enabled: Boolean)
 
