@@ -1300,6 +1300,7 @@ class MainActivity : Activity() {
     }
 
     private fun page(content: View, pad: Int = 14) = FrameLayout(this).apply {
+        clipChildren = false; clipToPadding = false
         defaultFocusHighlightEnabled = false
         setBackgroundColor(Theme.BG); setPadding(dpi(pad.toFloat()), dpi(10f), dpi(pad.toFloat()), dpi(8f)); addView(content, -1, -1)
     }
@@ -3131,6 +3132,7 @@ class MainActivity : Activity() {
     /** Intestazione comune a ogni schermata: tasto indietro (l'R1 non ne ha uno) e titolo. */
     private fun framed(title: String, body: View, trailing: View? = null, buddyHeader: Boolean = true): View = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
+        clipChildren = false; clipToPadding = false   // il buddy della pagina non viene tagliato dal bordo del corpo: sta SOPRA la barra del titolo
         val head = LinearLayout(this@MainActivity).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, 0, 0, dpi(6f)) }
         head.addView(iconButton("back", Theme.accent, filled = false) { pop() })
         head.addView(text(28f, 700).apply { letterSpacing = -0.01f; text = title; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; setPadding(dpi(12f), 0, 0, 0) }, LinearLayout.LayoutParams(0, -2, 1f))
@@ -3311,6 +3313,7 @@ class MainActivity : Activity() {
         val input = field(UiText.text(this@MainActivity, R.string.ui_7a0971edfc), "")
         val agent = visibleAgents().getOrNull(homeIndex.coerceAtLeast(0)) ?: visibleAgents().firstOrNull()
         lateinit var fill: () -> Unit
+        var fillToken = 0
         input.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(t: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(t: CharSequence?, a: Int, b: Int, c: Int) { fill() }
@@ -3352,12 +3355,25 @@ class MainActivity : Activity() {
                 val recents = if (q.isEmpty()) recentApps().filter { it !in favs }.mapNotNull { p -> apps.firstOrNull { it.pkg == p } } else emptyList()
                 if (recents.isNotEmpty()) { holder.addView(label(UiText.text(this@MainActivity, R.string.ui_950486e052))); recents.forEach { add(it) } }
                 if (q.isEmpty() && favs.isNotEmpty()) { holder.addView(label(UiText.text(this@MainActivity, R.string.ui_b207efeb7b))); apps.filter { it.pkg in favs }.forEach { add(it) }; holder.addView(label(UiText.text(this@MainActivity, R.string.ui_9fa3124899))) }
-                shown.forEach { add(it) }
-                if (q.isNotEmpty() && agent != null) holder.addView(row(UiText.text(this@MainActivity, R.string.ui_c024fcc5f9, agent.name, input.text.toString().trim()), Theme.colorOf(agent.color), icon = "chat") {
-                    val id = db.lastChat(agent.id) ?: db.newChat(agent.id); openChat(agent, id, say = input.text.toString().trim())
-                }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
-                if (loaded && shown.isEmpty() && q.isEmpty()) holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_9ba5c1d281), ""))
+                // Le righe si creano a gruppi (la prima schermata subito, il resto un fotogramma dopo l'altro): con decine di app il costo
+                // di creare tutte le view insieme faceva saltare i fotogrammi all'apertura e nelle prime scorse.
+                val token = ++fillToken
+                fun finish() {
+                    if (q.isNotEmpty() && agent != null) holder.addView(row(UiText.text(this@MainActivity, R.string.ui_c024fcc5f9, agent.name, input.text.toString().trim()), Theme.colorOf(agent.color), icon = "chat") {
+                        val id = db.lastChat(agent.id) ?: db.newChat(agent.id); openChat(agent, id, say = input.text.toString().trim())
+                    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
+                    if (loaded && shown.isEmpty() && q.isEmpty()) holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_9ba5c1d281), ""))
+                }
+                fun more(from: Int) {
+                    if (token != fillToken || !holder.isAttachedToWindow) return
+                    val end = minOf(from + 12, shown.size)
+                    for (k in from until end) add(shown[k])
+                    if (end < shown.size) holder.post { more(end) } else finish()
+                }
+                val first = minOf(8, shown.size)
+                for (k in 0 until first) add(shown[k])
                 Motion.stagger(holder, dp(8f), max = 7)
+                if (first < shown.size) holder.post { more(first) } else finish()
             }
             if (loaded) fill() else Io.run { val list = loadApps(); runOnUiThread { apps = list; loaded = true; if (holder.isAttachedToWindow) fill() } }
         }

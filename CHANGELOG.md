@@ -59,3 +59,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.18 (code 25): buddy doppi: i buddy ritirati durante un volo non si riaccendono piu quando il clone viene preso in carico, un solo volo alla volta tra rotella e pagine del carosello, rete di sicurezza che toglie cloni orfani a riposo, niente riaccensione sotto una scheda aperta, la chat vuota mostra un solo buddy.
 
 0.5.19 (code 26): animazioni piu leggere e coerenti: a riposo il respiro e gli sguardi si fermano dopo 20 s (da 41 a circa 6 fotogrammi al secondo), i buddy invisibili o coperti non animano piu, il ticker degli oggetti gira solo dove serve, dissolvenze delle pagine senza sovrapporre i testi (volo home/chat e glance/home), titoli del carosello senza ripetizioni, livelli hardware sempre rilasciati.
+
+0.5.20 (code 27): il buddy delle pagine con lista (impostazioni, app, ecc.) non e piu tagliato dal bordo e sta sopra la barra del titolo; la lista delle app si crea a gruppi (scorrimento p95 da 39 a 22 ms).

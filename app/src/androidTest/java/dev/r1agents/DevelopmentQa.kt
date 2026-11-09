@@ -115,6 +115,7 @@ internal class DevelopmentQa(private val test: Instrumentation) {
             Thread.sleep(1200) // i gesti d'evento hanno un limite di frequenza: lascio passare l'ultimo
             for (attempt in 1..3) {
                 if (moved) break
+                ui { dev.r1os.host.ui.Dim.poke() }   // scrivere e' un input: il test non tocca lo schermo, quindi lo segnala (altrimenti dopo 20 s di quiete gli sguardi sono fermi)
                 ui { val field = views(activity!!.window.decorView).filterIsInstance<EditText>().first(); field.setText("un nome un po' più lungo del solito".take(8 + attempt * 9)) }
                 val edUntil = System.currentTimeMillis() + 2500
                 while (!moved && System.currentTimeMillis() < edUntil) { ui { moved = views(activity!!.window.decorView).filterIsInstance<dev.r1os.host.ui.CharacterView>().any { kotlin.math.abs(it.eyeOffsetX) > 1f } }; Thread.sleep(40) }
