@@ -19,14 +19,38 @@ object Md {
     private val heading = Regex("^(#{1,3})\\s+(.*)$")
     private val bullet = Regex("^(\\s*)[-*+]\\s+(.*)$")
     private val numbered = Regex("^(\\s*)(\\d{1,3})[.)]\\s+(.*)$")
+    private val tableRow = Regex("^\\s*\\|.*\\|\\s*$")
+    private val tableSep = Regex("^\\s*\\|?[\\s:|-]+\\|[\\s:|-]*$")
     private val quote = Regex("^>\\s?(.*)$")
     private val link = Regex("^\\[([^\\]]+)]\\((https?://[^)\\s]+)\\)")
+
+    /** Tabelle `| a | b |`: righe allineate a colonne in carattere fisso (la bolla non ha un layout a griglia). */
+    internal fun alignTables(lines: List<String>): List<String> {
+        val res = ArrayList<String>(); var i = 0; var inCode = false
+        while (i < lines.size) {
+            val l = lines[i]
+            if (l.trimStart().startsWith("```")) { inCode = !inCode; res += l; i++; continue }
+            if (!inCode && tableRow.matches(l) && i + 1 < lines.size && tableSep.matches(lines[i + 1]) && lines[i + 1].contains('-')) {
+                val rows = ArrayList<List<String>>(); var j = i
+                while (j < lines.size && tableRow.matches(lines[j])) { if (j != i + 1) rows += lines[j].trim().trim('|').split('|').map { it.trim() }; j++ }
+                val cols = rows.maxOf { it.size }
+                val w = IntArray(cols) { c -> rows.maxOf { (it.getOrNull(c) ?: "").length } }
+                res += "```"
+                rows.forEachIndexed { r, row ->
+                    res += (0 until cols).joinToString(" \u2502 ") { c -> (row.getOrNull(c) ?: "").padEnd(w[c]) }.trimEnd()
+                    if (r == 0) res += w.joinToString("\u2500\u253c\u2500") { "\u2500".repeat(it) }
+                }
+                res += "```"; i = j
+            } else { res += l; i++ }
+        }
+        return res
+    }
 
     fun render(src: String, codeBg: Int): CharSequence {
         val out = SpannableStringBuilder()
         var inCode = false
         val block = StringBuilder()
-        val lines = src.split('\n')
+        val lines = alignTables(src.split('\n'))
         for ((i, line) in lines.withIndex()) {
             if (line.trimStart().startsWith("```")) {
                 if (inCode && block.isNotEmpty()) {

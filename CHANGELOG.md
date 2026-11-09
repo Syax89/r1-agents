@@ -49,3 +49,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.13 (code 20): rifinitura UX da analisi del codice: bersagli da 48 dp e testi più leggibili (contrasti del tema chiaro), conferma a doppio tocco per archivia/elimina cron/svuota registro/elimina nota/rimuovi allegato, errori in parole semplici con "riprova" e menu sul pallino Hermes, uscita dalla chat con risposta in corso con conferma, stato "interrotta", Markdown con liste numerate, citazioni e link, Aspetto con etichette tradotte, benvenuto al primo avvio, esito dei cron e comando Hermes copiabile.
 
 0.5.14 (code 21): ricerca tra le skill, Aspetto in sezioni (lingua e tema, rotella e schermo, agente sul telefono, testo e sfondo), tasto "copia" sui blocchi di codice, testo di sistema fino a 1,3x.
+
+0.5.15 (code 22): tabelle Markdown allineate in carattere fisso, Indietro dentro una funzione del carosello torna all agente, messaggio "codice copiato".

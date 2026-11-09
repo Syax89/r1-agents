@@ -273,7 +273,7 @@ class MainActivity : Activity() {
                 "security" -> push(securityScreen()); "actionlog" -> push(actionLogScreen()); "glance" -> push(glance())
                 "settings" -> push(settingsScreen()); "tools" -> push(tools()); "agent_new" -> push(editor(null))
                 "space" -> if (ag != null) push(space(ag)); "manage" -> if (ag != null) push(manageChats(ag)); "memory" -> if (ag != null) push(memoryScreen(ag))
-                "card" -> if (ag != null) push(listPage(UiText.text(this@MainActivity, R.string.ui_3b225a819e)) { col -> col.addView(cardView(ag, org.json.JSONObject().put("title", UiText.text(this@MainActivity, R.string.ui_0ea049a68d)).put("body", UiText.text(this@MainActivity, R.string.ui_991379a059)))) }); "edit" -> if (ag != null) push(editor(ag)); "dash" -> push(providerScreen()); "jobs" -> push(hermesJobsScreen()); "skills" -> if (ag != null) push(skillsScreen(ag)); "switch" -> push(listPage("interruttori") { col -> col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "acceso" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, true, Theme.colorOf("green")) {}) }); col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "spento" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, false, Theme.colorOf("green")) {}) }) }); "about" -> push(aboutScreen()); "menu" -> menuSheet(ag); "shake" -> onShake()
+                "card" -> if (ag != null) push(listPage(UiText.text(this@MainActivity, R.string.ui_3b225a819e)) { col -> col.addView(cardView(ag, org.json.JSONObject().put("title", UiText.text(this@MainActivity, R.string.ui_0ea049a68d)).put("body", UiText.text(this@MainActivity, R.string.ui_991379a059)))) }); "edit" -> if (ag != null) push(editor(ag)); "dash" -> push(providerScreen()); "jobs" -> push(hermesJobsScreen()); "skills" -> if (ag != null) push(skillsScreen(ag)); "switch" -> push(listPage("interruttori") { col -> col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "acceso" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, true, Theme.colorOf("green")) {}) }); col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "spento" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, false, Theme.colorOf("green")) {}) }) }); "md" -> push(listPage("md") { col -> col.addView(text(16f, 500).keepCase().apply { text = Md.render("# titolo\n1. uno\n2. due\n> citazione\n[link](https://example.org) e **grassetto**\n\n| nome | valore |\n|---|---|\n| alfa | 1 |\n| beta lungo | 22 |\n\n```\nprint(1)\n```", Theme.withAlpha(Theme.FG, 0.14f)); movementMethod = android.text.method.LinkMovementMethod.getInstance() }) }); "about" -> push(aboutScreen()); "menu" -> menuSheet(ag); "shake" -> onShake()
             }
         }
         i.getStringExtra("debug_do")?.let { spec -> // prova di una direttiva dell'agente da adb (solo build debuggabili): --es debug_do "apri=Calcolatrice"
@@ -730,7 +730,7 @@ class MainActivity : Activity() {
 
     private fun copyText(t: String) {
         (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("codice", t))
-        snack(UiText.text(this, R.string.ui_032d1653f8))
+        snack(UiText.text(this, R.string.ui_b6ec5021d5))
     }
 
     private var armedKey: String? = null
@@ -1223,6 +1223,7 @@ class MainActivity : Activity() {
         if (pinGate != null) { if (gateWanted()) leaveLockedChat() else if (!isDefaultLauncher()) finish(); return }
         overlays.keys.lastOrNull()?.let { overlayBack[it]?.invoke(); return }   // prima le finestre sopra tutto (permessi, menu)
         if (pttView != null) { pttClose(); return }
+        if (stack.size == 1 && homeLaneBack?.invoke() == true) return
         if (stack.size > 1 && stack.last().leaveGuard?.invoke() == true) return
         if (stack.size > 1) pop() else if (!isDefaultLauncher()) finish()   // come ogni app indietro esce; da schermata iniziale non esce (come ogni launcher)
     }
@@ -1302,6 +1303,8 @@ class MainActivity : Activity() {
         fun land() { sq.snapTo(0.07f); sq.animateTo(0f, 320f, 0.4f) }
     }
 
+    /** In home, dentro una funzione del carosello Indietro (o il tasto della rotella) torna all'agente. */
+    private var homeLaneBack: (() -> Boolean)? = null
     private var welcomeChecked = false
     /** Primo avvio: una sola volta, se non c'è ancora un fornitore configurato, propone da dove cominciare. */
     private fun maybeWelcome() {
@@ -1580,6 +1583,7 @@ class MainActivity : Activity() {
             if (l == null) laneLayer.postDelayed({ if (lanePos == 0) laneLayer.visibility = View.INVISIBLE }, Motion.SLOW + 60L)
         }
         fun laneStep(d: Int) = laneGo(lanePos + d)
+        homeLaneBack = { if (scope.alive && lanePos != 0) { laneGo(0); true } else false }
         /** Tocco sulla funzione: l'oggetto fa il suo gesto, poi si apre. */
         fun laneAction() {
             val l = laneAt(lanePos) ?: return
@@ -1730,7 +1734,7 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { if (lanePos != 0) laneAction() else open(); true }
                 else -> false
             }
-        }, buddyContext = BuddySceneContext.LIVE, scope = scope, onLeave = { stopHomeState?.invoke(); sleeper.stop() }, onShow = { laneLayer.alpha = 1f; refreshLive(); sleeper.poke(); agents = visibleAgents(); if (signature() != sig || homeIndex != sel) rebuild() else agents.getOrNull(sel)?.let { focusAvatar()?.show(it) } })
+        }, buddyContext = BuddySceneContext.LIVE, scope = scope, onLeave = { stopHomeState?.invoke(); sleeper.stop(); homeLaneBack = null }, onShow = { laneLayer.alpha = 1f; refreshLive(); sleeper.poke(); agents = visibleAgents(); if (signature() != sig || homeIndex != sel) rebuild() else agents.getOrNull(sel)?.let { focusAvatar()?.show(it) } })
     }
 
     // ---- chat -----------------------------------------------------------------------------------

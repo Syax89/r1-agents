@@ -688,6 +688,7 @@
     <string name="ui_15a1464f73" formatted="false">"agente sul telefono"</string>
     <string name="ui_e0f65ded6a" formatted="false">"testo e sfondo"</string>
     <string name="ui_cafd4e1fc8" formatted="false">"cerca una skill"</string>
+    <string name="ui_b6ec5021d5" formatted="false">"codice copiato"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

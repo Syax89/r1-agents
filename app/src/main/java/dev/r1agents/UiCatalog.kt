@@ -695,6 +695,7 @@ internal object UiCatalog {
         UiEntry(R.string.ui_15a1464f73, "agente sul telefono"),
         UiEntry(R.string.ui_e0f65ded6a, "testo e sfondo"),
         UiEntry(R.string.ui_cafd4e1fc8, "cerca una skill"),
+        UiEntry(R.string.ui_b6ec5021d5, "codice copiato"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }
