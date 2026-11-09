@@ -95,7 +95,15 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
     private fun progress(y: Int) = (y.toFloat() / baseH.coerceAtLeast(1)).coerceIn(0f, 1f)
     /** La riga si restringe da piena a 44 dp mentre scorri: il buddy viene "spinto in su" e la lista guadagna spazio. */
     private fun rowHeight(p: Float) = (baseH - (baseH - density * 44f) * p).toInt().coerceAtLeast((density * 44f).toInt())
-    private fun fit(r: View, p: Float) { if (root == null) return; val lp = r.layoutParams ?: return; val h = rowHeight(p); if (lp.height != h) { lp.height = h; r.layoutParams = lp } }
+    /** Cambia l'altezza della riga (e quindi rifa il layout della pagina) solo a passi di 3 dp, o agli estremi: scorrendo non si rifa un layout per ogni pixel. */
+    private fun fit(r: View, p: Float) {
+        if (root == null) return
+        val lp = r.layoutParams ?: return
+        val h = rowHeight(p)
+        val step = (density * 3f).toInt().coerceAtLeast(2)
+        val atEdge = p <= 0f || p >= 1f
+        if (lp.height != h && (atEdge || kotlin.math.abs(lp.height - h) >= step)) { lp.height = h; r.layoutParams = lp }
+    }
     /** Centro sul bordo inferiore della riga a fine corsa: resta mezza sfera con gli occhi, il resto è coperto dalle righe. */
     private fun restY(p: Float) = (rowHeight(p) / 2f - (if (root != null) density * 16f else 0f)) * p   // con la testata fissa gli occhi restano sopra il bordo della lista
     private fun applyRest() {
