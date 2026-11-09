@@ -37,3 +37,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.7 (code 14): le istruzioni nascoste per l'agente non compaiono più nel primo messaggio della chat Hermes.
 
 0.5.8 (code 15): registro delle azioni eseguite dagli agenti sul telefono (Sicurezza → azioni dell'agente), mai nei backup.
+
+0.5.9 (code 16): strumento phone_action per gli agenti locali (apri app, timer, sveglia, torcia, nota, pannello: pulsanti o esecuzione automatica secondo le impostazioni); contesto del telefono opzionale (Sicurezza), spento di default.

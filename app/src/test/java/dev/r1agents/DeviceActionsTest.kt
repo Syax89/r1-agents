@@ -2,6 +2,7 @@ package dev.r1agents
 
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -43,5 +44,12 @@ class DeviceActionsTest {
         assertEquals("Ciao", DeviceActions.stripIntro(sent))
         assertEquals("Grazie", DeviceActions.stripIntro(DeviceActions.instruction() + "Grazie"))
         assertEquals("Un messaggio [normale]\ncon parentesi", DeviceActions.stripIntro("Un messaggio [normale]\ncon parentesi"))
+    }
+    @Test fun validazioneStrumento() {
+        assertNull(DeviceActions.validate("timer", "10m")); assertNull(DeviceActions.validate("apri", "Calcolatrice"))
+        assertNull(DeviceActions.validate("sveglia", "07:30")); assertNull(DeviceActions.validate("pannello", "wifi"))
+        assertNotNull(DeviceActions.validate("timer", "domani")); assertNotNull(DeviceActions.validate("sveglia", "25:00"))
+        assertNotNull(DeviceActions.validate("chiama", "mamma")); assertNotNull(DeviceActions.validate("nota", " "))
+        assertNotNull(DeviceActions.validate("pannello", "impostazioni"))
     }
 }

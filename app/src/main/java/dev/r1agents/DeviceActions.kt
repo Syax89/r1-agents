@@ -24,6 +24,18 @@ object DeviceActions {
         return Parsed(clean, actions)
     }
 
+    /** Controlla un'azione proposta da uno strumento: null se valida, altrimenti il motivo (testo per il modello). */
+    fun validate(kind: String, arg: String): String? = when {
+        kind !in KINDS -> "azione sconosciuta; valide: " + KINDS.sorted().joinToString()
+        arg.isBlank() -> "manca l'argomento"
+        kind == "timer" && seconds(arg) == null -> "durata non valida (da 5 secondi a 24 ore, es. 10m)"
+        kind == "sveglia" && time(arg) == null -> "orario non valido (es. 07:30)"
+        kind == "torcia" && arg.lowercase() !in setOf("on", "off") -> "usa on oppure off"
+        kind == "pannello" && arg.lowercase() !in setOf("wifi", "internet", "bluetooth", "volume") -> "pannello valido: wifi, bluetooth, volume"
+        kind == "torcia" && !hasFlash -> "questo dispositivo non ha il flash"
+        else -> null
+    }
+
     /** «600», «10m», «2h», «90s» → secondi (5 s … 24 h) oppure null. */
     fun seconds(arg: String): Int? {
         val m = Regex("^(\\d{1,5})\\s*([smh]?)$", RegexOption.IGNORE_CASE).find(arg.trim()) ?: return null

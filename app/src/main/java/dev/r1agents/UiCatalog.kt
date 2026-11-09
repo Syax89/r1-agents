@@ -658,6 +658,8 @@ internal object UiCatalog {
         UiEntry(R.string.ui_edaedc429e, "Qui compaiono apri, timer, sveglie e altro eseguiti dagli agenti."),
         UiEntry(R.string.ui_1dcba78d37, "svuota registro"),
         UiEntry(R.string.ui_7ef44652ba, "non riuscita"),
+        UiEntry(R.string.ui_7dd4ab62e7, "contesto del telefono"),
+        UiEntry(R.string.ui_3b87e2a997, "batteria, rete, sveglie e app recenti agli agenti locali"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

@@ -159,6 +159,9 @@ class MainActivity : Activity() {
             try { startActivity(Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { snack(UiText.text(this@MainActivity, R.string.ui_7d0f161c22)) }
         })
         col.addView(row(UiText.text(this@MainActivity, R.string.ui_793ade4b26), Theme.accent, sub = UiText.text(this@MainActivity, R.string.ui_c5bcea219e), icon = "sliders") { push(actionLogScreen()) })
+        col.addView(row(UiText.text(this@MainActivity, R.string.ui_7dd4ab62e7), Theme.accent, sub = UiText.text(this@MainActivity, R.string.ui_3b87e2a997), check = prefs.getBoolean(PhoneContext.PREF, false), icon = "sliders") {
+            prefs.edit().putBoolean(PhoneContext.PREF, !prefs.getBoolean(PhoneContext.PREF, false)).apply(); applyPhoneContext(); stack.last().onShow?.invoke()
+        })
         if (!pinEnabled()) col.addView(row(UiText.text(this@MainActivity, R.string.ui_e067157f40), Theme.accent, icon = "lock") { pinSetup() })
         else {
             col.addView(row(UiText.text(this@MainActivity, R.string.ui_8c9d3158f9), Theme.accent, icon = "sliders") { pinPrompt(UiText.text(this@MainActivity, R.string.ui_c64ec43f51)) { pin -> Io.run { val ok = PinHash.verify(pin, prefs.getString("app_pin_hash", "").orEmpty()); runOnUiThread { if (ok) pinSetup() else snack(UiText.text(this@MainActivity, R.string.ui_1265e93b8f)) } } } })
@@ -184,7 +187,7 @@ class MainActivity : Activity() {
         prefs = getSharedPreferences("settings", MODE_PRIVATE)
         Vault.migrate(prefs) // cifra nel Keystore i segreti salvati in chiaro dalle versioni precedenti
         r1WheelLandscapeFlip = prefs.getBoolean("wheel_flip_land", true)
-        DeviceActions.mode = prefs.getString("dev_actions", "ask") ?: "ask"
+        DeviceActions.mode = prefs.getString("dev_actions", "ask") ?: "ask"; applyPhoneContext()
         DeviceActions.hasFlash = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_CAMERA_FLASH)
         Theme.setLook(prefs.getString("look_mode", "dark") == "light", prefs.getString("look_accent", "orange") ?: "orange", prefs.getString("look_font", "rubik") ?: "rubik")
         db = Db.get(this)
@@ -3656,6 +3659,8 @@ class MainActivity : Activity() {
         return Screen(page(pageBody), onShow = { confirmRemove = false; render() }, scope = scope)
     }
 
+    /** Il contesto del telefono arriva agli agenti solo se l'utente lo ha acceso in Sicurezza. */
+    private fun applyPhoneContext() { Engine.phoneContext = if (prefs.getBoolean(PhoneContext.PREF, false)) ({ PhoneContext.describe(applicationContext, db, recentApps().mapNotNull { p -> (appCache ?: emptyList()).firstOrNull { it.pkg == p }?.label }) }) else null }
     private fun actionLogScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_793ade4b26), context = BuddySceneContext.SECURITY) { col ->
         val list = ActionLog.entries(prefs)
         if (list.isEmpty()) col.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_7aac7be00d), UiText.text(this@MainActivity, R.string.ui_edaedc429e)))

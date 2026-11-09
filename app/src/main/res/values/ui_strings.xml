@@ -651,6 +651,8 @@
     <string name="ui_edaedc429e" formatted="false">"Qui compaiono apri, timer, sveglie e altro eseguiti dagli agenti."</string>
     <string name="ui_1dcba78d37" formatted="false">"svuota registro"</string>
     <string name="ui_7ef44652ba" formatted="false">"non riuscita"</string>
+    <string name="ui_7dd4ab62e7" formatted="false">"contesto del telefono"</string>
+    <string name="ui_3b87e2a997" formatted="false">"batteria, rete, sveglie e app recenti agli agenti locali"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

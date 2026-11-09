@@ -648,5 +648,7 @@
   "Nessuna azione eseguita.": "No actions yet.",
   "Qui compaiono apri, timer, sveglie e altro eseguiti dagli agenti.": "Open, timer, alarm and other agent actions show up here.",
   "svuota registro": "clear log",
-  "non riuscita": "failed"
+  "non riuscita": "failed",
+  "contesto del telefono": "phone context",
+  "batteria, rete, sveglie e app recenti agli agenti locali": "battery, network, alarms and recent apps shared with local agents"
 }

@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 15,
-  "versionName": "0.5.8",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.8/r1agents-release-signed.apk",
-  "sha256": "5daa1e42fa7199aa35ed21f71443803b9498e78066e632efc3859a0d307a4730",
-  "sizeBytes": 1333575,
-  "notes": "0.5.8: registro delle azioni eseguite dagli agenti sul telefono (Sicurezza, azioni dell'agente), solo locale e mai nei backup.\n"
+  "versionCode": 16,
+  "versionName": "0.5.9",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.9/r1agents-release-signed.apk",
+  "sha256": "bdf615102dc780b322f22bde8e3b28027fd347a238de437acb28b3cb3bb04905",
+  "sizeBytes": 1337671,
+  "notes": "0.5.9: strumento phone_action per gli agenti locali e contesto del telefono opzionale (Sicurezza), spento di default.\n"
 }

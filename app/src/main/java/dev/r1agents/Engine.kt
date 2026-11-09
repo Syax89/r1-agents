@@ -76,6 +76,18 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
 
     /** Quanti agenti si sono passati la parola: gli strumenti di messaggio funzionano solo al primo livello. */
     var depth = 0
+    /** Fornisce il testo di PhoneContext (impostato dall'activity solo se l'utente ha acconsentito). */
+    companion object { @Volatile var phoneContext: (() -> String)? = null }
+
+    /** Dove finiscono le direttive delle azioni sul telefono: il testo della risposta (poi gestite da DeviceActions: pulsanti o esecuzione automatica). */
+    private var emit: ((String) -> Unit)? = null
+    private val phoneTool = Triple("phone_action", "Agisce sul telefono dell'utente. kind: apri (nome app), timer (es. 10m), sveglia (es. 07:30), torcia (on/off), nota (testo), pannello (wifi, bluetooth, volume). L'utente conferma o la esecuzione è automatica, secondo le sue impostazioni.",
+        JSONObject().put("type", "object").put("properties", JSONObject()
+            .put("kind", JSONObject().put("type", "string").put("enum", JSONArray(DeviceActions.KINDS.sorted())))
+            .put("arg", JSONObject().put("type", "string"))).put("required", JSONArray().put("kind").put("arg")))
+    /** Gli strumenti del turno: quelli del telefono solo in chat (c'è una scheda di destinazione) e se l'utente non li ha spenti. */
+    private fun activeTools() = if (DeviceActions.mode != "off" && onCard != null && emit != null) tools + phoneTool else tools
+
     /** Chiamata quando l'agente usa show_card: la chat disegna la scheda subito. */
     var onCard: ((JSONObject) -> Unit)? = null
 
@@ -111,7 +123,7 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
     }
 
     fun turn(agent: Agent, chatId: Long, userText: String, retry: Boolean = false, onActivity: ((String) -> Unit)? = null, attachments: List<Attachment> = emptyList(), onCard: ((JSONObject) -> Unit)? = null, onText: (String) -> Unit) {
-        this.onCard = onCard
+        this.onCard = onCard; this.emit = onText
         if (cancelled) return
         val pr = settings.provider
         if (pr.id == "dashboard") {
@@ -214,6 +226,7 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
         append("\nOra locale: ").append(ZonedDateTime.now().format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy HH:mm")))
         val others = db.agents().filter { it.id != a.id }.map { it.name }
         if (others.isNotEmpty() && depth == 0) append("\nAltri agenti con cui puoi parlare (strumento message_agent): ").append(others.joinToString())
+        if (depth == 0) phoneContext?.invoke()?.takeIf { it.isNotBlank() }?.let { append("\n").append(it) }
         val mem = db.memories(a.id)
         if (mem.isNotEmpty()) append("\n\nMemoria (cose che ti ha chiesto di ricordare):\n").append(mem.joinToString("\n") { "- " + it.second })
     }
@@ -231,7 +244,7 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
             }
             if (clean.length() > 0) msgs.put(JSONObject().put("role", role).put("content", clean))
         }
-        val toolDefs = JSONArray().also { arr -> tools.forEach { (n, d, s) -> arr.put(JSONObject().put("name", n).put("description", d).put("input_schema", s)) } }
+        val toolDefs = JSONArray().also { arr -> activeTools().forEach { (n, d, s) -> arr.put(JSONObject().put("name", n).put("description", d).put("input_schema", s)) } }
         val body = JSONObject().put("model", settings.model(pr)).put("max_tokens", 2048).put("stream", true)
             .put("system", system(a)).put("messages", msgs).put("tools", toolDefs)
         val blocks = sortedMapOf<Int, JSONObject>()
@@ -298,7 +311,7 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
                 msgs.put(m)
             }
         }
-        val toolDefs = JSONArray().also { arr -> tools.forEach { (n, d, s) ->
+        val toolDefs = JSONArray().also { arr -> activeTools().forEach { (n, d, s) ->
             arr.put(JSONObject().put("type", "function").put("function", JSONObject().put("name", n).put("description", d).put("parameters", s))) } }
         val body = JSONObject().put("model", settings.model(pr)).put("max_tokens", 2048).put("stream", true)
             .put("messages", msgs).put("tools", toolDefs)
@@ -374,6 +387,13 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
                 db.addMemory(a.id, input.optString("note")); "salvato"
             }
             "web_fetch" -> fetch(input.optString("url"))
+            "phone_action" -> {
+                val kind = input.optString("kind").trim().lowercase(); val arg = input.optString("arg").trim()
+                DeviceActions.validate(kind, arg) ?: run {
+                    emit?.invoke("\n[[r1:$kind=$arg]]\n")
+                    if (DeviceActions.mode == "auto") "eseguita sul telefono" else "mostrata all'utente come pulsante da confermare; non è ancora stata eseguita"
+                }
+            }
             "add_note" -> { db.addNote(input.optString("text")); "nota salvata" }
             "list_notes" -> db.notes().take(30).joinToString("\n") { "- " + it.second }.ifBlank { "nessuna nota" }
             "message_agent" -> {
