@@ -158,6 +158,7 @@ class MainActivity : Activity() {
         col.addView(row(UiText.text(this@MainActivity, R.string.ui_7b4f2d1fe7), Theme.accent, sub = UiText.text(this@MainActivity, R.string.ui_544aacf142), icon = "lock") {
             try { startActivity(Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { snack(UiText.text(this@MainActivity, R.string.ui_7d0f161c22)) }
         })
+        col.addView(row(UiText.text(this@MainActivity, R.string.ui_793ade4b26), Theme.accent, sub = UiText.text(this@MainActivity, R.string.ui_c5bcea219e), icon = "sliders") { push(actionLogScreen()) })
         if (!pinEnabled()) col.addView(row(UiText.text(this@MainActivity, R.string.ui_e067157f40), Theme.accent, icon = "lock") { pinSetup() })
         else {
             col.addView(row(UiText.text(this@MainActivity, R.string.ui_8c9d3158f9), Theme.accent, icon = "sliders") { pinPrompt(UiText.text(this@MainActivity, R.string.ui_c64ec43f51)) { pin -> Io.run { val ok = PinHash.verify(pin, prefs.getString("app_pin_hash", "").orEmpty()); runOnUiThread { if (ok) pinSetup() else snack(UiText.text(this@MainActivity, R.string.ui_1265e93b8f)) } } } })
@@ -263,7 +264,7 @@ class MainActivity : Activity() {
                 "loading_preview" -> if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) push(loadingScreen(ag ?: neutralBuddy, "QA"))
                 "login_preview" -> if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) push(nousLogin(false))
                 "ring_preview" -> if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) push(ringScreen("timer", "QA", Sched.KIND_TIMER))
-                "security" -> push(securityScreen()); "glance" -> push(glance())
+                "security" -> push(securityScreen()); "actionlog" -> push(actionLogScreen()); "glance" -> push(glance())
                 "settings" -> push(settingsScreen()); "tools" -> push(tools()); "agent_new" -> push(editor(null))
                 "space" -> if (ag != null) push(space(ag)); "manage" -> if (ag != null) push(manageChats(ag)); "memory" -> if (ag != null) push(memoryScreen(ag))
                 "card" -> if (ag != null) push(listPage(UiText.text(this@MainActivity, R.string.ui_3b225a819e)) { col -> col.addView(cardView(ag, org.json.JSONObject().put("title", UiText.text(this@MainActivity, R.string.ui_0ea049a68d)).put("body", UiText.text(this@MainActivity, R.string.ui_991379a059)))) }); "edit" -> if (ag != null) push(editor(ag)); "dash" -> push(providerScreen()); "jobs" -> push(hermesJobsScreen()); "skills" -> if (ag != null) push(skillsScreen(ag)); "switch" -> push(listPage("interruttori") { col -> col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "acceso" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, true, Theme.colorOf("green")) {}) }); col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "spento" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, false, Theme.colorOf("green")) {}) }) }); "about" -> push(aboutScreen()); "menu" -> menuSheet(ag); "shake" -> onShake()
@@ -3110,7 +3111,9 @@ class MainActivity : Activity() {
         "nota" -> UiText.text(this@MainActivity, R.string.ui_510a578c56)
         else -> UiText.text(this@MainActivity, R.string.ui_77027ea210, a.arg)
     }
-    private fun runDeviceAction(a: DeviceActions.Action): Boolean = runCatching {
+    /** Esegue l'azione e, se viene da un agente, la scrive nel registro (pagina Sicurezza → azioni dell'agente). */
+    private fun runDeviceAction(a: DeviceActions.Action, log: Boolean = true): Boolean = execDeviceAction(a).also { if (log) ActionLog.record(prefs, a.kind, a.arg, it) }
+    private fun execDeviceAction(a: DeviceActions.Action): Boolean = runCatching {
         when (a.kind) {
             "apri" -> {
                 val apps = appCache ?: loadApps().also { appCache = it }
@@ -3268,7 +3271,7 @@ class MainActivity : Activity() {
         companionRow(112f)?.let { col.addView(it, LinearLayout.LayoutParams(-1, dpi(112f))) }
         col.addView(text(15f, 600, Theme.MUTED).keepCase().apply { text = batteryLine() + " · " + UiText.text(this@MainActivity, R.string.ui_ac647b8dc0, freeSpace()) }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dpi(8f) })
         if (DeviceActions.hasFlash) col.addView(bigRow("spark", UiText.text(this@MainActivity, R.string.ui_4d897fa9ab), if (torchOn) UiText.text(this@MainActivity, R.string.ui_a7623e2fdf) else UiText.text(this@MainActivity, R.string.ui_533deb16e2), Theme.colorOf("amber")) {
-            torchOn = !torchOn; if (!runDeviceAction(DeviceActions.Action("torcia", if (torchOn) "on" else "off"))) torchOn = !torchOn
+            torchOn = !torchOn; if (!runDeviceAction(DeviceActions.Action("torcia", if (torchOn) "on" else "off"), log = false)) torchOn = !torchOn
             cue(if (torchOn) "surprised" else "relief", force = true); stack.lastOrNull()?.onShow?.invoke()
         }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
         for ((icon, t, acts) in listOf(
@@ -3651,6 +3654,17 @@ class MainActivity : Activity() {
         render()
         if (hermesMode() && agent.profile.isNotEmpty()) Io.run { try { syncSessions(agent) } catch (e: Exception) { }; live = dash.live(); runOnUiThread { if (scope.alive) render() } }
         return Screen(page(pageBody), onShow = { confirmRemove = false; render() }, scope = scope)
+    }
+
+    private fun actionLogScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_793ade4b26), context = BuddySceneContext.SECURITY) { col ->
+        val list = ActionLog.entries(prefs)
+        if (list.isEmpty()) col.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_7aac7be00d), UiText.text(this@MainActivity, R.string.ui_edaedc429e)))
+        list.forEach { e ->
+            val a = DeviceActions.Action(e.kind, e.arg)
+            col.addView(row(describeAction(a), if (e.ok) Theme.accent else Theme.BAD, sub = ago(e.time) + if (e.ok) "" else " · " + UiText.text(this@MainActivity, R.string.ui_7ef44652ba), icon = if (e.ok) "check" else "close") { },
+                LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+        }
+        if (list.isNotEmpty()) col.addView(button(UiText.text(this@MainActivity, R.string.ui_1dcba78d37), Theme.BAD) { ActionLog.clear(prefs); pop() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
     }
 
     private fun memoryScreen(agent: Agent): Screen {

@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 14,
-  "versionName": "0.5.7",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.7/r1agents-release-signed.apk",
-  "sha256": "b7826b2d5e9e0221958e1c08148e174304193b7120e65d4a583cdce448864d27",
+  "versionCode": 15,
+  "versionName": "0.5.8",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.8/r1agents-release-signed.apk",
+  "sha256": "5daa1e42fa7199aa35ed21f71443803b9498e78066e632efc3859a0d307a4730",
   "sizeBytes": 1333575,
-  "notes": "0.5.7: le istruzioni nascoste per l'agente non compaiono più nel primo messaggio della chat Hermes.\n"
+  "notes": "0.5.8: registro delle azioni eseguite dagli agenti sul telefono (Sicurezza, azioni dell'agente), solo locale e mai nei backup.\n"
 }

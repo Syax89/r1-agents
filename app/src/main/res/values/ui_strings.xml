@@ -646,6 +646,11 @@
     <string name="ui_4605ee7759" formatted="false">"10 min"</string>
     <string name="ui_dc815e9fc7" formatted="false">"imposta un PIN per bloccare le chat"</string>
     <string name="ui_d683ad2559" formatted="false">"Il PIN protegge le chat che scegli (una per una dal menu della chat, oppure tutte). Home e impostazioni restano libere. Conserva il PIN: non è previsto un recupero."</string>
+    <string name="ui_c5bcea219e" formatted="false">"cosa ha fatto l\'agente sul telefono"</string>
+    <string name="ui_7aac7be00d" formatted="false">"Nessuna azione eseguita."</string>
+    <string name="ui_edaedc429e" formatted="false">"Qui compaiono apri, timer, sveglie e altro eseguiti dagli agenti."</string>
+    <string name="ui_1dcba78d37" formatted="false">"svuota registro"</string>
+    <string name="ui_7ef44652ba" formatted="false">"non riuscita"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

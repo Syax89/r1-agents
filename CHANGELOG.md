@@ -35,3 +35,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.6 (code 13): carosello: passaggio agenti↔pagine con buddy che vola (uno solo in scena).
 
 0.5.7 (code 14): le istruzioni nascoste per l'agente non compaiono più nel primo messaggio della chat Hermes.
+
+0.5.8 (code 15): registro delle azioni eseguite dagli agenti sul telefono (Sicurezza → azioni dell'agente), mai nei backup.

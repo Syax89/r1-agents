@@ -653,6 +653,11 @@ internal object UiCatalog {
         UiEntry(R.string.ui_4605ee7759, "10 min"),
         UiEntry(R.string.ui_dc815e9fc7, "imposta un PIN per bloccare le chat"),
         UiEntry(R.string.ui_d683ad2559, "Il PIN protegge le chat che scegli (una per una dal menu della chat, oppure tutte). Home e impostazioni restano libere. Conserva il PIN: non è previsto un recupero."),
+        UiEntry(R.string.ui_c5bcea219e, "cosa ha fatto l'agente sul telefono"),
+        UiEntry(R.string.ui_7aac7be00d, "Nessuna azione eseguita."),
+        UiEntry(R.string.ui_edaedc429e, "Qui compaiono apri, timer, sveglie e altro eseguiti dagli agenti."),
+        UiEntry(R.string.ui_1dcba78d37, "svuota registro"),
+        UiEntry(R.string.ui_7ef44652ba, "non riuscita"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

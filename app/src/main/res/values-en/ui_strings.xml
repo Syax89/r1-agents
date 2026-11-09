@@ -646,6 +646,11 @@
     <string name="ui_4605ee7759" formatted="false">"10 min"</string>
     <string name="ui_dc815e9fc7" formatted="false">"set a PIN to lock chats"</string>
     <string name="ui_d683ad2559" formatted="false">"The PIN protects the chats you choose (one by one from the chat menu, or all of them). Home and settings stay open. Keep the PIN: there is no recovery."</string>
+    <string name="ui_c5bcea219e" formatted="false">"what the agent did on the phone"</string>
+    <string name="ui_7aac7be00d" formatted="false">"No actions yet."</string>
+    <string name="ui_edaedc429e" formatted="false">"Open, timer, alarm and other agent actions show up here."</string>
+    <string name="ui_1dcba78d37" formatted="false">"clear log"</string>
+    <string name="ui_7ef44652ba" formatted="false">"failed"</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>
