@@ -642,5 +642,6 @@
   "2 min": "2 min",
   "5 min": "5 min",
   "10 min": "10 min",
-  "imposta un PIN per bloccare le chat": "set a PIN to lock chats"
+  "imposta un PIN per bloccare le chat": "set a PIN to lock chats",
+  "Il PIN protegge le chat che scegli (una per una dal menu della chat, oppure tutte). Home e impostazioni restano libere. Conserva il PIN: non è previsto un recupero.": "The PIN protects the chats you choose (one by one from the chat menu, or all of them). Home and settings stay open. Keep the PIN: there is no recovery."
 }

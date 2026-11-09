@@ -149,7 +149,7 @@ class MainActivity : Activity() {
         }
     }
     private fun securityScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_9729d2de44), context = BuddySceneContext.SECURITY) { col ->
-        col.addView(text(15f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_8d9a0badab) })
+        col.addView(text(15f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_d683ad2559) })
         col.post { // occhi attenti: scansione sinistra, destra, poi dritto
             cue(null, -24f, 0f, force = true)
             col.postDelayed({ cue(null, 24f, 0f, force = true) }, Motion.BASE * 2)

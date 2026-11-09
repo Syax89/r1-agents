@@ -105,7 +105,9 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
         cv.translationY = restY(p); cv.scaleX = 1f - 0.1f * p; cv.scaleY = cv.scaleX; cv.alpha = 1f
     }
 
-    private fun active(): CharacterView? = if (Motion.reduced(scroll.context)) null else find()
+    /** Falso per le liste dei pannelli (menu, scelte): il buddy lì lo posiziona il pannello, lo scroll non deve né spostarlo né rimetterlo "a riposo". */
+    var enabled = true
+    private fun active(): CharacterView? = if (!enabled || Motion.reduced(scroll.context)) null else find()
 
     fun onScrolled(y: Int) {
         val cv = active() ?: return
@@ -179,6 +181,7 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
 
     /** Fine del tiro o della corsa: torna alla posizione di riposo con un piccolo rimbalzo. */
     fun calm() {
+        if (!enabled) return
         val cv = buddy?.takeIf { it.isAttachedToWindow } ?: return
         val f = (pull / (density * 140f)).coerceIn(0f, 1.6f)
         if (pull > 0f && f in 0.45f..0.99f && !offendedThisPull && !BuddyMood.sulking()) cv.react("giggle")

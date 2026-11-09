@@ -302,6 +302,25 @@ internal class DevelopmentQa(private val test: Instrumentation) {
                 check(got == listOf(60_000L, 300_000L, 0L)) { "Inattività: tempi letti male $got" }
             }
             step("inattività: tempo letto dalle impostazioni: OK")
+            // Menu a pannello: scorrendo a fondo la lista, il buddy del pannello resta dov'è (prima lo scroll lo faceva cadere sulle voci).
+            run {
+                ui { test.callActivityOnNewIntent(activity!!, Intent(ctx, MainActivity::class.java).putExtra("debug_screen", "menu")) }; Thread.sleep(1800)
+                var before = 0f; var after = 0f; var found = false; var scrollView: android.widget.ScrollView? = null; var peek: dev.r1os.host.ui.CharacterView? = null
+                ui {
+                    val ov = (MainActivity::class.java.getDeclaredField("overlays").apply { isAccessible = true }.get(activity) as Map<*, *>).values.lastOrNull() as? View
+                    if (ov != null) {
+                        peek = views(ov).filterIsInstance<dev.r1os.host.ui.CharacterView>().firstOrNull { it.tag == "scene-buddy" }
+                        scrollView = views(ov).filterIsInstance<MaxHeightScrollView>().firstOrNull()
+                        found = peek != null && scrollView != null; before = peek?.translationY ?: 0f
+                    }
+                }
+                check(found) { "Menu: pannello, buddy o lista non trovati" }
+                ui { scrollView!!.scrollTo(0, 2000) }; Thread.sleep(150); ui { scrollView!!.scrollTo(0, 0) }; Thread.sleep(150); ui { scrollView!!.scrollTo(0, 2000) }; Thread.sleep(900)
+                ui { after = peek!!.translationY }
+                check(kotlin.math.abs(after - before) < 3f) { "Menu: lo scroll sposta il buddy del pannello ($before -> $after)" }
+                ui { activity!!.onBackPressed() }; Thread.sleep(900)
+            }
+            step("menu: il buddy del pannello non si sposta scorrendo la lista: OK")
             // Modalità automatica: la direttiva si esegue da sola una volta sola (qui una nota, innocua).
             run {
                 val auto = MainActivity::class.java.getDeclaredMethod("autoRunActions", String::class.java).apply { isAccessible = true }

@@ -645,6 +645,7 @@
     <string name="ui_b45ebd80de" formatted="false">"5 min"</string>
     <string name="ui_4605ee7759" formatted="false">"10 min"</string>
     <string name="ui_dc815e9fc7" formatted="false">"set a PIN to lock chats"</string>
+    <string name="ui_d683ad2559" formatted="false">"The PIN protects the chats you choose (one by one from the chat menu, or all of them). Home and settings stay open. Keep the PIN: there is no recovery."</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>

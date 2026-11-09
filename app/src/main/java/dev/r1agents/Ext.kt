@@ -633,6 +633,7 @@ class WheelFrame(ctx: Context, private val onWheel: (Float) -> Unit, private val
 
 /** ScrollView che non supera un'altezza massima (per i fogli: il contenuto scorre dentro il pannello). */
 class MaxHeightScrollView(ctx: Context, private val maxPx: () -> Int) : R1ScrollView(ctx) {
+    init { buddyFx.enabled = false }   // il buddy del pannello lo gestisce il pannello (placePeek), non lo scroll
     override fun onMeasure(w: Int, h: Int) {
         val cap = maxPx().coerceAtLeast(1)
         super.onMeasure(w, android.view.View.MeasureSpec.makeMeasureSpec(Math.min(android.view.View.MeasureSpec.getSize(h).takeIf { it > 0 } ?: cap, cap), android.view.View.MeasureSpec.AT_MOST))

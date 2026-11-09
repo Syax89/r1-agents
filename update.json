@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 10,
-  "versionName": "0.5.3",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.3/r1agents-release-signed.apk",
-  "sha256": "b39d0cdf5cbbcad2f6a8d1caa847dee97918e14846505ac18a3c02f30d799221",
-  "sizeBytes": 1325383,
-  "notes": "0.5.3: PIN solo sulle chat (alcune o tutte), inattività del buddy impostabile, tile con pressione delicata senza colori, buddy mai sopra le schede e mai doppio nei voli, chiavi API solo verso https, import backup sicuro, schermate con campi segreti protette da screenshot."
+  "versionCode": 11,
+  "versionName": "0.5.4",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.4/r1agents-release-signed.apk",
+  "sha256": "617de205c7b4da4a9c709bef603659c3e89b656e362915ca48c133db4aaf5fe0",
+  "sizeBytes": 1329479,
+  "notes": "0.5.4: il buddy dei menu a pannello non cade più sulle voci scorrendo la lista; testo di Sicurezza aggiornato (PIN sulle chat). Include PIN per chat, inattività impostabile, tile delicati e credenziali più sicure della 0.5.3."
 }

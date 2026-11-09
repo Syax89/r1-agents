@@ -652,6 +652,7 @@ internal object UiCatalog {
         UiEntry(R.string.ui_b45ebd80de, "5 min"),
         UiEntry(R.string.ui_4605ee7759, "10 min"),
         UiEntry(R.string.ui_dc815e9fc7, "imposta un PIN per bloccare le chat"),
+        UiEntry(R.string.ui_d683ad2559, "Il PIN protegge le chat che scegli (una per una dal menu della chat, oppure tutte). Home e impostazioni restano libere. Conserva il PIN: non è previsto un recupero."),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

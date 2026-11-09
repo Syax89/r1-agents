@@ -27,3 +27,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.2 (code 9): credenziali mascherate, sessioni Hermes cifrate, notifiche private, tile delicati, buddy mai sopra le schede, un solo buddy nei voli. 0.5.1 (code 8): i livelli statici del buddy (corpo, vestiti) sono texture della GPU: a home ferma il RenderThread passa da 35–48% a meno dell'1,3%, frame janky da 4,3% a 0%. PropView anima solo quando è visibile. Baseline e strumenti in `tools/perf.py` (risultati in `work/perf/`).
 
 0.5.3 (code 10): PIN solo sulle chat; inattività del buddy impostabile; tile delicati; buddy senza sovrapposizioni e doppioni; credenziali: https obbligatorio, import backup sicuro, FLAG_SECURE sui campi segreti, errori senza chiavi.
+
+0.5.4 (code 11): menu a pannello: il buddy non si sposta più scorrendo la lista; testo Sicurezza aggiornato.
