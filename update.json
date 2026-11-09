@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 17,
-  "versionName": "0.5.10",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.10/r1agents-release-signed.apk",
-  "sha256": "a4378fb8683b295007e74e5cd1575ee3619d7d5bf82862256e8501a322667a3b",
+  "versionCode": 18,
+  "versionName": "0.5.11",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.11/r1agents-release-signed.apk",
+  "sha256": "6851b49aacfc5901c7318c5051ad2dedb10d35d5f3dd2252490f775f41522147",
   "sizeBytes": 1341767,
-  "notes": "0.5.10: fotocamera del carosello: scatta e chiedi a un agente (la foto arriva come allegato nella chat scelta) oppure fotocamera di sistema.\n"
+  "notes": "0.5.11: pagina attività unica in modalità Hermes: sotto i cron del dashboard anche le routine locali di questo telefono.\n"
 }

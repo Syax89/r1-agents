@@ -655,6 +655,7 @@
     <string name="ui_3b87e2a997" formatted="false">"batteria, rete, sveglie e app recenti agli agenti locali"</string>
     <string name="ui_57289acd6d" formatted="false">"scatta e chiedi a un agente"</string>
     <string name="ui_b1a6079206" formatted="false">"fotocamera di sistema"</string>
+    <string name="ui_91bfacd574" formatted="false">"routine su questo telefono"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

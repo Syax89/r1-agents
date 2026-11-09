@@ -652,5 +652,6 @@
   "contesto del telefono": "phone context",
   "batteria, rete, sveglie e app recenti agli agenti locali": "battery, network, alarms and recent apps shared with local agents",
   "scatta e chiedi a un agente": "take a photo and ask an agent",
-  "fotocamera di sistema": "system camera"
+  "fotocamera di sistema": "system camera",
+  "routine su questo telefono": "routines on this phone"
 }

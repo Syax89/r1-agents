@@ -3475,6 +3475,16 @@ class MainActivity : Activity() {
         val holder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         col.addView(holder)
         col.addView(bigRow("plus", UiText.text(this@MainActivity, R.string.ui_f4266e420f), null, Theme.accent) { push(hermesJobEditor()) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
+        // Una sola pagina per tutte le attività: sotto i cron di Hermes anche le routine locali di questo telefono.
+        val localRoutines = db.routines()
+        if (localRoutines.isNotEmpty()) {
+            col.addView(section(UiText.text(this@MainActivity, R.string.ui_91bfacd574)))
+            val agentNames = visibleAgents()
+            localRoutines.forEach { r ->
+                col.addView(row(r.name, if (r.on) Theme.accent else Theme.MUTED, sub = "${Sched.time(r.hour, r.minute)} · ${UiText.days(this@MainActivity, r.days)} · ${agentNames.firstOrNull { it.id == r.agentId }?.name ?: "?"}", raw = true, icon = "repeat") { push(routineEditor(r)) },
+                    LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+            }
+        }
         fun jobLine(j: HermesJob): String {
             val parts = ArrayList<String>()
             if (j.schedule.isNotBlank()) parts += j.schedule
