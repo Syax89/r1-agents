@@ -52,9 +52,14 @@ internal class BuddyFlight(
     /** I buddy veri si nascondono con INVISIBLE (non solo alpha): scroll, comparse e capolini non possono riaccenderli durante il volo. */
     private fun hide(v: CharacterView) { v.alpha = 0f; if (v.visibility != View.INVISIBLE) v.visibility = View.INVISIBLE }
     private fun show(v: CharacterView) { v.visibility = View.VISIBLE; v.alpha = 1f }
-    private fun stopWatchingLayout() {
+    /** Originali sostituiti durante il volo e lasciati nascosti: chi prende in carico il clone li affida a restoreBuddies(). */
+    var leftHidden: List<CharacterView> = emptyList()
+        private set
+    /** Con [showRetired] falso (clone preso in carico, o volo chiuso senza sorgente) i ritirati restano nascosti: riaccenderli darebbe due buddy insieme. */
+    private fun stopWatchingLayout(showRetired: Boolean) {
         if (root.viewTreeObserver.isAlive) root.viewTreeObserver.removeOnGlobalLayoutListener(layouts)
-        retired.forEach { if (it.tag != "buddy-carry") show(it); it.setActive(false) }; retired.clear()
+        if (showRetired) retired.forEach { if (it.tag != "buddy-carry") show(it) } else leftHidden = retired.toList()
+        retired.forEach { it.setActive(false) }; retired.clear()
     }
     init {
         hide(homeAvatar); hide(chatAvatar)
@@ -118,7 +123,7 @@ internal class BuddyFlight(
     }
     private fun stopAnimator() { animator?.cancel(); animator = null }
     fun takeActor(): CharacterView {
-        disposed = true; stopAnimator(); stopWatchingLayout(); clone.tag = "buddy-carry"
+        disposed = true; stopAnimator(); stopWatchingLayout(false); clone.tag = "buddy-carry"
         if (fadePages) for (view in listOf(home, chat)) {
             view.alpha = 1f; view.translationX = 0f; view.translationY = 0f; view.scaleX = 1f; view.scaleY = 1f
             view.setLayerType(View.LAYER_TYPE_NONE, null)
@@ -127,7 +132,7 @@ internal class BuddyFlight(
     }
     fun dispose(restoreSource: Boolean = true) {
         if (disposed) return
-        disposed = true; stopAnimator(); stopWatchingLayout(); root.removeView(clone)
+        disposed = true; stopAnimator(); stopWatchingLayout(restoreSource); root.removeView(clone)
         if (restoreSource) show(homeAvatar) else hide(homeAvatar); show(chatAvatar)
         homeAvatar.setActive(restoreSource); chatAvatar.setActive(true)
         if (fadePages) for (view in listOf(home, chat)) {

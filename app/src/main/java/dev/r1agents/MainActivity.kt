@@ -951,7 +951,40 @@ class MainActivity : Activity() {
     private val heldBuddies = LinkedHashSet<CharacterView>()
 
     private fun holdBuddy(view: CharacterView) { heldBuddies.add(view); view.alpha = 0f; view.visibility = View.INVISIBLE; view.setActive(false) }
+    /**
+     * Rete di sicurezza contro i buddy doppi: a riposo (nessun volo, nessuna scheda aperta, nessuna entrata in attesa) un clone
+     * "buddy-flight"/"buddy-carry" rimasto in root, o un carriedBuddy che nessuno ha rilasciato, e' un fantasma. Si toglie solo se
+     * lo stesso stato si ripete per due controlli di fila, per non toccare un passaggio di mano legittimo.
+     */
+    private var laneKick: android.view.ViewTreeObserver.OnPreDrawListener? = null
+    private var laneKickHost: View? = null
+    private fun cancelLaneKick() {
+        val k = laneKick; val h = laneKickHost
+        if (k != null && h != null && h.viewTreeObserver.isAlive) h.viewTreeObserver.removeOnPreDrawListener(k)
+        laneKick = null; laneKickHost = null
+    }
+    private var orphanTicks = 0
+    private val buddyReaper = object : Runnable {
+        override fun run() {
+            reapOrphanBuddies()
+            if (visible) root.postDelayed(this, 1200L)
+        }
+    }
+    private fun reapOrphanBuddies() {
+        val resting = overlays.isEmpty() && buddyFlight?.isActive != true && modalBuddyFlight?.isActive != true && stack.lastOrNull()?.pendingEntry == null && pttView == null
+        val ghosts = ArrayList<View>()
+        for (i in 0 until root.childCount) {
+            val v = root.getChildAt(i)
+            if (v is CharacterView && (v.tag == "buddy-flight" || v.tag == "buddy-carry") && v !== carriedBuddy) ghosts += v
+        }
+        if (!resting || (ghosts.isEmpty() && carriedBuddy == null)) { orphanTicks = 0; return }
+        if (++orphanTicks < 2) return
+        orphanTicks = 0
+        ghosts.forEach { heldBuddies.remove(it); root.removeView(it) }
+        if (carriedBuddy != null) clearCarriedBuddy() else if (heldBuddies.isNotEmpty()) restoreBuddies()
+    }
     private fun restoreBuddies() {
+        if (overlays.isNotEmpty()) return   // sotto una scheda aperta i buddy restano nascosti: li riaccende la chiusura
         val current = currentBuddyPage()?.let { sceneAvatar(it, companionAgent?.id) }
         heldBuddies.forEach { it.visibility = View.VISIBLE; it.alpha = 1f; it.setActive(visible && it === current) }; heldBuddies.clear()
         current?.let { cv -> cv.setActive(visible); Motion.onAttention = { view -> attend(cv, view) } }
@@ -972,6 +1005,7 @@ class MainActivity : Activity() {
         }
         val cleanup = if (modal) modalCarryCleanup else null
         val actor = flight.takeActor()
+        flight.leftHidden.forEach(::holdBuddy)
         if (modal) { modalBuddyFlight = null; modalCarryCleanup = null; modalSourceBuddy = null; modalSurface = null } else {
             buddyFlight = null
             flightHome?.let { if (stack.lastOrNull() !== it) detach(it.view) }
@@ -1000,7 +1034,7 @@ class MainActivity : Activity() {
     }
     private fun carryBuddy(anchor: CharacterView, flight: BuddyFlight? = null) {
         clearCarriedBuddy(restore = false)
-        val actor = if (flight?.isActive == true) flight.takeActor() else {
+        val actor = if (flight?.isActive == true) flight.takeActor().also { flight.leftHidden.forEach(::holdBuddy) } else {
             val matrix = android.graphics.Matrix(); anchor.transformMatrixToGlobal(matrix); root.transformMatrixToLocal(matrix)
             val bounds = android.graphics.RectF(0f, 0f, anchor.width.toFloat(), anchor.height.toFloat()).also { matrix.mapRect(it) }
             CharacterView(this, anchor.width).apply {
@@ -1451,7 +1485,7 @@ class MainActivity : Activity() {
             if (hermesMode()) Lane("jobs", UiText.text(this@MainActivity, R.string.ui_e8250ed32d), UiText.text(this@MainActivity, R.string.ui_2515690daf), "jobs") { push(routinesScreen()) } else null,
         )
         var lanePos = 0
-        val laneCaption = text(15f, 700, Theme.FG).apply { gravity = Gravity.CENTER; letterSpacing = 0.08f }
+        val laneCaption = text(14f, 700, Theme.MUTED).apply { gravity = Gravity.CENTER; letterSpacing = 0.08f }
         val laneLayer = FrameLayout(this).apply { visibility = View.INVISIBLE; defaultFocusHighlightEnabled = false }
         stage.addView(laneLayer, FrameLayout.LayoutParams(-1, -1))
         val laneDots = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
@@ -1520,7 +1554,7 @@ class MainActivity : Activity() {
                 // Da una pagina all'altra il buddy resta lì: cambia l'attrezzatura. L'oggetto vecchio esce ruotando, quello nuovo entra, i titoli scivolano.
                 val ob = ot.first as CharacterView; val oldProp = ot.second as PropView; val nb = nt.first as CharacterView; val newProp = nt.second as PropView
                 val oc = outgoing as LinearLayout; val ic = incoming as LinearLayout
-                laneFlight?.dispose(); laneFlight = null
+                cancelLaneKick(); laneFlight?.dispose(); laneFlight = null
                 val nbParent = nb.parent as ViewGroup; val lp = nb.layoutParams
                 (ob.parent as ViewGroup).removeView(ob); nbParent.removeView(nb); nbParent.addView(ob, 0, lp)   // lo stesso buddy passa alla nuova colonna: nessuna dissolvenza
                 incoming.tag = Triple(ob, newProp, l)
@@ -1545,7 +1579,7 @@ class MainActivity : Activity() {
                 val toLane = outgoing === wheel
                 val laneBuddy = laneTri.first as CharacterView; val laneProp = laneTri.second as PropView
                 val lc = laneCol as LinearLayout; val shift = dpi(36f).toFloat() * dir
-                laneFlight?.dispose(); laneFlight = null
+                cancelLaneKick(); laneFlight?.dispose(); laneFlight = null
                 wheel.animate().cancel(); wheel.translationX = 0f
                 if (toLane) {
                     incoming.visibility = View.VISIBLE; incoming.alpha = 1f; incoming.translationX = 0f
@@ -1561,12 +1595,14 @@ class MainActivity : Activity() {
                 val kickoff = object : android.view.ViewTreeObserver.OnPreDrawListener {
                     override fun onPreDraw(): Boolean {
                         laneCol.viewTreeObserver.removeOnPreDrawListener(this)
+                        if (laneKick === this) { laneKick = null; laneKickHost = null }
                         if (!laneCol.isAttachedToWindow || wheelBuddy.width <= 0 || laneBuddy.width <= 0) { laneBuddy.alpha = 1f; return true }
                         val f = BuddyFlight(root, wheel, laneCol, wheelBuddy, laneBuddy, if (toLane) 0f else 1f, fadePages = false) { c, _ -> c.dispose(restoreSource = true); if (laneFlight === c) laneFlight = null }
                         laneFlight = f; f.animateTo(if (toLane) 1f else 0f)
                         return true
                     }
                 }
+                laneKick = kickoff; laneKickHost = laneCol
                 laneCol.viewTreeObserver.addOnPreDrawListener(kickoff)
                 laneView = if (l == null) null else incoming
                 if (l == null) laneLayer.postDelayed({ if (lanePos == 0) laneLayer.visibility = View.INVISIBLE }, Motion.SLOW + 60L)
@@ -1908,7 +1944,6 @@ class MainActivity : Activity() {
         if (first && observeHsid == null && say == null && share == null) {
             emptyHint = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(dpi(24f), dpi(40f), dpi(24f), 0)
-                addView(CharacterView(this@MainActivity, dpi(120f)).also { it.show(agent) }, LinearLayout.LayoutParams(dpi(120f), dpi(120f)))
                 addView(text(24f, 800).apply { text = UiText.text(this@MainActivity, R.string.ui_d5f4254e31, agent.name); gravity = Gravity.CENTER; setPadding(0, dpi(10f), 0, dpi(4f)) })
                 addView(text(15f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_ccd94418dd); gravity = Gravity.CENTER })
                 // Tre idee per cominciare: toccandone una finisce nel campo (non si invia da sola).
@@ -2400,13 +2435,13 @@ class MainActivity : Activity() {
 
     override fun onStart() { super.onStart(); watchPackages(true) }
     override fun onStop() { watchPackages(false); super.onStop() }
-    override fun onResume() { super.onResume(); startShake(); visible = true; dev.r1os.host.ui.Spring.reduced = Motion.reduced(this); runtimeVisibility()
+    override fun onResume() { super.onResume(); startShake(); visible = true; root.removeCallbacks(buddyReaper); root.postDelayed(buddyReaper, 1200L); dev.r1os.host.ui.Spring.reduced = Motion.reduced(this); runtimeVisibility()
         hermesRuntime.requestListener = { request -> runOnUiThread { if (visible) showRequest(request) } }
         hermesRuntime.requestCancelListener = { id -> runOnUiThread { closeOverlay("req-$id") } }
         hermesRuntime.requests.values.forEach { showRequest(it) }
         if (hermesMode()) hermesRuntime.ensureRecoveryService()
          if (::prefs.isInitialized && gateWanted()) showPinGate(); Dim.on(this); characters(root) { it.setActive(true) }; heldBuddies.forEach { it.setActive(false) }; stack.lastOrNull()?.onResume?.invoke() }
-    override fun onPause() { stopShake(); stack.forEach { it.onSuspend?.invoke() }; pttClose(immediate = true); cancelBuddyFlight(); cancelModalBuddyFlight(restoreSource = overlays.isEmpty()); clearCarriedBuddy(restore = overlays.isEmpty()); if (::prefs.isInitialized && gateWanted()) { cancelActiveMic?.invoke(); pttClose(immediate = true); tts?.stop(); pinUnlocked = false; showPinGate() }; visible = false; runtimeVisibility(); hermesRuntime.requestListener = null; hermesRuntime.requestCancelListener = null; characters(root) { it.setActive(false) }; Dim.off(); super.onPause() }
+    override fun onPause() { root.removeCallbacks(buddyReaper); stopShake(); stack.forEach { it.onSuspend?.invoke() }; pttClose(immediate = true); cancelBuddyFlight(); cancelModalBuddyFlight(restoreSource = overlays.isEmpty()); clearCarriedBuddy(restore = overlays.isEmpty()); if (::prefs.isInitialized && gateWanted()) { cancelActiveMic?.invoke(); pttClose(immediate = true); tts?.stop(); pinUnlocked = false; showPinGate() }; visible = false; runtimeVisibility(); hermesRuntime.requestListener = null; hermesRuntime.requestCancelListener = null; characters(root) { it.setActive(false) }; Dim.off(); super.onPause() }
     private val KEYCODE_NAV_NEXT = 261   // KEYCODE_NAVIGATE_NEXT
     private val KEYCODE_NAV_PREV = 260   // KEYCODE_NAVIGATE_PREVIOUS
 

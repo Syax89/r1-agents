@@ -55,3 +55,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.16 (code 23): avviso visibile quando si esce da una risposta in corso (prima non compariva), scheda di benvenuto, conferme e errori classificati verificati sul dispositivo.
 
 0.5.17 (code 24): dentro una funzione del carosello il click della rotella tenuto premuto torna all agente (il click breve esegue la funzione); suggerimento aggiornato.
+
+0.5.18 (code 25): buddy doppi: i buddy ritirati durante un volo non si riaccendono piu quando il clone viene preso in carico, un solo volo alla volta tra rotella e pagine del carosello, rete di sicurezza che toglie cloni orfani a riposo, niente riaccensione sotto una scheda aperta, la chat vuota mostra un solo buddy.
