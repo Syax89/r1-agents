@@ -43,3 +43,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.10 (code 17): fotocamera del carosello: «scatta e chiedi a un agente» (la foto arriva come allegato nella chat scelta) oppure fotocamera di sistema.
 
 0.5.11 (code 18): pagina attività unica in modalità Hermes: sotto i cron del dashboard anche le routine locali di questo telefono.
+
+0.5.12 (code 19): avvisi opzionali dalle attività di Hermes (Sicurezza, spenti di default): ogni 30 minuti controlla i cron e notifica quelli che hanno girato, con anteprima privata.

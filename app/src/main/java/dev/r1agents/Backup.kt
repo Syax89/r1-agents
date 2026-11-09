@@ -29,7 +29,7 @@ object Backup {
         return out.toString(Charsets.UTF_8.name())
     }
     /** Impostazioni che decidono verso quale server partono chiavi e password: mai da un file importato. */
-    internal fun isDestination(k: String) = k.startsWith("base_") || k.startsWith("dash_") || k == "update_url" || k == "nous_client_id" || k == "dev_actions" || k == "ctx_phone"
+    internal fun isDestination(k: String) = k.startsWith("base_") || k.startsWith("dash_") || k == "update_url" || k == "nous_client_id" || k == "dev_actions" || k == "ctx_phone" || k == "cron_notify"
     private val skipPrefix = listOf("nous_", "dash_sid_", "w_", "reopen", "app_pin_", "pin_", "running_", "pending_", "actlog_", "draft_", "hint_", "asked_")
 
     class Summary(val agents: Int, val chats: Int, val notes: Int, val alarms: Int, val routines: Int, val settings: Int) {

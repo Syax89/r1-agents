@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 18,
-  "versionName": "0.5.11",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.11/r1agents-release-signed.apk",
-  "sha256": "6851b49aacfc5901c7318c5051ad2dedb10d35d5f3dd2252490f775f41522147",
-  "sizeBytes": 1341767,
-  "notes": "0.5.11: pagina attività unica in modalità Hermes: sotto i cron del dashboard anche le routine locali di questo telefono.\n"
+  "versionCode": 19,
+  "versionName": "0.5.12",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.12/r1agents-release-signed.apk",
+  "sha256": "d9d55233fc4c42fb8f87da5797b8afc9856c9cb5efe2e5c4b4697a4ab79bc3c1",
+  "sizeBytes": 1345863,
+  "notes": "0.5.12: avvisi opzionali dalle attività di Hermes (Sicurezza, spenti di default): controllo ogni 30 minuti e notifica privata.\n"
 }

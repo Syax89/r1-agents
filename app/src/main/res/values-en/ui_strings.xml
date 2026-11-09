@@ -656,6 +656,9 @@
     <string name="ui_57289acd6d" formatted="false">"take a photo and ask an agent"</string>
     <string name="ui_b1a6079206" formatted="false">"system camera"</string>
     <string name="ui_91bfacd574" formatted="false">"routines on this phone"</string>
+    <string name="ui_2718314a3d" formatted="false">"alerts from Hermes tasks"</string>
+    <string name="ui_768e8b058b" formatted="false">"checks every 30 minutes and alerts when a scheduled task has run"</string>
+    <string name="ui_e35f849a62" formatted="false">"task ran"</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>

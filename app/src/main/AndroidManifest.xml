@@ -86,6 +86,7 @@
         <provider android:name=".PhotoProvider" android:authorities="${applicationId}.photos" android:exported="false" android:grantUriPermissions="true" />
         <receiver android:name=".AlarmReceiver" android:exported="false" />
         <receiver android:name=".UpdateResultReceiver" android:exported="false" />
+        <receiver android:name=".CronPollReceiver" android:exported="false" />
         <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /></intent-filter>
         </receiver>

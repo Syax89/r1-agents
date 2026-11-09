@@ -31,5 +31,6 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, i: Intent) {
         if (i.action != Intent.ACTION_BOOT_COMPLETED) return
         val db = Db.get(ctx); Sched.channels(ctx); Sched.all(ctx, db)
+        if (ctx.getSharedPreferences("settings", Context.MODE_PRIVATE).getBoolean(CronWatch.PREF, false)) CronWatch.arm(ctx, true)
     }
 }

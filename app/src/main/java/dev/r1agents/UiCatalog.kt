@@ -663,6 +663,9 @@ internal object UiCatalog {
         UiEntry(R.string.ui_57289acd6d, "scatta e chiedi a un agente"),
         UiEntry(R.string.ui_b1a6079206, "fotocamera di sistema"),
         UiEntry(R.string.ui_91bfacd574, "routine su questo telefono"),
+        UiEntry(R.string.ui_2718314a3d, "avvisi dalle attività di Hermes"),
+        UiEntry(R.string.ui_768e8b058b, "controlla ogni 30 minuti e avvisa quando un'attività pianificata ha girato"),
+        UiEntry(R.string.ui_e35f849a62, "attività eseguita"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

@@ -159,6 +159,9 @@ class MainActivity : Activity() {
             try { startActivity(Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { snack(UiText.text(this@MainActivity, R.string.ui_7d0f161c22)) }
         })
         col.addView(row(UiText.text(this@MainActivity, R.string.ui_793ade4b26), Theme.accent, sub = UiText.text(this@MainActivity, R.string.ui_c5bcea219e), icon = "sliders") { push(actionLogScreen()) })
+        if (hermesMode()) col.addView(row(UiText.text(this@MainActivity, R.string.ui_2718314a3d), Theme.accent, sub = UiText.text(this@MainActivity, R.string.ui_768e8b058b), check = prefs.getBoolean(CronWatch.PREF, false), icon = "sliders") {
+            val on = !prefs.getBoolean(CronWatch.PREF, false); prefs.edit().putBoolean(CronWatch.PREF, on).remove("pending_cron_seen").apply(); CronWatch.arm(this, on); stack.last().onShow?.invoke()
+        })
         col.addView(row(UiText.text(this@MainActivity, R.string.ui_7dd4ab62e7), Theme.accent, sub = UiText.text(this@MainActivity, R.string.ui_3b87e2a997), check = prefs.getBoolean(PhoneContext.PREF, false), icon = "sliders") {
             prefs.edit().putBoolean(PhoneContext.PREF, !prefs.getBoolean(PhoneContext.PREF, false)).apply(); applyPhoneContext(); stack.last().onShow?.invoke()
         })

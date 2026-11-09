@@ -653,5 +653,8 @@
   "batteria, rete, sveglie e app recenti agli agenti locali": "battery, network, alarms and recent apps shared with local agents",
   "scatta e chiedi a un agente": "take a photo and ask an agent",
   "fotocamera di sistema": "system camera",
-  "routine su questo telefono": "routines on this phone"
+  "routine su questo telefono": "routines on this phone",
+  "avvisi dalle attività di Hermes": "alerts from Hermes tasks",
+  "controlla ogni 30 minuti e avvisa quando un'attività pianificata ha girato": "checks every 30 minutes and alerts when a scheduled task has run",
+  "attività eseguita": "task ran"
 }
