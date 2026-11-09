@@ -1024,6 +1024,8 @@ class MainActivity : Activity() {
     private fun sceneAvatar(view: View, agentId: Long? = null): CharacterView? {
         view.findViewWithTag<CharacterView>("scene-buddy")?.let { return it }
         if (view.tag == "home-screen") {
+            // Su una pagina del carosello (fotocamera, app, strumenti…) il buddy che si vede è quello della pagina, non quello della rotella nascosto sotto: i voli devono partire e arrivare lì.
+            view.findViewWithTag<CharacterView>("lane-buddy")?.takeIf { it.isShown && it.width > 0 }?.let { return it }
             val focused = visibleAgents().getOrNull(homeIndex)?.id ?: neutralBuddy.id
             view.findViewWithTag<CharacterView>("home-agent-$focused")?.let { return it }
         }
@@ -1458,6 +1460,27 @@ class MainActivity : Activity() {
                 outgoing.alpha = 0f; if (outgoing !== wheel) laneLayer.removeView(outgoing) else wheel.visibility = View.INVISIBLE
                 incoming.visibility = View.VISIBLE; incoming.alpha = 1f; incoming.translationX = 0f
                 laneView = if (l == null) null else incoming; if (l == null) laneLayer.visibility = View.INVISIBLE
+                return
+            }
+            val ot = outgoing.tag as? Triple<*, *, *>; val nt = incoming.tag as? Triple<*, *, *>
+            if (outgoing !== wheel && incoming !== wheel && ot != null && nt != null) {
+                // Da una pagina all'altra il buddy resta lì: cambia l'attrezzatura. L'oggetto vecchio esce ruotando, quello nuovo entra, i titoli scivolano.
+                val ob = ot.first as CharacterView; val oldProp = ot.second as PropView; val nb = nt.first as CharacterView; val newProp = nt.second as PropView
+                val oc = outgoing as LinearLayout; val ic = incoming as LinearLayout
+                val nbParent = nb.parent as ViewGroup; val lp = nb.layoutParams
+                (ob.parent as ViewGroup).removeView(ob); nbParent.removeView(nb); nbParent.addView(ob, 0, lp)   // lo stesso buddy passa alla nuova colonna: nessuna dissolvenza
+                incoming.tag = Triple(ob, newProp, l)
+                incoming.visibility = View.VISIBLE; incoming.alpha = 1f; incoming.translationX = 0f
+                val shift = dpi(36f).toFloat() * dir
+                for (i in 0..1) {
+                    val inText = ic.getChildAt(i); inText.translationX = shift; inText.alpha = 0f
+                    inText.animate().translationX(0f).alpha(1f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start()
+                    oc.getChildAt(i).animate().translationX(-shift).alpha(0f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).start()
+                }
+                newProp.alpha = 0f; newProp.animate().alpha(1f).setStartDelay(Motion.PRESS).setDuration(Motion.BASE).start()
+                oldProp.animate().cancel(); oldProp.animate().rotation(-dir * 60f).scaleX(.5f).scaleY(.5f).translationX(-shift).alpha(0f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).withEndAction { laneLayer.removeView(outgoing) }.start()
+                ob.lookAt(dir * 18f, 10f, hold = Motion.SLOW * 2)
+                laneView = incoming
                 return
             }
             incoming.visibility = View.VISIBLE; incoming.translationX = dir * w * 0.4f; incoming.alpha = 0f

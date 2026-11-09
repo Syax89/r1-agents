@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 11,
-  "versionName": "0.5.4",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.4/r1agents-release-signed.apk",
-  "sha256": "617de205c7b4da4a9c709bef603659c3e89b656e362915ca48c133db4aaf5fe0",
+  "versionCode": 12,
+  "versionName": "0.5.5",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.5/r1agents-release-signed.apk",
+  "sha256": "5fa709243975cea231b68f9c73227c4a21b0911698883b156dac13701e078647",
   "sizeBytes": 1329479,
-  "notes": "0.5.4: il buddy dei menu a pannello non cade più sulle voci scorrendo la lista; testo di Sicurezza aggiornato (PIN sulle chat). Include PIN per chat, inattività impostabile, tile delicati e credenziali più sicure della 0.5.3."
+  "notes": "0.5.5: il buddy non appare più doppio quando chiudi il menu da una pagina del carosello; tra le pagine del carosello il buddy resta fermo e cambia l'attrezzatura (l'oggetto esce ruotando, quello nuovo entra) invece di dissolversi."
 }
