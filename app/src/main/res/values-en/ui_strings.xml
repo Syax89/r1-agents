@@ -633,6 +633,18 @@
     <string name="ui_7b4f2d1fe7" formatted="false">"Android screen lock"</string>
     <string name="ui_544aacf142" formatted="false">"choose “None” to use only the app PIN"</string>
     <string name="ui_7d0f161c22" formatted="false">"Security settings unavailable"</string>
+    <string name="ui_768a2cb129" formatted="false">"lock this chat"</string>
+    <string name="ui_9d86e57fdb" formatted="false">"unlock this chat"</string>
+    <string name="ui_7789e4318d" formatted="false">"lock all chats with the PIN"</string>
+    <string name="ui_c9e8d72546" formatted="false">"locked chat: PIN required"</string>
+    <string name="ui_17e2587ab7" formatted="false">"leave the chat"</string>
+    <string name="ui_2c24e821f5" formatted="false">"idle: the buddy falls asleep after"</string>
+    <string name="ui_ea4440bd94" formatted="false">"never"</string>
+    <string name="ui_3eb8a90885" formatted="false">"1 min"</string>
+    <string name="ui_47742d68e8" formatted="false">"2 min"</string>
+    <string name="ui_b45ebd80de" formatted="false">"5 min"</string>
+    <string name="ui_4605ee7759" formatted="false">"10 min"</string>
+    <string name="ui_dc815e9fc7" formatted="false">"set a PIN to lock chats"</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>

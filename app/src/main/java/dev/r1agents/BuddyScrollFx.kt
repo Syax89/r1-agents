@@ -83,8 +83,9 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
             return null
         }
         headerMode = false
+        val newRow = r !== row
         row = r; buddy = r.getChildAt(0) as? CharacterView
-        baseH = ((r.layoutParams?.height ?: 0).takeIf { it > 0 } ?: r.height)
+        if (newRow || baseH == 0) baseH = ((r.layoutParams?.height ?: 0).takeIf { it > 0 } ?: r.height)   // mai riletto dalla riga già ridotta
         if (scroll.scrollY > 0) scroll.post { applyRest() } // pagina ricostruita già scorsa
         return buddy
     }
@@ -94,9 +95,9 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
     private fun progress(y: Int) = (y.toFloat() / baseH.coerceAtLeast(1)).coerceIn(0f, 1f)
     /** La riga si restringe da piena a 44 dp mentre scorri: il buddy viene "spinto in su" e la lista guadagna spazio. */
     private fun rowHeight(p: Float) = (baseH - (baseH - density * 44f) * p).toInt().coerceAtLeast((density * 44f).toInt())
-    private fun fit(r: View, p: Float) { if (root == null) return; val clip = p > 0f; (r as? ViewGroup)?.let { g -> if (g.clipChildren != clip) g.clipChildren = clip }; (r.parent as? ViewGroup)?.let { g -> if (g.clipChildren != clip) g.clipChildren = clip } /* scorrendo, il buddy resta mezza sfera sul bordo della riga: mai sopra le schede */; val lp = r.layoutParams ?: return; val h = rowHeight(p); if (lp.height != h) { lp.height = h; r.layoutParams = lp } }
+    private fun fit(r: View, p: Float) { if (root == null) return; val lp = r.layoutParams ?: return; val h = rowHeight(p); if (lp.height != h) { lp.height = h; r.layoutParams = lp } }
     /** Centro sul bordo inferiore della riga a fine corsa: resta mezza sfera con gli occhi, il resto è coperto dalle righe. */
-    private fun restY(p: Float) = (rowHeight(p) / 2f - (if (root != null) density * 10f else 0f)) * p   // con la testata fissa il centro resta dentro il ritaglio: occhi sempre visibili
+    private fun restY(p: Float) = (rowHeight(p) / 2f - (if (root != null) density * 16f else 0f)) * p   // con la testata fissa gli occhi restano sopra il bordo della lista
     private fun applyRest() {
         val cv = buddy ?: return; val r = row ?: return
         val p = progress(scroll.scrollY)
@@ -117,6 +118,7 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
         vel = vel * 0.6f + (dy.toFloat() / dt) * 0.4f
         if (pull == 0f) {
             val p = progress(y)
+            cv.animate().cancel()   // un calm() in corso non deve sovrascrivere la posizione che segue il dito
             cv.pivotX = cv.width / 2f; cv.pivotY = cv.height * 0.75f
             fit(r, p)
             cv.translationY = restY(p)

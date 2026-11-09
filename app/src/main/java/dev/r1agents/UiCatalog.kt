@@ -640,6 +640,18 @@ internal object UiCatalog {
         UiEntry(R.string.ui_7b4f2d1fe7, "blocco schermo di Android"),
         UiEntry(R.string.ui_544aacf142, "scegli «nessuno» per usare solo il PIN dell'app"),
         UiEntry(R.string.ui_7d0f161c22, "Impostazioni di sicurezza non disponibili"),
+        UiEntry(R.string.ui_768a2cb129, "blocca questa chat"),
+        UiEntry(R.string.ui_9d86e57fdb, "sblocca questa chat"),
+        UiEntry(R.string.ui_7789e4318d, "blocca tutte le chat con il PIN"),
+        UiEntry(R.string.ui_c9e8d72546, "chat bloccata: serve il PIN"),
+        UiEntry(R.string.ui_17e2587ab7, "esci dalla chat"),
+        UiEntry(R.string.ui_2c24e821f5, "inattività: il buddy si addormenta dopo"),
+        UiEntry(R.string.ui_ea4440bd94, "mai"),
+        UiEntry(R.string.ui_3eb8a90885, "1 min"),
+        UiEntry(R.string.ui_47742d68e8, "2 min"),
+        UiEntry(R.string.ui_b45ebd80de, "5 min"),
+        UiEntry(R.string.ui_4605ee7759, "10 min"),
+        UiEntry(R.string.ui_dc815e9fc7, "imposta un PIN per bloccare le chat"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

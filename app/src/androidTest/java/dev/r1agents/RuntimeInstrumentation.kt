@@ -168,8 +168,9 @@ class RuntimeInstrumentation : Instrumentation() {
             result.putString("stream", "OK: foreground, risposta e notifica in background; stop per chat; recupero senza reinvio")
             step("recupero senza reinvio: OK")
             // Il blocco si prova solo nella copia QA: nessuna preferenza del pacchetto utente cambia.
-            prefs.edit().putString("app_pin_hash", PinHash.create("004279")).commit()
-            runOnMainSync { ctx.startActivity(Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)) }; await("attività QA riaperta") { runtime.foreground }
+            // Il PIN protegge le chat, non l'app: qui tutte le chat sono bloccate e se ne apre una.
+            prefs.edit().putString("app_pin_hash", PinHash.create("004279")).putBoolean("lock_all_chats", true).commit()
+            runOnMainSync { ctx.startActivity(Intent(ctx, MainActivity::class.java).putExtra("open_chat", recoverChat).putExtra("open_agent", agent.id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)) }; await("attività QA riaperta") { runtime.foreground }
             fun findText(view: android.view.View, text: String): android.widget.TextView? {
                 if (view is android.widget.TextView && view.text.toString() == text) return view
                 if (view is android.view.ViewGroup) for (i in 0 until view.childCount) findText(view.getChildAt(i), text)?.let { return it }
@@ -180,6 +181,7 @@ class RuntimeInstrumentation : Instrumentation() {
                 if (view is android.view.ViewGroup) for (i in 0 until view.childCount) pinField(view.getChildAt(i))?.let { return it }
                 return null
             }
+            await("chat bloccata: richiesta del PIN") { var found = false; runOnMainSync { found = findText(activity!!.window.decorView, "sblocca r1agents") != null }; found }
             check(activity!!.window.attributes.flags and android.view.WindowManager.LayoutParams.FLAG_SECURE != 0)
             runOnMainSync {
                 val decor = activity!!.window.decorView
@@ -193,8 +195,9 @@ class RuntimeInstrumentation : Instrumentation() {
             check(annoyed) { "Con il PIN errato il buddy non si infastidisce" }
             runOnMainSync { val decor = activity!!.window.decorView; pinField(decor)!!.setText("004279"); findText(decor, "sblocca")!!.performClick() }
             await("PIN corretto accettato") { var unlocked = false; runOnMainSync { unlocked = findText(activity!!.window.decorView, "sblocca r1agents") == null }; unlocked }
-            prefs.edit().remove("app_pin_hash").commit()
-            step("PIN corretto ed errato: OK")
+            prefs.edit().remove("app_pin_hash").remove("lock_all_chats").commit()
+            runOnMainSync { activity!!.onBackPressed() }
+            step("PIN corretto ed errato su chat bloccata: OK")
             val oldAddress = runtime.dash.url
             val link = Pairing.create("http://192.168.1.20:9119", "esempio").link()
             runOnMainSync { ctx.startActivity(Intent(ctx, MainActivity::class.java).setAction(Intent.ACTION_VIEW).setData(android.net.Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)) }

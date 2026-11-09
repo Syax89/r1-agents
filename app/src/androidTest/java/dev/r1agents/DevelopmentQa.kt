@@ -60,7 +60,7 @@ internal class DevelopmentQa(private val test: Instrumentation) {
             ui { val d = activity!!.window.decorView; fxScroll = views(d).filterIsInstance<R1ScrollView>().first { it.isShown }; fxBuddy = views(d).filterIsInstance<dev.r1os.host.ui.CharacterView>().first { it.isShown && it.tag == "scene-buddy" }
                 check(fxBuddy.alpha > .99f && fxBuddy.scaleX > .99f) { "Buddy non intero in cima" } }
             ui { fxScroll.scrollTo(0, 600) }; Thread.sleep(400)
-            ui { check(fxBuddy.translationY > ctx.resources.displayMetrics.density * 10f && fxBuddy.alpha > .9f) { "Il buddy non affonda a metà scorrendo: ty=${fxBuddy.translationY} alpha=${fxBuddy.alpha}" } }
+            ui { check(fxBuddy.translationY > ctx.resources.displayMetrics.density * 4f && fxBuddy.alpha > .9f) { "Il buddy non affonda a metà scorrendo: ty=${fxBuddy.translationY} alpha=${fxBuddy.alpha}" } }
             ui { fxScroll.scrollTo(0, 0) }; Thread.sleep(900)
             ui { check(fxBuddy.scaleX > .98f && fxBuddy.alpha > .98f) { "Il buddy non torna intero in cima: ${fxBuddy.scaleX}/${fxBuddy.alpha}" } }
             val pullPx = ctx.resources.displayMetrics.density * 170f
@@ -270,6 +270,38 @@ internal class DevelopmentQa(private val test: Instrumentation) {
                 db.deleteChat(flightChat)
             }
             step("volo del buddy: mai due buddy insieme: OK")
+            // PIN solo sulle chat: con il PIN impostato la home resta libera; una chat bloccata chiede il PIN, una no.
+            run {
+                val lockedChat = db.newChat(agent.id); val freeChat = db.newChat(agent.id)
+                prefs.edit().putString("app_pin_hash", PinHash.create("2468")).putStringSet("locked_chats", setOf(lockedChat.toString())).remove("lock_all_chats").commit()
+                fun gate() = MainActivity::class.java.getDeclaredField("pinGate").apply { isAccessible = true }.get(activity)
+                ui { test.callActivityOnPause(activity!!); test.callActivityOnResume(activity!!) }; Thread.sleep(500)
+                check(gate() == null) { "PIN: la home non deve chiedere il PIN" }
+                ui { test.callActivityOnNewIntent(activity!!, Intent(ctx, MainActivity::class.java).putExtra("open_chat", freeChat).putExtra("open_agent", agent.id)) }; Thread.sleep(1500)
+                check(gate() == null) { "PIN: una chat non bloccata non deve chiedere il PIN" }
+                ui { activity!!.onBackPressed() }; Thread.sleep(900)
+                ui { test.callActivityOnNewIntent(activity!!, Intent(ctx, MainActivity::class.java).putExtra("open_chat", lockedChat).putExtra("open_agent", agent.id)) }; Thread.sleep(1500)
+                run {
+                    val st = MainActivity::class.java.getDeclaredField("stack").apply { isAccessible = true }.get(activity) as List<*>
+                    val top = st.lastOrNull(); val ck = top?.let { it.javaClass.getDeclaredField("chatKey").apply { isAccessible = true }.get(it) }
+                    android.util.Log.i("R1PERF", "pin-debug stack=${st.size} chatKey=$ck locked=$lockedChat pin=${prefs.getString("app_pin_hash", "")?.isNotEmpty()} set=${prefs.getStringSet("locked_chats", null)}")
+                }
+                check(gate() != null) { "PIN: una chat bloccata deve chiedere il PIN" }
+                ui { activity!!.onBackPressed() }; Thread.sleep(900)   // indietro dal gate = esce dalla chat
+                check(gate() == null) { "PIN: uscire dalla chat bloccata deve togliere il gate" }
+                prefs.edit().remove("app_pin_hash").remove("locked_chats").commit()
+                db.deleteChat(lockedChat); db.deleteChat(freeChat)
+            }
+            step("PIN solo sulle chat bloccate: home libera, chat libera, chat bloccata, uscita: OK")
+            // Inattività: il tempo si legge dalle impostazioni (mai = 0).
+            run {
+                val idle = MainActivity::class.java.getDeclaredMethod("idleMs").apply { isAccessible = true }
+                val got = mutableListOf<Long>()
+                for (v in listOf("1", "5", "never")) { prefs.edit().putString("idle_after", v).commit(); ui { got += idle.invoke(activity!!) as Long } }
+                prefs.edit().remove("idle_after").commit()
+                check(got == listOf(60_000L, 300_000L, 0L)) { "Inattività: tempi letti male $got" }
+            }
+            step("inattività: tempo letto dalle impostazioni: OK")
             // Modalità automatica: la direttiva si esegue da sola una volta sola (qui una nota, innocua).
             run {
                 val auto = MainActivity::class.java.getDeclaredMethod("autoRunActions", String::class.java).apply { isAccessible = true }

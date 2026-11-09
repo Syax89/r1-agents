@@ -44,17 +44,20 @@ internal class BuddyFlight(
 
     private val layouts = android.view.ViewTreeObserver.OnGlobalLayoutListener {
         if (isActive) {
-            resolveHome?.invoke()?.takeIf { it !== homeAvatar }?.let { retired.add(homeAvatar); homeAvatar = it; it.alpha = 0f; it.setActive(false) }
-            resolveChat?.invoke()?.takeIf { it !== chatAvatar }?.let { retired.add(chatAvatar); chatAvatar = it; it.alpha = 0f; it.setActive(false) }
+            resolveHome?.invoke()?.takeIf { it !== homeAvatar }?.let { retired.add(homeAvatar); homeAvatar = it; hide(it); it.setActive(false) }
+            resolveChat?.invoke()?.takeIf { it !== chatAvatar }?.let { retired.add(chatAvatar); chatAvatar = it; hide(it); it.setActive(false) }
             applyProgress(progress)
         }
     }
+    /** I buddy veri si nascondono con INVISIBLE (non solo alpha): scroll, comparse e capolini non possono riaccenderli durante il volo. */
+    private fun hide(v: CharacterView) { v.alpha = 0f; if (v.visibility != View.INVISIBLE) v.visibility = View.INVISIBLE }
+    private fun show(v: CharacterView) { v.visibility = View.VISIBLE; v.alpha = 1f }
     private fun stopWatchingLayout() {
         if (root.viewTreeObserver.isAlive) root.viewTreeObserver.removeOnGlobalLayoutListener(layouts)
-        retired.forEach { it.alpha = 1f; it.setActive(false) }; retired.clear()
+        retired.forEach { if (it.tag != "buddy-carry") show(it); it.setActive(false) }; retired.clear()
     }
     init {
-        homeAvatar.alpha = 0f; chatAvatar.alpha = 0f
+        hide(homeAvatar); hide(chatAvatar)
         homeAvatar.setActive(false); chatAvatar.setActive(false)
         if (fadePages) { home.setLayerType(View.LAYER_TYPE_HARDWARE, null); chat.setLayerType(View.LAYER_TYPE_HARDWARE, null) }
         root.addView(clone, FrameLayout.LayoutParams(size, size))
@@ -80,7 +83,7 @@ internal class BuddyFlight(
         }
         progress = value.coerceIn(0f, 1f)
         // Finché il volo dura, in scena c'è un solo buddy: comparse, capolini o rientri della pagina non possono riaccendere gli originali.
-        if (!disposed) { homeAvatar.alpha = 0f; chatAvatar.alpha = 0f; retired.forEach { it.alpha = 0f } }
+        if (!disposed) { hide(homeAvatar); hide(chatAvatar); retired.forEach { hide(it) } }
         clone.copyScenePoseFrom(if (progress >= .35f) chatAvatar else homeAvatar)
         val flight = Theme.SETTLE.getInterpolation(progress)
         val alpha = fade.getInterpolation(progress)
@@ -125,7 +128,7 @@ internal class BuddyFlight(
     fun dispose(restoreSource: Boolean = true) {
         if (disposed) return
         disposed = true; stopAnimator(); stopWatchingLayout(); root.removeView(clone)
-        homeAvatar.alpha = if (restoreSource) 1f else 0f; chatAvatar.alpha = 1f
+        if (restoreSource) show(homeAvatar) else hide(homeAvatar); show(chatAvatar)
         homeAvatar.setActive(restoreSource); chatAvatar.setActive(true)
         if (fadePages) for (view in listOf(home, chat)) {
             view.alpha = 1f; view.translationX = 0f; view.translationY = 0f; view.scaleX = 1f; view.scaleY = 1f

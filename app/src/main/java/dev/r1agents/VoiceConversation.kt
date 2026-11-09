@@ -66,7 +66,7 @@ internal class VoiceConversation(
         val column = LinearLayout(act).apply { orientation = LinearLayout.VERTICAL; setPadding(act.dpi(16f), act.dpi(8f), act.dpi(16f), act.dpi(8f)) }
         addView(column, LayoutParams(-1, -1))
         val header = LinearLayout(act).apply { gravity = Gravity.CENTER_VERTICAL }
-        val back = act.text(22f, 600).apply { text = "×"; isFocusable = true; gravity = Gravity.CENTER; contentDescription = tr(R.string.voice_close); setOnClickListener { close() } }
+        val back = act.text(22f, 600).apply { text = "×"; isFocusable = true; defaultFocusHighlightEnabled = false; gravity = Gravity.CENTER; contentDescription = tr(R.string.voice_close); setOnClickListener { close() } }
         header.addView(back, LinearLayout.LayoutParams(act.dpi(48f), act.dpi(48f)))
         header.addView(act.text(17f, 650).keepCase().apply { text = agent.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }, LinearLayout.LayoutParams(0, -2, 1f))
         column.addView(header)
@@ -88,11 +88,11 @@ internal class VoiceConversation(
         bubble.addView(reply); bubble.isFillViewport = false; bubble.visibility = View.INVISIBLE
         bubbleSpace.addView(bubble, LayoutParams(-1, -2, Gravity.CENTER_VERTICAL).apply { marginEnd = act.dpi(38f) })
         bubbleSpace.visibility = View.GONE
-        stop.apply { text = tr(R.string.voice_stop); isFocusable = true; gravity = Gravity.CENTER; visibility = View.GONE; setOnClickListener { stopTurn() } }
+        stop.apply { text = tr(R.string.voice_stop); isFocusable = true; defaultFocusHighlightEnabled = false; gravity = Gravity.CENTER; visibility = View.GONE; setOnClickListener { stopTurn() } }
         column.addView(stop, LinearLayout.LayoutParams(-1, act.dpi(44f)))
         hold.apply {
             text = tr(R.string.voice_hold); gravity = Gravity.CENTER; background = roundRect(Theme.FOCUS, act.dp(26f)); isClickable = true
-            contentDescription = tr(R.string.voice_hold); isFocusable = true
+            contentDescription = tr(R.string.voice_hold); isFocusable = true; defaultFocusHighlightEnabled = false
             setOnKeyListener { _, key, event ->
                 if (key != android.view.KeyEvent.KEYCODE_DPAD_CENTER && key != android.view.KeyEvent.KEYCODE_ENTER) false
                 else { if (event.action == android.view.KeyEvent.ACTION_DOWN && event.repeatCount == 0) startListening() else if (event.action == android.view.KeyEvent.ACTION_UP) release(); true }

@@ -62,6 +62,7 @@ internal class SceneQa(private val test: Instrumentation, private val edgesOnly:
             check(rect.contains(x, y)) { "Centro del buddy ritagliato: $name / $rect / $x,$y" }
         }
         if (!screenshot) return
+        if (activity.window.attributes.flags and android.view.WindowManager.LayoutParams.FLAG_SECURE != 0) return   // pagina con campi segreti: lo schermo non si può fotografare (è voluto)
         val shot = test.uiAutomation.takeScreenshot() ?: error("Screenshot assente")
         try {
             var coloured = 0

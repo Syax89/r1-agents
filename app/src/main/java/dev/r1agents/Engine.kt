@@ -27,17 +27,30 @@ object Providers {
     fun get(id: String) = all.firstOrNull { it.id == id } ?: all[0]
 }
 
+/** Vero se l'indirizzo è sicuro per mandarci una chiave: https o rete locale, senza userinfo né query. */
+fun safeBase(url: String): Boolean {
+    val u = runCatching { java.net.URI(url.trim()) }.getOrNull() ?: return false
+    val scheme = u.scheme?.lowercase() ?: return false
+    if (scheme != "http" && scheme != "https") return false
+    if (u.host.isNullOrBlank() || u.userInfo != null || u.rawQuery != null || u.rawFragment != null) return false
+    return httpAllowed(scheme + "://" + u.host + (if (u.port > 0) ":" + u.port else ""))
+}
+
 class Settings(val p: SharedPreferences, private val fixedProvider: String? = null) {
     var provider: Provider
         get() = Providers.get(fixedProvider ?: p.getString("provider", "anthropic")!!)
         set(v) { p.edit().putString("provider", v.id).apply() }
     fun key(pr: Provider) = p.secret("key_${pr.id}")
-    fun base(pr: Provider) = p.getString("base_${pr.id}", pr.baseUrl)?.ifBlank { pr.baseUrl } ?: pr.baseUrl
+    /** L'indirizzo del provider: la chiave API viaggia solo verso https (o rete locale), senza utente:password né parametri nell'URL; altrimenti si usa quello predefinito. */
+    fun base(pr: Provider): String {
+        val saved = p.getString("base_${pr.id}", pr.baseUrl)?.ifBlank { pr.baseUrl } ?: pr.baseUrl
+        return if (safeBase(saved)) saved else pr.baseUrl
+    }
     fun model(pr: Provider) = p.getString("model_${pr.id}", pr.model)?.ifBlank { pr.model } ?: pr.model
     fun set(pr: Provider, key: String?, base: String?, model: String?) {
         p.edit().apply {
             key?.let { putSecret("key_${pr.id}", it.trim()) }
-            base?.let { putString("base_${pr.id}", it.trim()) }
+            base?.let { if (it.isBlank() || safeBase(it.trim())) putString("base_${pr.id}", it.trim()) }
             model?.let { putString("model_${pr.id}", it.trim()) }
         }.apply()
     }
@@ -338,7 +351,7 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
             if (c.responseCode !in 200..299) {
                 val err = c.errorStream?.bufferedReader()?.readText().orEmpty()
                 val msg = runCatching { JSONObject(err).let { it.optJSONObject("error")?.optString("message") ?: it.optString("message") } }.getOrNull()
-                throw RuntimeException("HTTP ${c.responseCode}: ${msg?.takeIf { it.isNotBlank() } ?: err.take(200)}")
+                throw RuntimeException("HTTP ${c.responseCode}: ${Vault.redact(msg?.takeIf { it.isNotBlank() } ?: err.take(200))}")
             }
             BufferedReader(InputStreamReader(c.inputStream)).use { r ->
                 while (!cancelled) {
@@ -379,7 +392,7 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
             }
             else -> "strumento sconosciuto"
         }
-    } catch (e: Exception) { "errore: ${e.message}" }
+    } catch (e: Exception) { "errore: ${Vault.redact(e.message)}" }
 
     /** Solo https verso host pubblici: l'agente non deve poter raggiungere la rete locale dell'utente. */
     private fun fetch(start: String): String {

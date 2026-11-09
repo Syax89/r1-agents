@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 9,
-  "versionName": "0.5.2",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.2/r1agents-release-signed.apk",
-  "sha256": "0ff41286dde4e15a5d8fbfadf0d8bf167292fec52ac74c2d423b24caea996eb6",
-  "sizeBytes": 1321287,
-  "notes": "0.5.2: credenziali sempre mascherate (sessioni Hermes cifrate), tile con pressione delicata, buddy mai sopra le schede nello scroll, niente buddy doppi nei voli, notifiche private, accesso rapido al blocco di Android."
+  "versionCode": 10,
+  "versionName": "0.5.3",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.3/r1agents-release-signed.apk",
+  "sha256": "b39d0cdf5cbbcad2f6a8d1caa847dee97918e14846505ac18a3c02f30d799221",
+  "sizeBytes": 1325383,
+  "notes": "0.5.3: PIN solo sulle chat (alcune o tutte), inattività del buddy impostabile, tile con pressione delicata senza colori, buddy mai sopra le schede e mai doppio nei voli, chiavi API solo verso https, import backup sicuro, schermate con campi segreti protette da screenshot."
 }

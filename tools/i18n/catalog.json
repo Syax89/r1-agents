@@ -630,5 +630,17 @@
   "spenta": "off",
   "blocco schermo di Android": "Android screen lock",
   "scegli «nessuno» per usare solo il PIN dell'app": "choose “None” to use only the app PIN",
-  "Impostazioni di sicurezza non disponibili": "Security settings unavailable"
+  "Impostazioni di sicurezza non disponibili": "Security settings unavailable",
+  "blocca questa chat": "lock this chat",
+  "sblocca questa chat": "unlock this chat",
+  "blocca tutte le chat con il PIN": "lock all chats with the PIN",
+  "chat bloccata: serve il PIN": "locked chat: PIN required",
+  "esci dalla chat": "leave the chat",
+  "inattività: il buddy si addormenta dopo": "idle: the buddy falls asleep after",
+  "mai": "never",
+  "1 min": "1 min",
+  "2 min": "2 min",
+  "5 min": "5 min",
+  "10 min": "10 min",
+  "imposta un PIN per bloccare le chat": "set a PIN to lock chats"
 }

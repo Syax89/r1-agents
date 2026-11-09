@@ -178,11 +178,10 @@ object Motion {
         if (v.width <= 0 || v.height <= 0 || v.height > v.resources.displayMetrics.density * 220f || reduced(v.context)) return
         val nx = ((e.x / v.width) * 2f - 1f).coerceIn(-1f, 1f); val ny = ((e.y / v.height) * 2f - 1f).coerceIn(-1f, 1f)
         v.cameraDistance = v.resources.displayMetrics.density * 900f
-        v.rotationY = nx * TILT; v.rotationX = -ny * TILT
-        v.translationX = nx * v.resources.displayMetrics.density * 0.6f
+        // Inclinazione morbida: segue il dito con una breve animazione invece di scattare.
+        v.animate().rotationY(nx * TILT).rotationX(-ny * TILT).translationX(nx * v.resources.displayMetrics.density * 0.6f).setDuration(FAST).setInterpolator(Theme.EASE_OUT).start()
     }
     private fun untilt(v: View) {
-        if (v.rotationX == 0f && v.rotationY == 0f && v.translationX == 0f) return
         v.animate().rotationX(0f).rotationY(0f).translationX(0f).scaleX(1f).scaleY(1f).setDuration(SLOW).setInterpolator(Theme.EASE_OUT).start()
     }
     fun touch(v: View, e: android.view.MotionEvent) {
@@ -190,7 +189,7 @@ object Motion {
         when (e.action) {
             android.view.MotionEvent.ACTION_DOWN -> { press(v, true); tilt(v, e); v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP) }
             android.view.MotionEvent.ACTION_MOVE -> tilt(v, e)
-            android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> { if (v.rotationX == 0f && v.rotationY == 0f) press(v, false) else untilt(v) }
+            android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> untilt(v)
         }
     }
 }
@@ -363,7 +362,7 @@ class IconView(ctx: Context, private val kind: String, private val color: Int, p
     override fun drawableStateChanged() { super.drawableStateChanged(); invalidate() }
     override fun onDraw(c: android.graphics.Canvas) {
         val s = minOf(width, height).toFloat(); if (s <= 0f) return
-        val on = drawableState.any { it == android.R.attr.state_pressed || it == android.R.attr.state_focused }
+        val on = drawableState.any { it == android.R.attr.state_focused }   // la pressione non cambia colore: solo il fuoco della rotella
         p.color = if (on) onColor else color
         c.save(); c.translate((width - s) / 2, (height - s) / 2); c.scale(s / 24f, s / 24f)
         if (kind == "more") p.style = android.graphics.Paint.Style.FILL
@@ -401,7 +400,7 @@ object Io {
 }
 
 /** Dopo un po' senza tocchi l'agente si addormenta (sbadiglia, poi dorme); al primo tocco si sveglia di soprassalto. Chiamare `poke()` a ogni input. */
-class Sleeper(private val view: View, private val ch: () -> CharacterView?, private val wake: () -> Unit, private val sleep: () -> Unit, private val afterMs: Long = 75_000L) {
+class Sleeper(private val view: View, private val ch: () -> CharacterView?, private val wake: () -> Unit, private val sleep: () -> Unit, private val afterMs: Long = 75_000L, private val afterProvider: (() -> Long)? = null) {
     var asleep = false
         private set
     private val nod = Runnable {
@@ -411,7 +410,8 @@ class Sleeper(private val view: View, private val ch: () -> CharacterView?, priv
     fun poke() {
         view.removeCallbacks(nod)
         if (asleep) { asleep = false; wake(); ch()?.react("surprised") }
-        view.postDelayed(nod, afterMs)
+        val wait = afterProvider?.invoke() ?: afterMs
+        if (wait > 0L) view.postDelayed(nod, wait)   // 0 = mai (impostazione)
     }
     fun stop() { view.removeCallbacks(nod) }
 }

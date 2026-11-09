@@ -55,6 +55,18 @@ class MainActivity : Activity() {
     private var pinGate: View? = null
     private var pinUnlocked = false
     private fun pinEnabled() = prefs.getString("app_pin_hash", "").orEmpty().isNotEmpty()
+    // Il PIN protegge le chat (alcune o tutte), non l'app: la home e le altre pagine restano sempre libere.
+    private fun lockedChats(): Set<String> = prefs.getStringSet("locked_chats", emptySet()) ?: emptySet()
+    private fun chatLocked(id: Long?) = id != null && pinEnabled() && (prefs.getBoolean("lock_all_chats", false) || id.toString() in lockedChats())
+    private fun gateWanted() = chatLocked(stack.lastOrNull()?.chatKey)
+    private fun setChatLocked(id: Long, on: Boolean) { prefs.edit().putStringSet("locked_chats", lockedChats().toMutableSet().also { if (on) it.add(id.toString()) else it.remove(id.toString()) }).apply() }
+    /** Esce da una chat bloccata senza il PIN: toglie il gate e torna indietro. */
+    private fun leaveLockedChat() {
+        pinGate?.let { root.removeView(it) }; pinGate = null; pinUnlocked = false; deferredPinIntent = null
+        cancelModalBuddyFlight(); clearCarriedBuddy(); hideKeyboard()
+        if (stack.size > 1) pop()
+    }
+    private fun idleMs(): Long = prefs.getString("idle_after", "1").let { if (it == "never") 0L else (it?.toLongOrNull() ?: 1L) * 60_000L }
     private fun pinPrompt(title: String, confirm: (String) -> Unit) {
         val id = "pin-setup"
         overlay(id, title, { closeOverlay(id) }, context = BuddySceneContext.SECURITY) { col, close ->
@@ -130,6 +142,7 @@ class MainActivity : Activity() {
             }
         }
         pinBody.addView(unlock, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
+        if (gateWanted()) pinBody.addView(button(UiText.text(this@MainActivity, R.string.ui_17e2587ab7), Theme.MUTED, primary = false) { leaveLockedChat() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
         pinGate = gate; root.addView(gate, ViewGroup.LayoutParams(-1, -1))
         if (animate && under != null && source != null) gate.post {
             if (pinGate === gate && gate.isAttachedToWindow && source.width > 0) modalFlight(under, gate, source, gateBuddy, 0f) { }.animateTo(1f)
@@ -149,7 +162,7 @@ class MainActivity : Activity() {
         else {
             col.addView(row(UiText.text(this@MainActivity, R.string.ui_8c9d3158f9), Theme.accent, icon = "sliders") { pinPrompt(UiText.text(this@MainActivity, R.string.ui_c64ec43f51)) { pin -> Io.run { val ok = PinHash.verify(pin, prefs.getString("app_pin_hash", "").orEmpty()); runOnUiThread { if (ok) pinSetup() else snack(UiText.text(this@MainActivity, R.string.ui_1265e93b8f)) } } } })
             col.addView(row(UiText.text(this@MainActivity, R.string.ui_d8ebc0990d), Theme.BAD, icon = "close") { pinPrompt(UiText.text(this@MainActivity, R.string.ui_c64ec43f51)) { pin -> Io.run { val ok = PinHash.verify(pin, prefs.getString("app_pin_hash", "").orEmpty()); runOnUiThread { if (ok) { prefs.edit().remove("app_pin_hash").remove("pin_failures").remove("pin_wait_until").apply(); window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE); stack.lastOrNull()?.onShow?.invoke() } else snack(UiText.text(this@MainActivity, R.string.ui_1265e93b8f)) } } } })
-            col.addView(row(UiText.text(this@MainActivity, R.string.ui_4a2e30175e), Theme.accent, icon = "agent") { pinUnlocked = false; showPinGate(true) })
+            col.addView(row(UiText.text(this@MainActivity, R.string.ui_7789e4318d), Theme.accent, check = prefs.getBoolean("lock_all_chats", false), icon = "lock") { prefs.edit().putBoolean("lock_all_chats", !prefs.getBoolean("lock_all_chats", false)).apply(); stack.last().onShow?.invoke() })
         }
     }
 
@@ -168,7 +181,6 @@ class MainActivity : Activity() {
         super.onCreate(b)
         Theme.init(this)
         prefs = getSharedPreferences("settings", MODE_PRIVATE)
-        if (pinEnabled()) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
         Vault.migrate(prefs) // cifra nel Keystore i segreti salvati in chiaro dalle versioni precedenti
         r1WheelLandscapeFlip = prefs.getBoolean("wheel_flip_land", true)
         DeviceActions.mode = prefs.getString("dev_actions", "ask") ?: "ask"
@@ -199,12 +211,12 @@ class MainActivity : Activity() {
         }
     }
 
-    override fun onNewIntent(i: Intent) { super.onNewIntent(i); if (i.hasCategory(Intent.CATEGORY_HOME) && isDefaultLauncher()) goHome(); if (pinEnabled() && !pinUnlocked) { deferredPinIntent = Intent(i); showPinGate() } else { applyIntent(i); handle(i) }; pinGate?.bringToFront() }
+    override fun onNewIntent(i: Intent) { super.onNewIntent(i); if (i.hasCategory(Intent.CATEGORY_HOME) && isDefaultLauncher()) goHome(); if (gateWanted() && !pinUnlocked) { deferredPinIntent = Intent(i); showPinGate() } else { applyIntent(i); handle(i) }; pinGate?.bringToFront() }
 
     /** Aperture dalle notifiche: suoneria (sveglia/timer) o risposta di una routine. */
     private fun handle(i: Intent?) {
         i ?: return
-        if (pinEnabled() && !pinUnlocked) { deferredPinIntent = Intent(i); showPinGate(); return }
+        if (gateWanted() && !pinUnlocked) { deferredPinIntent = Intent(i); showPinGate(); return }
         i.data?.takeIf { it.scheme == "r1agents" && it.host == "connect" }?.let { uri ->
             i.data = null
             runCatching { Pairing.parse(uri.toString()) }.onSuccess { confirmPairing(it) }.onFailure { snack(UiText.message(this@MainActivity, it.message) ?: UiText.text(this@MainActivity, R.string.ui_4bd3645750), long = true) }
@@ -389,7 +401,7 @@ class MainActivity : Activity() {
         build(col, close)
         root.addView(ov, ViewGroup.LayoutParams(-1, -1)); overlays[id] = ov; overlayBack[id] = back
         pinGate?.bringToFront()
-        overlayRotations[id] = { ov.animate().cancel(); ov.alpha = 1f; ov.translationY = 0f; buddy?.alpha = 1f }
+        overlayRotations[id] = { ov.animate().cancel(); ov.alpha = 1f; ov.translationY = 0f; buddy?.let { it.visibility = View.VISIBLE; it.alpha = 1f } }
         ov.post {
             if (overlays[id] !== ov || !ov.isAttachedToWindow) return@post
             if (pinGate != null) { ov.alpha = 1f; return@post }
@@ -472,18 +484,22 @@ class MainActivity : Activity() {
         var closing = false; var finished = false; var afterClose: (() -> Unit)? = null
         var sheetFlight: BuddyFlight? = null
         var buddyReturning = false
+        var afterRan = false
+        /** La pagina scelta nel pannello parte subito: il buddy portato vola mentre il pannello scende, invece di restare fermo ad aspettarlo. */
+        fun runAfter() { val a = afterClose ?: return; afterClose = null; afterRan = true; a() }
         lateinit var spring: dev.r1os.host.ui.Spring
         fun finish() {
             if (finished || buddyReturning) return
             finished = true; spring.cancel(); overlayRotations.remove(id); root.removeView(ov)
-            afterClose?.invoke()
-            if (afterClose != null) root.post {
-                if (carriedBuddy != null && overlays.isEmpty() && buddyFlight == null) {
+            val hadAfter = afterClose != null || afterRan
+            runAfter()
+            if (hadAfter) root.post {
+                if (carriedBuddy != null && overlays.isEmpty() && buddyFlight == null && stack.lastOrNull()?.pendingEntry == null) {
                     val page = stack.lastOrNull()?.view
                     val target = page?.let { sceneAvatar(it, companionAgent?.id) }
                     if (page != null && target != null) {
                         val carry = carriedBuddy!!
-                        modalFlight(page, page, target, carry, 1f) { clearCarriedBuddy(); target.alpha = 1f }.animateTo(0f)
+                        modalFlight(page, page, target, carry, 1f) { clearCarriedBuddy(); target.visibility = View.VISIBLE; target.alpha = 1f }.animateTo(0f)
                     } else clearCarriedBuddy()
                 }
             }
@@ -501,7 +517,7 @@ class MainActivity : Activity() {
             if (peekView != null && under != null && originalSource != null && peekView.width > 0 && originalSource.width > 0) {
                 peekInFlight = true
                 if (then != null) {
-                    carryBuddy(peekView, sheetFlight); if (modalBuddyFlight === sheetFlight) { modalBuddyFlight = null; modalCarryCleanup = null; modalSourceBuddy = null; modalSurface = null }; sheetFlight = null
+                    carryBuddy(peekView, sheetFlight); if (modalBuddyFlight === sheetFlight) { modalBuddyFlight = null; modalCarryCleanup = null; modalSourceBuddy = null; modalSurface = null }; sheetFlight = null; ov.post { runAfter() }
                 } else {
                     buddyReturning = true
                     val entering = sheetFlight?.takeIf { it.isActive }
@@ -587,7 +603,7 @@ class MainActivity : Activity() {
             if (peekView != null && sourceBuddy != null && under != null && sourceBuddy.width > 0 && peekView.width > 0) {
                 placePeek(0f, panel.height)
                 peekInFlight = true
-                sheetFlight = modalFlight(under, ov, sourceBuddy, peekView, 0f) { peekInFlight = false; peekView.alpha = 1f; sheetFlight = null }
+                sheetFlight = modalFlight(under, ov, sourceBuddy, peekView, 0f) { peekInFlight = false; peekView.visibility = View.VISIBLE; peekView.alpha = 1f; sheetFlight = null }
                 sheetFlight?.animateTo(1f)
             }
             spring.snapTo(panel.height.toFloat() + dp(12f)); panel.alpha = 1f
@@ -756,6 +772,7 @@ class MainActivity : Activity() {
         old.scope.alive = false; old.onLeave?.invoke()
         s.heroOrigin = if (s.chatKey == old.chatKey && s.isChat) old.heroOrigin else Hero(0f, 0f, source?.width ?: 0, selected)
         stack.add(s); root.addView(s.view, ViewGroup.LayoutParams(-1, -1)); pinGate?.bringToFront(); runtimeVisibility()
+        if (chatLocked(s.chatKey)) { pinUnlocked = false; root.post { if (stack.lastOrNull() === s) showPinGate(false) } }
         if (source != null && sceneAvatar(s.view, selected.id) != null) {
             if (s.heroOrigin == null) s.heroOrigin = Hero(0f, 0f, source.width, selected)
             s.view.alpha = 0f
@@ -902,10 +919,10 @@ class MainActivity : Activity() {
     private var modalSourceBuddy: CharacterView? = null
     private val heldBuddies = LinkedHashSet<CharacterView>()
 
-    private fun holdBuddy(view: CharacterView) { heldBuddies.add(view); view.alpha = 0f; view.setActive(false) }
+    private fun holdBuddy(view: CharacterView) { heldBuddies.add(view); view.alpha = 0f; view.visibility = View.INVISIBLE; view.setActive(false) }
     private fun restoreBuddies() {
         val current = currentBuddyPage()?.let { sceneAvatar(it, companionAgent?.id) }
-        heldBuddies.forEach { it.alpha = 1f; it.setActive(visible && it === current) }; heldBuddies.clear()
+        heldBuddies.forEach { it.visibility = View.VISIBLE; it.alpha = 1f; it.setActive(visible && it === current) }; heldBuddies.clear()
         current?.let { cv -> cv.setActive(visible); Motion.onAttention = { view -> attend(cv, view) } }
     }
     private fun clearCarriedBuddy(restore: Boolean = true) {
@@ -1019,6 +1036,7 @@ class MainActivity : Activity() {
     private fun prepareBuddyFlight(chat: Screen, home: Screen, initial: Float): BuddyFlight? {
         if (flightChat === chat && flightHome === home) return buddyFlight
         cancelBuddyFlight()
+        modalBuddyFlight?.takeIf { it.isActive && carriedBuddy == null }?.let { cancelModalBuddyFlight(restoreSource = false) }   // un solo clone in volo
         val origin = chat.heroOrigin ?: return null
         if (home.view.parent == null) root.addView(home.view, 0, ViewGroup.LayoutParams(-1, -1))
         for (view in listOf(home.view, chat.view)) {
@@ -1076,6 +1094,7 @@ class MainActivity : Activity() {
         val flying = prev != null && sourceBuddy != null && sceneAvatar(s.view, selected?.id) != null && selected != null
         val fadeIn = fade || flying
         stack.add(s); root.addView(s.view, ViewGroup.LayoutParams(-1, -1)); pinGate?.bringToFront(); runtimeVisibility()
+        if (chatLocked(s.chatKey)) { pinUnlocked = false; root.post { if (stack.lastOrNull() === s) showPinGate(false) } }   // chat bloccata: chiede il PIN
         if (prev == null) return
         if (flying) {
             s.heroOrigin = hero ?: Hero(0f, 0f, sourceBuddy!!.width, selected!!); hero = null
@@ -1084,7 +1103,7 @@ class MainActivity : Activity() {
                 override fun onPreDraw(): Boolean {
                     s.view.viewTreeObserver.removeOnPreDrawListener(this); s.pendingEntry = null
                     if (stack.lastOrNull() === s) prepareBuddyFlight(s, prev, 0f)?.animateTo(1f)
-                        ?: run { s.view.alpha = 1f; detach(prev.view) }
+                        ?: run { s.view.alpha = 1f; detach(prev.view); clearCarriedBuddy() }
                     return true
                 }
             }
@@ -1129,6 +1148,7 @@ class MainActivity : Activity() {
         if (stack.size <= 1) return
         hideKeyboard()
         val s = stack.removeAt(stack.size - 1); cancelPendingEntry(s); s.scope.alive = false
+        if (chatLocked(s.chatKey)) { pinUnlocked = false; if (pinGate == null) window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
         if (s.view.tag == "ring") { setShowWhenLocked(false); setTurnScreenOn(false) }
         s.onLeave?.invoke()
         if (stack.size == 1 && rootProvider != settings.provider.id) { stack[0].scope.alive = false; detach(stack[0].view); stack[0] = root() }
@@ -1136,7 +1156,7 @@ class MainActivity : Activity() {
         if (s.heroOrigin != null && !s.view.isLaidOut) {
             root.removeView(s.view)
             if (back.view.parent == null) root.addView(back.view, 0, ViewGroup.LayoutParams(-1, -1))
-            back.view.alpha = 1f; showScreen(back); restoreBuddies(); runtimeVisibility(); return
+            back.view.alpha = 1f; showScreen(back); clearCarriedBuddy(); runtimeVisibility(); return
         }
         if (s.heroOrigin != null) {
             if (buddyFlight == null) showScreen(back)
@@ -1167,7 +1187,7 @@ class MainActivity : Activity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (pinGate != null) { if (!isDefaultLauncher()) finish(); return }
+        if (pinGate != null) { if (gateWanted()) leaveLockedChat() else if (!isDefaultLauncher()) finish(); return }
         overlays.keys.lastOrNull()?.let { overlayBack[it]?.invoke(); return }   // prima le finestre sopra tutto (permessi, menu)
         if (pttView != null) { pttClose(); return }
         if (stack.size > 1) pop() else if (!isDefaultLauncher()) finish()   // come ogni app indietro esce; da schermata iniziale non esce (come ogni launcher)
@@ -1225,7 +1245,14 @@ class MainActivity : Activity() {
         else if (secret) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD else InputType.TYPE_CLASS_TEXT
         if (multi) { minLines = 3; gravity = Gravity.TOP } else { setSingleLine(true); imeOptions = EditorInfo.IME_ACTION_DONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI }   // Invio chiude la tastiera
         // setSingleLine toglie la maschera della password: la si rimette (le credenziali restano puntini) e niente suggerimenti/autofill.
-        if (secret) { transformationMethod = android.text.method.PasswordTransformationMethod.getInstance(); importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO }
+        if (secret) {
+            transformationMethod = android.text.method.PasswordTransformationMethod.getInstance(); importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
+            // Finché un campo segreto è sullo schermo, niente screenshot né anteprima nei recenti (anche senza PIN).
+            addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                override fun onViewAttachedToWindow(v: View) { window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
+                override fun onViewDetachedFromWindow(v: View) { if (!pinEnabled()) window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
+            })
+        }
     }
 
     private fun hideKeyboard() { (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).hideSoftInputFromWindow(window.decorView.windowToken, 0) }
@@ -1463,7 +1490,7 @@ class MainActivity : Activity() {
         pill.setOnTouchListener { v, e ->
             when (e.action) {
                 android.view.MotionEvent.ACTION_DOWN -> { talkStartY = e.rawY; talkCancelled = false; focusAvatar()?.lookAt(0f, 20f, -1); v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(Motion.PRESS).start(); if (agents.getOrNull(sel) != null) { talking = true; homeVoiceGesture = true; homeVoiceStartY = e.rawY; pttStart() } }
-                android.view.MotionEvent.ACTION_UP -> { focusAvatar()?.lookBack(); v.animate().scaleX(1f).scaleY(1f).setDuration(Motion.BASE).setInterpolator(Theme.POP).start(); if (talking) { talking = false; pttStop() } else if (!talkCancelled) open() }
+                android.view.MotionEvent.ACTION_UP -> { focusAvatar()?.lookBack(); v.animate().scaleX(1f).scaleY(1f).setDuration(Motion.SLOW).setInterpolator(Theme.EASE_OUT).start(); if (talking) { talking = false; pttStop() } else if (!talkCancelled) open() }
                 android.view.MotionEvent.ACTION_MOVE -> if (talking && talkStartY - e.rawY > dp(64f)) { talking = false; talkCancelled = true; pttClose(); v.animate().scaleX(1f).scaleY(1f).setDuration(Motion.BASE).start(); snack(UiText.text(this@MainActivity, R.string.ui_4435ce3621)) }
                 android.view.MotionEvent.ACTION_CANCEL -> { v.animate().scaleX(1f).scaleY(1f).setDuration(Motion.BASE).start(); talking = false; talkCancelled = true; if (!homeVoiceGesture && !drainingHomeVoiceTouch) pttClose() }
             }
@@ -1512,7 +1539,7 @@ class MainActivity : Activity() {
             }
         })
         stage.isClickable = true
-        val sleeper = Sleeper(stage, { focusAvatar() }, { agents.getOrNull(sel)?.let { a -> focusAvatar()?.show(a) } }, { agents.getOrNull(sel)?.let { a -> focusAvatar()?.show(a, "sleeping") } })
+        val sleeper = Sleeper(stage, { focusAvatar() }, { agents.getOrNull(sel)?.let { a -> focusAvatar()?.show(a) } }, { agents.getOrNull(sel)?.let { a -> focusAvatar()?.show(a, "sleeping") } }, afterProvider = ::idleMs)
         stage.post { sleeper.poke() }
         stage.setOnTouchListener { _, e ->
             sleeper.poke()
@@ -1770,7 +1797,7 @@ class MainActivity : Activity() {
         val head = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; clipChildren = false; clipToPadding = false }
         val headChar = CharacterView(this, dpi(56f)).also { it.show(agent); it.scaleX = 36f / 56f; it.scaleY = 36f / 56f }
         val avatarSlot = FrameLayout(this).apply {
-            clipChildren = false; clipToPadding = false; isClickable = true; isFocusable = true
+            clipChildren = false; clipToPadding = false; isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
             contentDescription = UiText.text(this@MainActivity, R.string.ui_799d550ed7, agent.name)
             addView(headChar, FrameLayout.LayoutParams(dpi(56f), dpi(56f), Gravity.CENTER))
         }
@@ -1811,6 +1838,9 @@ class MainActivity : Activity() {
             val items = ArrayList<Pair<String, () -> Unit>>()
             items += UiText.text(this@MainActivity, R.string.ui_7f4849bfb0) to { if (!busy) replaceTop(chat(agent, db.newChat(agent.id))) }
             items += UiText.text(this@MainActivity, R.string.ui_0fd7b04a53) to { openAttach() }
+            items += (if (!pinEnabled()) UiText.text(this@MainActivity, R.string.ui_dc815e9fc7) else if (chatId.toString() in lockedChats()) UiText.text(this@MainActivity, R.string.ui_9d86e57fdb) else UiText.text(this@MainActivity, R.string.ui_768a2cb129)) to {
+                if (!pinEnabled()) pinSetup() else { val on = chatId.toString() !in lockedChats(); setChatLocked(chatId, on); if (on) pinUnlocked = true; cue(if (on) "nod" else "wink", force = true) }
+            }
             val hs = db.hsid(chatId)
             if (hermesMode() && agent.profile.isNotEmpty()) {
                 items += UiText.text(this@MainActivity, R.string.ui_eef051cd40) to { askText(UiText.text(this@MainActivity, R.string.ui_00c9325b04), UiText.text(this@MainActivity, R.string.ui_a87537ff47)) { t -> Io.run { try { dash.rename(chatId, agent.profile, t); db.title(chatId, t.take(60)); runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_9ea5d517e7)) } } catch (e: Exception) { runOnUiThread { snack(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1), long = true) } } } } }
@@ -1967,7 +1997,7 @@ class MainActivity : Activity() {
                 localTurns.remove(turnEngine)
                 if (!chatScope.alive || engine !== turnEngine) return@run
                 runOnUiThread { flush.run() }
-                if (got.get() && !turnEngine.isCancelled && visible && (!pinEnabled() || pinUnlocked) && prefs.getBoolean("tts", false)) { val spoken = synchronized(acc) { acc.toString() }; runOnUiThread { if (chatScope.alive && engine === turnEngine) speak(spoken) } }
+                if (got.get() && !turnEngine.isCancelled && visible && (!gateWanted() || pinUnlocked) && prefs.getBoolean("tts", false)) { val spoken = synchronized(acc) { acc.toString() }; runOnUiThread { if (chatScope.alive && engine === turnEngine) speak(spoken) } }
                 runOnUiThread { if (!chatScope.alive || engine !== turnEngine) return@runOnUiThread; busy = false; Motion.hide(activity); updateAction(); if (headChar.tag != "x") { buddyStage.dismiss(); headChar.show(agent, "idle"); if (got.get()) headChar.react("giggle") }; if (!got.get() && reply.parent != null && reply.text.isEmpty()) list.removeView(reply) }
             }
         }
@@ -2251,8 +2281,8 @@ class MainActivity : Activity() {
         hermesRuntime.requestCancelListener = { id -> runOnUiThread { closeOverlay("req-$id") } }
         hermesRuntime.requests.values.forEach { showRequest(it) }
         if (hermesMode()) hermesRuntime.ensureRecoveryService()
-         if (::prefs.isInitialized) showPinGate(); Dim.on(this); characters(root) { it.setActive(true) }; heldBuddies.forEach { it.setActive(false) }; stack.lastOrNull()?.onResume?.invoke() }
-    override fun onPause() { stopShake(); stack.forEach { it.onSuspend?.invoke() }; pttClose(immediate = true); cancelBuddyFlight(); cancelModalBuddyFlight(restoreSource = overlays.isEmpty()); clearCarriedBuddy(restore = overlays.isEmpty()); if (::prefs.isInitialized && pinEnabled()) { cancelActiveMic?.invoke(); pttClose(immediate = true); tts?.stop(); pinUnlocked = false; showPinGate() }; visible = false; runtimeVisibility(); hermesRuntime.requestListener = null; hermesRuntime.requestCancelListener = null; characters(root) { it.setActive(false) }; Dim.off(); super.onPause() }
+         if (::prefs.isInitialized && gateWanted()) showPinGate(); Dim.on(this); characters(root) { it.setActive(true) }; heldBuddies.forEach { it.setActive(false) }; stack.lastOrNull()?.onResume?.invoke() }
+    override fun onPause() { stopShake(); stack.forEach { it.onSuspend?.invoke() }; pttClose(immediate = true); cancelBuddyFlight(); cancelModalBuddyFlight(restoreSource = overlays.isEmpty()); clearCarriedBuddy(restore = overlays.isEmpty()); if (::prefs.isInitialized && gateWanted()) { cancelActiveMic?.invoke(); pttClose(immediate = true); tts?.stop(); pinUnlocked = false; showPinGate() }; visible = false; runtimeVisibility(); hermesRuntime.requestListener = null; hermesRuntime.requestCancelListener = null; characters(root) { it.setActive(false) }; Dim.off(); super.onPause() }
     private val KEYCODE_NAV_NEXT = 261   // KEYCODE_NAVIGATE_NEXT
     private val KEYCODE_NAV_PREV = 260   // KEYCODE_NAVIGATE_PREVIOUS
 
@@ -2319,6 +2349,7 @@ class MainActivity : Activity() {
         // I figli ricevono un ANNULLA una volta sola: da qui in poi il gesto e' della pagina.
         val cancel = android.view.MotionEvent.obtain(ev); cancel.action = android.view.MotionEvent.ACTION_CANCEL; super.dispatchTouchEvent(cancel); cancel.recycle()
         val screen = stack.last(); val previous = stack[stack.size - 2]
+        cancelPendingEntry(screen)   // un ingresso ancora in attesa non deve partire mentre il dito trascina
         if (screen.heroOrigin != null) {
             if (buddyFlight == null) showScreen(previous)
             prepareBuddyFlight(screen, previous, 1f)?.let { flight ->
@@ -2649,7 +2680,7 @@ class MainActivity : Activity() {
                     text = label; setPadding(dpi(14f), dpi(10f), dpi(14f), dpi(10f)); isClickable = true
                     setTextColor(if (on) Theme.ON_ACCENT else Theme.FG); background = roundRect(if (on) Theme.accent else Theme.FOCUS, dp(14f))
                     if (font) typeface = Theme.fontOf(id, 700)
-                    setOnClickListener { if (!on) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) } }
+                    setOnClickListener { if (!on) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "idle_after") { prefs.edit().putString("idle_after", id).apply(); stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) } }
                 }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
             }
             return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(row) }
@@ -2668,6 +2699,8 @@ class MainActivity : Activity() {
             } }) })
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_449d113dca)))
         col.addView(chips(listOf("normal" to UiText.text(this@MainActivity, R.string.ui_bae7591bb2), "flip" to UiText.text(this@MainActivity, R.string.ui_a9d1bc7eca)), if (r1WheelLandscapeFlip) "flip" else "normal", "wheel_flip"))
+        col.addView(label(UiText.text(this@MainActivity, R.string.ui_2c24e821f5)))
+        col.addView(chips(listOf("1" to UiText.text(this@MainActivity, R.string.ui_3eb8a90885), "2" to UiText.text(this@MainActivity, R.string.ui_47742d68e8), "5" to UiText.text(this@MainActivity, R.string.ui_b45ebd80de), "10" to UiText.text(this@MainActivity, R.string.ui_4605ee7759), "never" to UiText.text(this@MainActivity, R.string.ui_ea4440bd94)), prefs.getString("idle_after", "1")!!, "idle_after"))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_793ade4b26)))
         col.addView(chips(listOf("ask" to UiText.text(this@MainActivity, R.string.ui_3cd50c52c0), "auto" to UiText.text(this@MainActivity, R.string.ui_9e67d0a179), "off" to UiText.text(this@MainActivity, R.string.ui_22938aeb5f)), DeviceActions.mode, "dev_actions"))
         col.addView(label("font"))
@@ -2775,7 +2808,7 @@ class MainActivity : Activity() {
                 runOnUiThread {
                     dock.removeAllViews()
                     apps.forEach { a -> dock.addView(android.widget.ImageView(this@MainActivity).apply {
-                        setImageDrawable(a.icon); contentDescription = a.label; isClickable = true; isFocusable = true
+                        setImageDrawable(a.icon); contentDescription = a.label; isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
                         setPadding(dpi(4f), dpi(4f), dpi(4f), dpi(4f))
                         setOnClickListener { launchApp(a) }; setOnTouchListener { v, e -> Motion.touch(v, e); false }
                     }, LinearLayout.LayoutParams(dpi(56f), dpi(56f)).apply { marginEnd = dpi(8f) }) }
@@ -2799,7 +2832,7 @@ class MainActivity : Activity() {
             peek.translationY = size * 0.32f
             frame.addView(peek, FrameLayout.LayoutParams(size, size, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL))
         }
-        val sleeper = peek?.let { ch -> Sleeper(frame, { ch }, { agent?.let { ch.show(it) } }, { agent?.let { ch.show(it, "sleeping") } }) }
+        val sleeper = peek?.let { ch -> Sleeper(frame, { ch }, { agent?.let { ch.show(it) } }, { agent?.let { ch.show(it, "sleeping") } }, afterProvider = ::idleMs) }
         frame.post { sleeper?.poke() }
         // Standby vivo: finché non dorme si guarda intorno, e ogni tanto si alza un poco per vedere meglio.
         if (peek != null) {
@@ -2883,7 +2916,7 @@ class MainActivity : Activity() {
         steps.forEach { s ->
             btns.addView(button(if (s > 0) "+$s" else "−${-s}", toolAccent, small = true) {
                 val n = max - min + 1; val v = (((get() + s - min) % n) + n) % n + min; set(v)
-                value.text = fmt(v); value.animate().cancel(); value.scaleX = 1.12f; value.scaleY = 1.12f; value.animate().scaleX(1f).scaleY(1f).setDuration(Motion.BASE).setInterpolator(Theme.POP).start()
+                value.text = fmt(v); value.animate().cancel(); value.scaleX = 1.12f; value.scaleY = 1.12f; value.animate().scaleX(1f).scaleY(1f).setDuration(Motion.BASE).setInterpolator(Theme.EASE_OUT).start()
             }.apply { minWidth = dpi(50f) }, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dpi(6f) })
         }
         return LinearLayout(this).apply {
@@ -2938,7 +2971,7 @@ class MainActivity : Activity() {
         val scroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(col, -1, -2) }
         val pinned = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
         scroll.buddyFx.root = pinned
-        val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; clipChildren = false; clipToPadding = false; addView(pinned, LinearLayout.LayoutParams(-1, -2)); addView(FrameLayout(this@MainActivity).apply { clipChildren = true; addView(scroll, FrameLayout.LayoutParams(-1, -1)) }, LinearLayout.LayoutParams(-1, 0, 1f)) }
+        val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; clipChildren = false; clipToPadding = false; addView(pinned, LinearLayout.LayoutParams(-1, -2)); addView(FrameLayout(this@MainActivity).apply { clipChildren = true; setBackgroundColor(Theme.BG); addView(scroll, FrameLayout.LayoutParams(-1, -1)) }, LinearLayout.LayoutParams(-1, 0, 1f)) }   /* sfondo opaco: la lista copre la metà bassa del buddy e la sfumatura va verso il colore pagina, non verso il buddy */
         var rendered = false
         fun render() {
             if (rendered && !Motion.reduced(this@MainActivity)) { scroll.animate().cancel(); scroll.alpha = .55f; scroll.animate().alpha(1f).setDuration(Motion.FAST).setInterpolator(Theme.EASE_OUT).start() } // il contenuto si riassesta invece di tagliare di netto
@@ -3212,7 +3245,7 @@ class MainActivity : Activity() {
 
     private fun alarmsScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_70b85f50fe), context = BuddySceneContext.TIME) { col ->
         db.alarms().forEach { a ->
-            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(8f), dpi(10f), dpi(8f)); isClickable = true; isFocusable = true
+            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(8f), dpi(10f), dpi(8f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
                 setOnClickListener { push(alarmEditor(a)) } }
             val timeV = text(34f, 700, Theme.FG).apply { text = Sched.time(a.hour, a.minute); alpha = if (a.on) 1f else 0.45f }
             fun alarmLine() = (UiText.days(this@MainActivity, a.days) + (if (a.label.isNotBlank()) " · ${a.label}" else "") + (if (a.on) " · " + UiText.text(this@MainActivity, R.string.ui_0ad2d49935, relativeIn(Sched.next(a.hour, a.minute, a.days) - System.currentTimeMillis())) else ""))
@@ -3313,7 +3346,7 @@ class MainActivity : Activity() {
     private fun localRoutinesScreen(): Screen = listPage("routine", context = BuddySceneContext.CONFIGURE) { col ->
         val agents = visibleAgents()
         db.routines().forEach { r ->
-            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)); isClickable = true; isFocusable = true
+            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
                 setOnClickListener { push(routineEditor(r)) } }
             val nameV = text(21f, 700, Theme.FG).apply { text = r.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; alpha = if (r.on) 1f else 0.45f }
             card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
@@ -3375,7 +3408,7 @@ class MainActivity : Activity() {
             return parts.joinToString(" · ")
         }
         fun card(j: HermesJob): View {
-            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)); isClickable = true; isFocusable = true }
+            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false }
             val nameV = text(20f, 700, Theme.FG).keepCase().apply { text = j.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; alpha = if (j.enabled) 1f else 0.45f }
             val lineV = text(14f, 500, Theme.MUTED).keepCase().apply { text = jobLine(j); maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END }
             card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(nameV); addView(lineV) }, LinearLayout.LayoutParams(0, -2, 1f))
@@ -3386,7 +3419,6 @@ class MainActivity : Activity() {
             }
             card.addView(sw)
             card.setOnClickListener {
-                Motion.press(card, false)
                 sheetOf(j.name, listOf(
                     SheetItem(UiText.text(this@MainActivity, R.string.ui_7bafdb870a), icon = "repeat", sub = if (j.lastStatus.isNotBlank()) UiText.text(this@MainActivity, R.string.ui_d304528aa4, j.lastStatus) else null) {
                         Io.run { try { dash.cronAction(j, "trigger"); runOnUiThread { cue("bounce", force = true); snack(UiText.text(this@MainActivity, R.string.ui_cdf273e773)) } } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, UiText.message(this@MainActivity, e.message)), long = true) } } }

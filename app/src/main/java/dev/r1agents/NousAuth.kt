@@ -43,7 +43,7 @@ class NousAuth(private val p: SharedPreferences) {
             c.outputStream.use { it.write(fields.entries.joinToString("&") { (k, v) -> "$k=${URLEncoder.encode(v, "UTF-8")}" }.toByteArray()) }
             val code = c.responseCode
             val body = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.readText().orEmpty()
-            return code to (runCatching { JSONObject(body) }.getOrNull() ?: JSONObject().put("error", "http_$code").put("error_description", body.take(120)))
+            return code to (runCatching { JSONObject(body) }.getOrNull() ?: JSONObject().put("error", "http_$code").put("error_description", Vault.redact(body.take(120))))
         } finally { c.disconnect() }
     }
 

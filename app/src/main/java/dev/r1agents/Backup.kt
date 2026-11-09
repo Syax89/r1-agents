@@ -28,6 +28,8 @@ object Backup {
         }
         return out.toString(Charsets.UTF_8.name())
     }
+    /** Impostazioni che decidono verso quale server partono chiavi e password: mai da un file importato. */
+    internal fun isDestination(k: String) = k.startsWith("base_") || k.startsWith("dash_") || k == "update_url" || k == "nous_client_id" || k == "dev_actions"
     private val skipPrefix = listOf("nous_", "dash_sid_", "w_", "reopen", "app_pin_", "pin_", "running_", "pending_", "draft_", "hint_", "asked_")
 
     class Summary(val agents: Int, val chats: Int, val notes: Int, val alarms: Int, val routines: Int, val settings: Int) {
@@ -51,7 +53,7 @@ object Backup {
     fun applyPrefs(j: JSONObject, e: SharedPreferences.Editor): Int {
         var n = 0
         for (k in j.keys()) {
-            if (k in Vault.SECRET_KEYS || skipPrefix.any { k.startsWith(it) }) continue
+            if (k in Vault.SECRET_KEYS || skipPrefix.any { k.startsWith(it) } || isDestination(k)) continue   // un file importato non può cambiare dove vanno le chiavi
             val o = j.optJSONObject(k) ?: continue
             when (o.optString("t")) {
                 "b" -> e.putBoolean(k, o.getBoolean("v")); "f" -> e.putFloat(k, o.getDouble("v").toFloat())

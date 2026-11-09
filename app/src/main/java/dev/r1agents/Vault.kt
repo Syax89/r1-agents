@@ -46,10 +46,14 @@ object Vault {
         } catch (e: Exception) { "" }
     }
 
+    private val secretPattern = Regex("(sk-[A-Za-z0-9_\\-]{8,}|Bearer\\s+\\S+|(?i:api[_-]?key|token|password)=[^&\\s]+)")
+    /** Toglie chiavi e token da un testo prima di mostrarlo (errori del server, messaggi): mai credenziali sullo schermo. */
+    fun redact(text: String?): String = secretPattern.replace(text.orEmpty(), "•••")
+
     /** Cifra i segreti ancora in chiaro (avvio dell'app). */
     fun migrate(p: SharedPreferences) {
         val e = p.edit(); var any = false
-        for (k in SECRET_KEYS) { val v = p.getString(k, null) ?: continue; if (v.isNotEmpty() && !v.startsWith(PREFIX)) { val s = seal(v); if (s != v) { e.putString(k, s); any = true } } }
+        for (k in SECRET_KEYS + p.all.keys.filter { it.startsWith("dash_sid_") }) { val v = p.getString(k, null) ?: continue; if (v.isNotEmpty() && !v.startsWith(PREFIX)) { val s = seal(v); if (s != v) { e.putString(k, s); any = true } } }
         if (any) e.apply()
     }
 }
