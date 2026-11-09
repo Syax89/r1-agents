@@ -1719,12 +1719,19 @@ class MainActivity : Activity() {
         // Prima volta con piu' di un agente: un suggerimento una volta sola.
         if (agents.size > 1 && !prefs.getBoolean("hint_home_seen", false)) stage.postDelayed({ if (scope.alive && stack.lastOrNull()?.scope === scope) { prefs.edit().putBoolean("hint_home_seen", true).apply(); snack(UiText.text(this@MainActivity, R.string.ui_d3aff5ed26), long = true) } }, 1800)
         // Una volta sola, anche con un agente solo: il carosello laterale e il tocco prolungato non si scoprono da soli.
-        if (agents.isNotEmpty() && !packageName.endsWith(".qa") && prefs.getBoolean("hint_home_seen", false) && !prefs.getBoolean("hint_lane_seen", false)) stage.postDelayed({ if (scope.alive && stack.lastOrNull()?.scope === scope) { prefs.edit().putBoolean("hint_lane_seen", true).apply(); snack(UiText.text(this@MainActivity, R.string.ui_c599cdc3c1), long = true) } }, 2600L)
+        if (agents.isNotEmpty() && !packageName.endsWith(".qa") && prefs.getBoolean("hint_home_seen", false) && !prefs.getBoolean("hint_lane_seen", false)) stage.postDelayed({ if (scope.alive && stack.lastOrNull()?.scope === scope) { prefs.edit().putBoolean("hint_lane_seen", true).apply(); snack(UiText.text(this@MainActivity, R.string.ui_570d5b3ff8), long = true) } }, 2600L)
         val now = System.currentTimeMillis()
         if (hermesMode() && (agents.isEmpty() || now - lastProfileSync > 60_000L)) { lastProfileSync = now; syncProfiles(scope,
             { err -> if (agents.isEmpty()) { emptyNote = err; rebuild() } },
             { agents = visibleAgents(); emptyNote = null; rebuild() }) }
+        var centerLong = false
         return Screen(view, { e ->
+            // Dentro una funzione: click della rotella = esegui; tenuto premuto = torna all'agente (come il fling verticale col dito).
+            if (lanePos != 0 && (e.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || e.keyCode == KeyEvent.KEYCODE_ENTER)) {
+                if (e.action == KeyEvent.ACTION_DOWN) { if (e.repeatCount == 0) centerLong = false else if (!centerLong) { centerLong = true; laneGo(0) } }
+                else if (e.action == KeyEvent.ACTION_UP && !centerLong) laneAction()
+                true
+            } else
             if (e.action != KeyEvent.ACTION_DOWN) false else
             when (e.keyCode) {
                 KeyEvent.KEYCODE_DPAD_LEFT -> { laneStep(-1); true }

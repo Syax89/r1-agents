@@ -53,3 +53,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.15 (code 22): tabelle Markdown allineate in carattere fisso, Indietro dentro una funzione del carosello torna all agente, messaggio "codice copiato".
 
 0.5.16 (code 23): avviso visibile quando si esce da una risposta in corso (prima non compariva), scheda di benvenuto, conferme e errori classificati verificati sul dispositivo.
+
+0.5.17 (code 24): dentro una funzione del carosello il click della rotella tenuto premuto torna all agente (il click breve esegue la funzione); suggerimento aggiornato.
