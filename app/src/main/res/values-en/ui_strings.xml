@@ -653,6 +653,8 @@
     <string name="ui_7ef44652ba" formatted="false">"failed"</string>
     <string name="ui_7dd4ab62e7" formatted="false">"phone context"</string>
     <string name="ui_3b87e2a997" formatted="false">"battery, network, alarms and recent apps shared with local agents"</string>
+    <string name="ui_57289acd6d" formatted="false">"take a photo and ask an agent"</string>
+    <string name="ui_b1a6079206" formatted="false">"system camera"</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>

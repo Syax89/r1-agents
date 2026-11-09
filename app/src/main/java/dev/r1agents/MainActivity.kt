@@ -1394,7 +1394,7 @@ class MainActivity : Activity() {
             Lane("apps", UiText.text(this@MainActivity, R.string.ui_7d1043473d), UiText.text(this@MainActivity, R.string.ui_be6f615b92), "apps") { push(appsScreen()) },
         )
         val rightLanes = listOfNotNull(
-            Lane("camera", UiText.text(this@MainActivity, R.string.ui_10315f3cb1), UiText.text(this@MainActivity, R.string.ui_aaa045009b), "camera") { launchCamera() },
+            Lane("camera", UiText.text(this@MainActivity, R.string.ui_10315f3cb1), UiText.text(this@MainActivity, R.string.ui_aaa045009b), "camera") { sheet(UiText.text(this@MainActivity, R.string.ui_10315f3cb1), listOf(UiText.text(this@MainActivity, R.string.ui_57289acd6d) to { pickPhoto(16) }, UiText.text(this@MainActivity, R.string.ui_b1a6079206) to { launchCamera() })) },
             Lane("tools", UiText.text(this@MainActivity, R.string.ui_6bceb5c35b), UiText.text(this@MainActivity, R.string.ui_fa1f94b99f), "stopwatch") { push(tools()) },
             Lane("translate", UiText.text(this@MainActivity, R.string.ui_1a8a49ab36), UiText.text(this@MainActivity, R.string.ui_9383d2036e), "globe") { push(translator()) },
             Lane("controls", UiText.text(this@MainActivity, R.string.ui_4d538300d5), UiText.text(this@MainActivity, R.string.ui_3dd6153b9c), "controls") { push(controlsScreen()) },
@@ -2530,6 +2530,15 @@ class MainActivity : Activity() {
                     runOnUiThread { confirmImport(text, sum) }
                 } catch (e: Exception) { runOnUiThread { snack(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_23a3dc3076), long = true) } }
             }
+        }
+        if (req == 16) { // scatta e chiedi a un agente: la foto diventa un allegato pronto da inviare nella chat scelta
+            val f = photoFile; photoFile = null
+            if (res == RESULT_OK && f != null && f.exists() && f.length() > 0) {
+                val att = Attach.fromFile(f, "foto-${java.text.SimpleDateFormat("HHmmss", AppLanguage.locale(this@MainActivity)).format(java.util.Date())}.jpg", "image/jpeg")
+                val agents = visibleAgents(); val share = Share("", listOf(att))
+                when { agents.isEmpty() -> snack(UiText.text(this@MainActivity, R.string.ui_62dde8cda6), long = true); agents.size == 1 -> openLatest(agents[0], null, share)
+                    else -> sheet(UiText.text(this@MainActivity, R.string.ui_263a8abb66), agents.map { a -> a.name to { openLatest(a, null, share) } }) }
+            } else f?.delete()
         }
         if (req == 9) { // Il risultato resta legato alla chat che ha aperto la fotocamera.
             val f = photoFile; photoFile = null

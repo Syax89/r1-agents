@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 16,
-  "versionName": "0.5.9",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.9/r1agents-release-signed.apk",
-  "sha256": "bdf615102dc780b322f22bde8e3b28027fd347a238de437acb28b3cb3bb04905",
-  "sizeBytes": 1337671,
-  "notes": "0.5.9: strumento phone_action per gli agenti locali e contesto del telefono opzionale (Sicurezza), spento di default.\n"
+  "versionCode": 17,
+  "versionName": "0.5.10",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.10/r1agents-release-signed.apk",
+  "sha256": "a4378fb8683b295007e74e5cd1575ee3619d7d5bf82862256e8501a322667a3b",
+  "sizeBytes": 1341767,
+  "notes": "0.5.10: fotocamera del carosello: scatta e chiedi a un agente (la foto arriva come allegato nella chat scelta) oppure fotocamera di sistema.\n"
 }

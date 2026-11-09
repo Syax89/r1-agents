@@ -39,3 +39,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.8 (code 15): registro delle azioni eseguite dagli agenti sul telefono (Sicurezza → azioni dell'agente), mai nei backup.
 
 0.5.9 (code 16): strumento phone_action per gli agenti locali (apri app, timer, sveglia, torcia, nota, pannello: pulsanti o esecuzione automatica secondo le impostazioni); contesto del telefono opzionale (Sicurezza), spento di default.
+
+0.5.10 (code 17): fotocamera del carosello: «scatta e chiedi a un agente» (la foto arriva come allegato nella chat scelta) oppure fotocamera di sistema.

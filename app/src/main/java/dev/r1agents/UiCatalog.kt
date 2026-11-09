@@ -660,6 +660,8 @@ internal object UiCatalog {
         UiEntry(R.string.ui_7ef44652ba, "non riuscita"),
         UiEntry(R.string.ui_7dd4ab62e7, "contesto del telefono"),
         UiEntry(R.string.ui_3b87e2a997, "batteria, rete, sveglie e app recenti agli agenti locali"),
+        UiEntry(R.string.ui_57289acd6d, "scatta e chiedi a un agente"),
+        UiEntry(R.string.ui_b1a6079206, "fotocamera di sistema"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }
