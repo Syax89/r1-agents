@@ -1310,7 +1310,7 @@ class MainActivity : Activity() {
     private fun maybeWelcome() {
         if (welcomeChecked) return
         welcomeChecked = true
-        if (packageName.endsWith(".qa") || prefs.getBoolean("welcomed", false)) return
+        if ((packageName.endsWith(".qa") && !intent.getBooleanExtra("qa_welcome", false)) || prefs.getBoolean("welcomed", false)) return
         prefs.edit().putBoolean("welcomed", true).apply()
         val cur = settings.provider
         if (cur.id == "dashboard" || settings.key(cur).isNotBlank() || nous.loggedIn) return
@@ -2118,7 +2118,7 @@ class MainActivity : Activity() {
                 runOnUiThread { if (!chatScope.alive || engine !== turnEngine) return@runOnUiThread; busy = false; Motion.hide(activity); updateAction(); if (headChar.tag != "x") { buddyStage.dismiss(); headChar.show(agent, "idle"); if (got.get()) headChar.react("giggle") }; if (!got.get() && reply.parent != null && reply.text.isEmpty()) list.removeView(reply) }
             }
         }
-        sendBtn = send; stopBtn = iconButton("close", Theme.BAD, size = 52f) { if (hermesRuntime.active(chatId) != null) hermesRuntime.cancel(chatId) else engine?.cancel(); snack(UiText.text(this@MainActivity, R.string.ui_406565f0d9)) }.apply { visibility = View.GONE }
+        sendBtn = send; stopBtn = iconButton("close", Theme.BAD, size = 52f) { if (hermesRuntime.active(chatId) != null) hermesRuntime.cancel(chatId) else engine?.cancel(); val m = UiText.text(this@MainActivity, R.string.ui_406565f0d9); snack(m); buddyStage.flash("cancel", m, 2400) }.apply { visibility = View.GONE }
         send.setOnClickListener { submit(input.text.toString()) }
         input.setOnEditorActionListener { _, a, _ -> if (a == EditorInfo.IME_ACTION_SEND) { submit(input.text.toString()); true } else false }
         val bar = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
@@ -2283,7 +2283,7 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { input.requestFocus(); true }
                 else -> false
             }
-        }, scope = chatScope, onLeave = { prefs.edit().apply { val d = input.text.toString(); if (d.isBlank() || busy) remove("draft_$chatId") else putString("draft_$chatId", d) }.apply(); stopSmooth(); connectionAlive = false; stopConnectionWatch(); buddyStage.dismiss(); avatarSlot.removeCallbacks(collapseAvatar); avatarMotion?.cancel(); engine?.let { it.cancel(); localTurns.remove(it) }; stopTaskWatch?.invoke(); onVoice = null; cancelActiveMic = null; pttHandler = null; attachHook = null; pending.forEach { it.file.delete() }; pending.clear(); voiceCancelled = true; voice.cancel(); tts?.stop() }, isChat = true, chatKey = chatId, onSuspend = { if (voiceActive) suspendVoice() }, leaveGuard = { if (busy && !hermesMode()) { val now = android.os.SystemClock.uptimeMillis(); if (armedKey == "leave" && now - armedAt < 4000) false else { armedKey = "leave"; armedAt = now; snack(UiText.text(this@MainActivity, R.string.ui_8cec984fbd)); true } } else false })
+        }, scope = chatScope, onLeave = { prefs.edit().apply { val d = input.text.toString(); if (d.isBlank() || busy) remove("draft_$chatId") else putString("draft_$chatId", d) }.apply(); stopSmooth(); connectionAlive = false; stopConnectionWatch(); buddyStage.dismiss(); avatarSlot.removeCallbacks(collapseAvatar); avatarMotion?.cancel(); engine?.let { it.cancel(); localTurns.remove(it) }; stopTaskWatch?.invoke(); onVoice = null; cancelActiveMic = null; pttHandler = null; attachHook = null; pending.forEach { it.file.delete() }; pending.clear(); voiceCancelled = true; voice.cancel(); tts?.stop() }, isChat = true, chatKey = chatId, onSuspend = { if (voiceActive) suspendVoice() }, leaveGuard = { if (busy && !hermesMode()) { val now = android.os.SystemClock.uptimeMillis(); if (armedKey == "leave" && now - armedAt < 4000) false else { armedKey = "leave"; armedAt = now; val m = UiText.text(this@MainActivity, R.string.ui_8cec984fbd); snack(m); buddyStage.flash("cancel", m, 3000); true } } else false })
     }
 
     /** Il microfono scelto in Aspetto e voce: Groq Whisper (se c'è la chiave) o il riconoscimento del dispositivo. */

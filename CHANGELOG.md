@@ -51,3 +51,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.14 (code 21): ricerca tra le skill, Aspetto in sezioni (lingua e tema, rotella e schermo, agente sul telefono, testo e sfondo), tasto "copia" sui blocchi di codice, testo di sistema fino a 1,3x.
 
 0.5.15 (code 22): tabelle Markdown allineate in carattere fisso, Indietro dentro una funzione del carosello torna all agente, messaggio "codice copiato".
+
+0.5.16 (code 23): avviso visibile quando si esce da una risposta in corso (prima non compariva), scheda di benvenuto, conferme e errori classificati verificati sul dispositivo.

@@ -130,7 +130,8 @@ internal class FunctionalUiQa(private val test: Instrumentation) {
                     click(a, "nota funzionale QA")
                     val clip = a.getSystemService(android.content.ClipboardManager::class.java).primaryClip
                     check(clip?.getItemAt(0)?.text?.toString() == "nota funzionale QA")
-                    click(a, a.getString(R.string.ui_dcfbe248ac))
+                    click(a, a.getString(R.string.ui_dcfbe248ac)) // il primo tocco avvisa
+                    click(a, a.getString(R.string.ui_dcfbe248ac)) // il secondo conferma
                 }
                 await("nota eliminata") { db.notes().isEmpty() }
             }
