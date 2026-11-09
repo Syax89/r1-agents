@@ -76,4 +76,53 @@ internal object LocalTurnQa {
         exercise(true)
         exercise(false)
     }
+
+    /** Turno locale in cui il modello (simulato) chiama `phone_action`: la direttiva arriva nel testo e il risultato dello strumento torna al modello. */
+    fun phoneTool(ctx: Context, agent: Agent) {
+        check(ctx.packageName.endsWith(".qa"))
+        val prefs = ctx.getSharedPreferences("settings", 0)
+        val db = Db.get(ctx)
+        val server = ServerSocket(0).apply { soTimeout = 8000 }
+        val bodies = java.util.concurrent.CopyOnWriteArrayList<String>()
+        val chat = db.newChat(agent.id)
+        val settings = Settings(prefs, "custom")
+        settings.set(Providers.get("custom"), "qa-only-not-a-real-key", "http://127.0.0.1:${server.localPort}", "qa")
+        val oldMode = DeviceActions.mode; DeviceActions.mode = "ask"
+        val peer = thread(isDaemon = true, name = "qa-tool-peer") {
+            runCatching {
+                for (round in 0..1) server.accept().use { socket ->
+                    socket.soTimeout = 6000
+                    val input = socket.getInputStream().bufferedReader(Charsets.ISO_8859_1)
+                    var length = 0
+                    while (true) { val line = input.readLine() ?: return@use; if (line.isEmpty()) break; if (line.startsWith("content-length:", true)) length = line.substringAfter(":").trim().toInt() }
+                    val body = CharArray(length); var consumed = 0
+                    while (consumed < length) { val n = input.read(body, consumed, length - consumed); if (n < 0) return@use; consumed += n }
+                    bodies += String(body)
+                    val out = socket.getOutputStream()
+                    out.write("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n".toByteArray())
+                    fun send(delta: JSONObject, finish: String? = null) {
+                        val choice = JSONObject().put("delta", delta); if (finish != null) choice.put("finish_reason", finish)
+                        out.write("data: ${JSONObject().put("choices", org.json.JSONArray().put(choice))}\n\n".toByteArray()); out.flush()
+                    }
+                    if (round == 0) {
+                        val call = JSONObject().put("index", 0).put("id", "call_qa").put("type", "function")
+                            .put("function", JSONObject().put("name", "phone_action").put("arguments", "{\"kind\":\"timer\",\"arg\":\"10m\"}"))
+                        send(JSONObject().put("tool_calls", org.json.JSONArray().put(call)), "tool_calls")
+                    } else send(JSONObject().put("content", "fatto, ho proposto il timer"), "stop")
+                    out.write("data: [DONE]\n\n".toByteArray()); out.flush()
+                }
+            }
+        }
+        val text = StringBuilder()
+        try {
+            Engine(db, settings, NousAuth(prefs), HermesRuntime.get(ctx).dash).turn(agent, chat, "metti un timer di 10 minuti", onCard = { }) { text.append(it) }
+            peer.join(4000)
+            check(bodies.size == 2) { "Attese 2 richieste al modello, ricevute ${bodies.size}" }
+            check(bodies[0].contains("phone_action")) { "Lo strumento phone_action non è offerto al modello" }
+            check(bodies[1].contains("mostrata all'utente come pulsante")) { "Il risultato dello strumento non torna al modello" }
+            check(text.contains("[[r1:timer=10m]]")) { "Direttiva assente nel testo: $text" }
+            check(DeviceActions.parse(text.toString()).actions.singleOrNull()?.key == "timer=10m") { "La direttiva non viene riconosciuta" }
+            check(text.contains("fatto, ho proposto il timer")) { "Risposta finale assente" }
+        } finally { DeviceActions.mode = oldMode; server.close(); peer.join(1000); db.deleteChat(chat); prefs.edit().putString("provider", "custom").commit() }
+    }
 }

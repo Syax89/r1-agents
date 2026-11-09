@@ -50,6 +50,8 @@ internal class DevelopmentQa(private val test: Instrumentation) {
             step("annullamento prima dell'avvio senza invio né persistenza: OK")
             LocalTurnQa.run(ctx, agent)
             step("SSE locale: stop durante streaming, provider fissato e turno successivo indipendente: OK")
+            LocalTurnQa.phoneTool(ctx, agent)
+            step("strumento phone_action: il modello lo chiama, la direttiva arriva nel testo e il risultato torna al modello: OK")
             // Buddy legato allo scroll: affonda a metà, si offende se tirato troppo, un tocco perdona (BuddyScrollFx).
             prefs.edit().putString("app_language", "it").putString("look_mode", "dark").commit()
             activity = test.startActivitySync(Intent(ctx, MainActivity::class.java).putExtra("debug_screen", "settings").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
