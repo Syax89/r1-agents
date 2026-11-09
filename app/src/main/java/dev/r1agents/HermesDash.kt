@@ -318,7 +318,7 @@ class HermesDash(private val p: SharedPreferences) {
         r.optJSONArray("open_requests")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let { o -> if (o.optString("method") in listOf("approval", "clarify")) deliver(SrvRequest(o.get("id"), o.getString("method"), o.optJSONObject("params") ?: JSONObject())) } }
         val arr = r.optJSONArray("messages") ?: return emptyList()
         return (0 until arr.length()).map { arr.getJSONObject(it) }.filter { it.optString("role") in listOf("user", "assistant") && it.optString("text").isNotBlank() }
-            .map { it.getString("role") to it.getString("text") }
+            .map { it.getString("role") to it.getString("text").let { t -> if (it.getString("role") == "user") DeviceActions.stripIntro(t) else t } }
     }
 
     /** Crea un profilo Hermes (un nuovo agente) con la descrizione data; eredita modello e credenziali del dashboard. */

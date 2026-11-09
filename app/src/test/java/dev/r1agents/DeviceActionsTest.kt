@@ -38,4 +38,10 @@ class DeviceActionsTest {
         assertEquals(7 to 30, DeviceActions.time("07:30")); assertEquals(19 to 0, DeviceActions.time("19")); assertEquals(7 to 5, DeviceActions.time("7.05"))
         assertNull(DeviceActions.time("25:00")); assertNull(DeviceActions.time("12:60")); assertNull(DeviceActions.time("mezzanotte"))
     }
+    @Test fun istruzioniNascosteNonSiVedonoNellaCronologia() {
+        val sent = DeviceActions.instruction() + "[Istruzioni per questa chat: sii breve]\n[Cose da ricordare:\n- caffè]\n\nCiao"
+        assertEquals("Ciao", DeviceActions.stripIntro(sent))
+        assertEquals("Grazie", DeviceActions.stripIntro(DeviceActions.instruction() + "Grazie"))
+        assertEquals("Un messaggio [normale]\ncon parentesi", DeviceActions.stripIntro("Un messaggio [normale]\ncon parentesi"))
+    }
 }

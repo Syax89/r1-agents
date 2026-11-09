@@ -42,6 +42,16 @@ object DeviceActions {
     /** Vero se il dispositivo ha un flash: se no la torcia non si propone né all'utente né all'agente. */
     @Volatile var hasFlash = false
 
+    private const val INTRO_END = "Non esiste nessun'altra azione.]\n"
+
+    /** Toglie dal messaggio dell'utente le istruzioni nascoste che il launcher aggiunge al primo invio (cronologia riletta da Hermes). */
+    fun stripIntro(text: String): String {
+        var t = text
+        if (t.startsWith("[Sei nel launcher R1 Agents")) { val e = t.indexOf(INTRO_END); if (e < 0) return text; t = t.substring(e + INTRO_END.length) }
+        for (head in listOf("[Istruzioni per questa chat:", "[Cose da ricordare:\n")) if (t.startsWith(head)) { val e = t.indexOf("]\n"); if (e > 0) t = t.substring(e + 2) }
+        return if (t === text) text else t.trimStart('\n')
+    }
+
     /** Il testo da aggiungere al primo messaggio di una chat perché l'agente sappia cosa può fare. */
     fun instruction(): String = "[Sei nel launcher R1 Agents su un Rabbit R1 (Android). Se l'utente lo chiede o ne ha chiaramente bisogno puoi agire sul telefono scrivendo una direttiva per riga nel tuo messaggio: " +
         "[[r1:apri=NomeApp]] apre un'app, [[r1:timer=10m]] avvia un timer (secondi, m o h), [[r1:sveglia=07:30]] imposta una sveglia, " +
