@@ -79,6 +79,10 @@ object Dim {
     }
 
     /** Input: Android's timer starts again, and so does this. Only a timestamp when it's already armed (wheel ticks). */
+    /** Da quanto tempo nessuno tocca nulla: le decorazioni lente (respiro, sguardi) si fermano dopo [QUIET_MS], il battito di ciglia resta. */
+    fun idleFor(): Long = SystemClock.uptimeMillis() - last
+    const val QUIET_MS = 20_000L
+
     fun poke() {
         last = SystemClock.uptimeMillis()
         wasLow = low

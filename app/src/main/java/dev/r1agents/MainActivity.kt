@@ -214,7 +214,7 @@ class MainActivity : Activity() {
             val veil = android.widget.ImageView(this).apply { setImageBitmap(shot); isClickable = true; scaleType = android.widget.ImageView.ScaleType.FIT_XY }
             val top = window.decorView as ViewGroup // sopra a tutto, anche al buddy in volo durante la ricostruzione
             top.addView(veil, FrameLayout.LayoutParams(-1, -1))
-            veil.animate().alpha(0f).setStartDelay(Motion.SLOW + Motion.FAST).setDuration(Motion.SLOW).setInterpolator(Theme.EASE_OUT).withEndAction { top.removeView(veil); shot.recycle() }.start()
+            veil.animate().alpha(0f).setStartDelay(Motion.FAST).setDuration(Motion.SLOW).setInterpolator(Theme.EASE_OUT).withEndAction { top.removeView(veil); shot.recycle() }.start()
         }
     }
 
@@ -899,7 +899,7 @@ class MainActivity : Activity() {
 
     // ---- navigazione ----------------------------------------------------------------------------
 
-    private fun detach(v: View) { v.animate().cancel(); (v.parent as? ViewGroup)?.removeView(v); v.alpha = 1f; v.translationX = 0f; v.translationY = 0f; v.scaleX = 1f; v.scaleY = 1f }
+    private fun detach(v: View) { v.animate().cancel(); v.setLayerType(View.LAYER_TYPE_NONE, null); (v.parent as? ViewGroup)?.removeView(v); v.alpha = 1f; v.translationX = 0f; v.translationY = 0f; v.scaleX = 1f; v.scaleY = 1f }
 
     /** Avanti: la nuova schermata entra da destra mentre la vecchia scivola un poco a sinistra e sfuma. */
     private fun applySceneContext(screen: Screen?, force: Boolean = false) {
@@ -1183,12 +1183,12 @@ class MainActivity : Activity() {
             // La chat (costosa da disporre) viene misurata PRIMA di partire: l'animazione inizia al primo disegno, su un livello hardware, per ridurre il costo dei fotogrammi durante il movimento.
             // Dissolvenza della chat e della home e volo dell'avatar durano uguale (SLOW) e partono insieme: la chat compare piano, trasparente, mentre l'avatar arriva.
             s.view.alpha = 0f; s.view.translationY = dp(14f); s.view.setLayerType(View.LAYER_TYPE_HARDWARE, null); prev.view.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-            val ease = android.view.animation.AccelerateDecelerateInterpolator()
+            val ease = Theme.EASE_OUT
             s.view.viewTreeObserver.addOnPreDrawListener(object : android.view.ViewTreeObserver.OnPreDrawListener {
                 override fun onPreDraw(): Boolean {
                     s.view.viewTreeObserver.removeOnPreDrawListener(this)
                     s.view.animate().alpha(1f).translationY(0f).setDuration(Motion.SLOW).setInterpolator(ease).withEndAction { s.view.setLayerType(View.LAYER_TYPE_NONE, null) }.start()
-                    prev.view.animate().alpha(0f).setDuration(Motion.SLOW).setInterpolator(ease).withEndAction { prev.view.setLayerType(View.LAYER_TYPE_NONE, null); if (stack.lastOrNull() !== prev) detach(prev.view) }.start()
+                    prev.view.animate().alpha(0f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).withEndAction { prev.view.setLayerType(View.LAYER_TYPE_NONE, null); if (stack.lastOrNull() !== prev) detach(prev.view) }.start()
                     return true
                 }
             })
@@ -1497,7 +1497,8 @@ class MainActivity : Activity() {
             for (i in -leftLanes.size..rightLanes.size) laneDots.addView(View(this).apply { background = roundRect(if (i == lanePos) Theme.accent else Theme.SUBTLE, dp(4f)) }, LinearLayout.LayoutParams(if (i == lanePos) dpi(16f) else dpi(7f), dpi(7f)).apply { marginStart = dpi(3f); marginEnd = dpi(3f) })
         }
         // La colonna del buddy si chiama «agenti»; le altre portano il nome della funzione. I puntini di rotazione degli agenti (a destra) esistono solo lì.
-        fun paintLaneCaption() { laneCaption.text = (laneAt(lanePos)?.title ?: UiText.text(this@MainActivity, R.string.ui_a27ab2d196)).lowercase() }
+        // Dentro una funzione il titolo grande dice gia' il nome: la didascalia lo ripeterebbe (due "fotocamera" uno sull'altro).
+        fun paintLaneCaption() { laneCaption.text = if (laneAt(lanePos) != null) "" else UiText.text(this@MainActivity, R.string.ui_a27ab2d196).lowercase() }
         paintLaneDots(); paintLaneCaption()
         var laneView: View? = null
         var laneFlight: BuddyFlight? = null
@@ -1584,10 +1585,10 @@ class MainActivity : Activity() {
                 if (toLane) {
                     incoming.visibility = View.VISIBLE; incoming.alpha = 1f; incoming.translationX = 0f
                     for (i in 0..1) { val t = lc.getChildAt(i); t.translationX = shift; t.alpha = 0f; t.animate().translationX(0f).alpha(1f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start() }
-                    wheel.animate().alpha(0f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).withEndAction { if (lanePos != 0) wheel.visibility = View.INVISIBLE }.start()
+                    wheel.animate().alpha(0f).setDuration(Motion.FAST).setInterpolator(Theme.EASE_OUT).withEndAction { if (lanePos != 0) wheel.visibility = View.INVISIBLE }.start()
                 } else {
                     wheel.visibility = View.VISIBLE; wheel.alpha = 0f; wheel.animate().alpha(1f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start()
-                    for (i in 0..1) lc.getChildAt(i).animate().translationX(-shift).alpha(0f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).start()
+                    for (i in 0..1) lc.getChildAt(i).animate().translationX(-shift).alpha(0f).setDuration(Motion.FAST).setInterpolator(Theme.EASE_OUT).start()
                     laneProp.animate().cancel(); laneProp.animate().rotation(-dir * 60f).scaleX(.5f).scaleY(.5f).translationX(-shift).alpha(0f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).withEndAction { laneLayer.removeView(laneCol) }.start()
                 }
                 // Il buddy: un clone vola dalla posizione della rotella a quella della pagina (o al contrario) dopo il primo layout.
@@ -1614,7 +1615,7 @@ class MainActivity : Activity() {
                 if (outgoing === wheel) { if (lanePos != 0) wheel.visibility = View.INVISIBLE } else laneLayer.removeView(outgoing)
                 outgoing.translationX = 0f
             }.start()
-            if (incoming === wheel) { wheel.visibility = View.VISIBLE; wheel.alpha = 0f; wheel.animate().alpha(1f).setDuration(Motion.SLOW).start() }
+            if (incoming === wheel) { wheel.visibility = View.VISIBLE; wheel.alpha = 0f; wheel.animate().alpha(1f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start() }
             laneView = if (l == null) null else incoming
             if (l == null) laneLayer.postDelayed({ if (lanePos == 0) laneLayer.visibility = View.INVISIBLE }, Motion.SLOW + 60L)
         }
@@ -2997,7 +2998,7 @@ class MainActivity : Activity() {
         }
         frame.addView(col, FrameLayout.LayoutParams(-1, -2))
         val size = dpi(232f)
-        val peek = if (agent != null) CharacterView(this, size).also { it.show(agent) } else null
+        val peek = if (agent != null) CharacterView(this, size).also { it.show(agent); it.tag = "scene-buddy" } else null
         // L'agente sbircia da sotto con una molla; al tocco sale al centro e si rimpicciolisce fino a dove sta nella home (morph glance -> home).
         var morphing = false
         if (peek != null) {

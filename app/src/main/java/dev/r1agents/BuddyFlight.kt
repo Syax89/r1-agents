@@ -6,7 +6,6 @@ import android.animation.ValueAnimator
 import android.graphics.Matrix
 import android.graphics.RectF
 import android.view.View
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
 import dev.r1os.host.ui.CharacterView
@@ -34,7 +33,6 @@ internal class BuddyFlight(
     private val chatBounds = bounds(chatAvatar)
     private val size = maxOf(homeAvatar.width, chatAvatar.width)
     private val clone = CharacterView(root.context, size).apply { copyAppearanceFrom(if (initial >= .5f) chatAvatar else homeAvatar); tag = "buddy-flight"; setActive(false); setOnTouchListener(null); isClickable = false; isFocusable = false }
-    private val fade = AccelerateDecelerateInterpolator()
     private var animator: ValueAnimator? = null
     private var disposed = false
     private var towards = if (initial >= .5f) 0f else 1f
@@ -91,15 +89,18 @@ internal class BuddyFlight(
         if (!disposed) { hide(homeAvatar); hide(chatAvatar); retired.forEach { hide(it) } }
         clone.copyScenePoseFrom(if (progress >= .35f) chatAvatar else homeAvatar)
         val flight = Theme.SETTLE.getInterpolation(progress)
-        val alpha = fade.getInterpolation(progress)
+        // Le due pagine non si sovrappongono a meta': la vecchia sparisce nella prima parte, la nuova compare nella seconda (prima: somma 1, testi trasparenti uno sull'altro).
+        fun smooth(x: Float) = x.coerceIn(0f, 1f).let { it * it * (3f - 2f * it) }
+        val chatAlpha = smooth((progress - .3f) / .7f)
+        val homeAlpha = 1f - smooth(progress / .6f)
         fun mix(a: Float, b: Float) = a + (b - a) * flight
         clone.translationX = mix(homeBounds.centerX(), chatBounds.centerX()) - size / 2f
         clone.translationY = mix(homeBounds.centerY(), chatBounds.centerY()) - size / 2f
         clone.scaleX = mix(homeBounds.width(), chatBounds.width()) / size
         clone.scaleY = mix(homeBounds.height(), chatBounds.height()) / size
         if (fadePages) {
-            chat.alpha = alpha; chat.translationY = root.context.dp(14f) * (1f - alpha)
-            home.alpha = 1f - alpha
+            chat.alpha = chatAlpha; chat.translationY = root.context.dp(14f) * (1f - chatAlpha)
+            home.alpha = homeAlpha
         }
     }
     fun bringActorToFront() { if (isActive) clone.bringToFront() }

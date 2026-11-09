@@ -31,7 +31,7 @@ class PropView(ctx: Context, val kind: String) : View(ctx) {
         val on = isVisible && isAttachedToWindow && alpha > 0.01f && !Motion.reduced(context)
         if (on == live) return
         live = on
-        if (on) { ticker.start(); breathe() } else { ticker.cancel(); animate().cancel(); translationY = 0f }
+        if (on) { if (kind == "globe" || kind == "stopwatch") ticker.start(); breathe() } else { ticker.cancel(); animate().cancel(); translationY = 0f }
     }
     override fun onAttachedToWindow() { super.onAttachedToWindow(); onVisibilityAggregated(isShown) }
     override fun onDetachedFromWindow() { live = false; ticker.cancel(); animate().cancel(); super.onDetachedFromWindow() }

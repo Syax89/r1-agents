@@ -118,9 +118,18 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
     }
 
     /** The calm clock's tick: its calm loops' time, and its blink. True while a blink is closing or opening. */
+    /** Davvero visibile: anche un genitore a alpha 0 o nascosto (pagina sotto, buddy "ritirato") lo rende inutile da animare. */
+    private fun reallyShown(): Boolean {
+        var v: View? = this
+        while (v != null) { if (v.alpha < .01f || v.visibility != VISIBLE) return false; v = v.parent as? View }
+        return isAttachedToWindow
+    }
+
     private fun calmStep(now: Long): Boolean {
+        if (!reallyShown()) return false
         val t = now - calmStart
-        for ((a, delay) in calm) {
+        // A riposo da 20 s il respiro si ferma dov'e' (nessun fotogramma); si riprende al primo tocco. Il battito di ciglia continua piu sotto.
+        if (Dim.idleFor() < Dim.QUIET_MS) for ((a, delay) in calm) {
             // Within one cycle (two when it reverses), so the time stays exact however long it runs.
             val cycle = if (a.repeatMode == ValueAnimator.REVERSE) 2 * a.duration else a.duration
             a.currentPlayTime = (t - delay).coerceAtLeast(0) % cycle.coerceAtLeast(1)
@@ -928,7 +937,7 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
             override fun sizeOf(key: String, value: Bitmap) = value.allocationByteCount
         }
         /** Calm life's ticks (T-094): 15 a second, and a frame only on the ones that move something by a pixel. */
-        const val CALM_FRAME_MS = 66L
+        const val CALM_FRAME_MS = 83L
         /** The calm clock's ticks while a blink closes and opens (30 a second). */
         const val BLINK_FRAME_MS = 33L
         const val BLINK_MS = 210L

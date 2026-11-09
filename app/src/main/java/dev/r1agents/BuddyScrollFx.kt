@@ -20,7 +20,7 @@ object BuddyCuriosity {
         lateinit var tick: Runnable
         tick = Runnable {
             if (!cv.isAttachedToWindow) { loops.remove(cv); return@Runnable }
-            if (active()) {
+            if (active() && cv.isShown && cv.alpha > .01f && dev.r1os.host.ui.Dim.idleFor() < dev.r1os.host.ui.Dim.QUIET_MS) {
                 val side = if (rng.nextBoolean()) 1f else -1f
                 when (rng.nextInt(5)) {
                     0 -> { cv.lookAt(30f * side, rng.nextInt(7) - 3f, hold = 900) }
