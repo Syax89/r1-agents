@@ -13,6 +13,9 @@ import android.text.style.TypefaceSpan
  * Un segno non chiuso (durante lo streaming) resta com'è finché non arriva la chiusura.
  */
 object Md {
+    /** Chi riceve il testo di un blocco di codice quando si tocca "copia" (impostato dalla chat). */
+    @Volatile var copyHandler: ((String) -> Unit)? = null
+
     private val heading = Regex("^(#{1,3})\\s+(.*)$")
     private val bullet = Regex("^(\\s*)[-*+]\\s+(.*)$")
     private val numbered = Regex("^(\\s*)(\\d{1,3})[.)]\\s+(.*)$")
@@ -22,9 +25,20 @@ object Md {
     fun render(src: String, codeBg: Int): CharSequence {
         val out = SpannableStringBuilder()
         var inCode = false
+        val block = StringBuilder()
         val lines = src.split('\n')
         for ((i, line) in lines.withIndex()) {
-            if (line.trimStart().startsWith("```")) { inCode = !inCode; continue }
+            if (line.trimStart().startsWith("```")) {
+                if (inCode && block.isNotEmpty()) {
+                    val text = block.toString().trimEnd('\n'); val st = out.length
+                    out.append(" \u29c9 copia ")
+                    out.setSpan(object : android.text.style.ClickableSpan() { override fun onClick(w: android.view.View) { copyHandler?.invoke(text) } }, st, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    out.setSpan(StyleSpan(Typeface.BOLD), st, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    if (i < lines.lastIndex) out.append('\n')
+                }
+                block.setLength(0); inCode = !inCode; continue
+            }
+            if (inCode) block.append(line).append('\n')
             val start = out.length
             when {
                 inCode -> {

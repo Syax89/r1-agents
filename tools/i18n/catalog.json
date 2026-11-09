@@ -680,5 +680,10 @@
   "ultima volta: %1": "last run: %1",
   "copia il comando": "copy the command",
   "comando copiato": "command copied",
-  "scorri di lato per fotocamera, app e strumenti · tieni premuto l'agente per il suo spazio": "swipe sideways for camera, apps and tools · hold the agent for its space"
+  "scorri di lato per fotocamera, app e strumenti · tieni premuto l'agente per il suo spazio": "swipe sideways for camera, apps and tools · hold the agent for its space",
+  "lingua e tema": "language and theme",
+  "rotella e schermo": "wheel and screen",
+  "agente sul telefono": "agent on the phone",
+  "testo e sfondo": "text and background",
+  "cerca una skill": "search a skill"
 }

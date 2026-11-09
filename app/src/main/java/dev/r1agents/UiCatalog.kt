@@ -690,6 +690,11 @@ internal object UiCatalog {
         UiEntry(R.string.ui_c6afddbe7d, "copia il comando"),
         UiEntry(R.string.ui_032d1653f8, "comando copiato"),
         UiEntry(R.string.ui_c599cdc3c1, "scorri di lato per fotocamera, app e strumenti · tieni premuto l'agente per il suo spazio"),
+        UiEntry(R.string.ui_147f3d4b53, "lingua e tema"),
+        UiEntry(R.string.ui_6742e04458, "rotella e schermo"),
+        UiEntry(R.string.ui_15a1464f73, "agente sul telefono"),
+        UiEntry(R.string.ui_e0f65ded6a, "testo e sfondo"),
+        UiEntry(R.string.ui_cafd4e1fc8, "cerca una skill"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

@@ -683,6 +683,11 @@
     <string name="ui_c6afddbe7d" formatted="false">"copia il comando"</string>
     <string name="ui_032d1653f8" formatted="false">"comando copiato"</string>
     <string name="ui_c599cdc3c1" formatted="false">"scorri di lato per fotocamera, app e strumenti · tieni premuto l\'agente per il suo spazio"</string>
+    <string name="ui_147f3d4b53" formatted="false">"lingua e tema"</string>
+    <string name="ui_6742e04458" formatted="false">"rotella e schermo"</string>
+    <string name="ui_15a1464f73" formatted="false">"agente sul telefono"</string>
+    <string name="ui_e0f65ded6a" formatted="false">"testo e sfondo"</string>
+    <string name="ui_cafd4e1fc8" formatted="false">"cerca una skill"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

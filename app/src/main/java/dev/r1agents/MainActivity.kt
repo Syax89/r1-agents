@@ -173,12 +173,12 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Il testo segue la dimensione scelta nelle impostazioni, ma al massimo 1,15×: le schermate sono pensate per 480×640. */
+    /** Il testo segue la dimensione scelta nelle impostazioni, ma al massimo 1,3×: le schermate sono pensate per 480×640. */
     override fun attachBaseContext(base: android.content.Context) {
         super.attachBaseContext(base)
         // Solo le proprieta' personalizzate: copiare l'intera Configuration congelava orientazione e misure.
         val c = android.content.res.Configuration().apply {
-            fontScale = base.resources.configuration.fontScale.coerceAtMost(1.15f)
+            fontScale = base.resources.configuration.fontScale.coerceAtMost(1.3f)
             setLocale(AppLanguage.locale(base)); setLayoutDirection(AppLanguage.locale(base))
         }
         applyOverrideConfiguration(c)
@@ -186,7 +186,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
-        Theme.init(this)
+        Theme.init(this); Md.copyHandler = { t -> runOnUiThread { copyText(t) } }
         prefs = getSharedPreferences("settings", MODE_PRIVATE)
         Vault.migrate(prefs) // cifra nel Keystore i segreti salvati in chiaro dalle versioni precedenti
         r1WheelLandscapeFlip = prefs.getBoolean("wheel_flip_land", true)
@@ -726,6 +726,11 @@ class MainActivity : Activity() {
         ErrorKind.RATE -> UiText.text(this, R.string.ui_0d3b9428e5)
         ErrorKind.SERVER -> UiText.text(this, R.string.ui_a8a7633f72)
         ErrorKind.OTHER -> UiText.message(this, e.message) ?: UiText.text(this, R.string.ui_00ea95d6d1)
+    }
+
+    private fun copyText(t: String) {
+        (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("codice", t))
+        snack(UiText.text(this, R.string.ui_032d1653f8))
     }
 
     private var armedKey: String? = null
@@ -1286,6 +1291,7 @@ class MainActivity : Activity() {
 
     private fun hideKeyboard() { (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).hideSoftInputFromWindow(window.decorView.windowToken, 0) }
 
+    private fun groupTitle(t: String) = text(19f, 800, Theme.accent).apply { text = t; setPadding(dpi(4f), dpi(22f), 0, dpi(2f)) }
     private fun label(t: String) = text(15f, 600, Theme.MUTED).apply { text = t; tag = "label"; setPadding(dpi(10f), dpi(16f), 0, dpi(6f)) }
 
     // ---- home: un agente alla volta, la rotella li gira -----------------------------------------
@@ -1814,6 +1820,7 @@ class MainActivity : Activity() {
             val body = p.text.ifBlank { p.actions.joinToString(", ") { describeAction(it) } }
             val mc = mdCaches.getOrPut(v) { Md.Cache() }
             v.text = Md.render(body, codeBg, mc)
+            if (body.contains("```")) v.movementMethod = android.text.method.LinkMovementMethod.getInstance()
             actionChips(v, p.actions)
         }
         // Chat vuota: invece di una pagina nera, un invito con l'agente (sparisce al primo messaggio).
@@ -2800,6 +2807,7 @@ class MainActivity : Activity() {
             }
             return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(row) }
         }
+        col.addView(groupTitle(UiText.text(this@MainActivity, R.string.ui_147f3d4b53)))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_1909c29a8f)))
         col.addView(chips(listOf("it" to "Italiano", "en" to "English"), AppLanguage.selected(this), "app_language"))
         col.addView(text(14f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_7df11394ff) })
@@ -2812,12 +2820,15 @@ class MainActivity : Activity() {
                     background = android.graphics.drawable.GradientDrawable().apply { setColor(c); cornerRadius = dp(20f); if (on) setStroke(dpi(3f), Theme.FG) }
                     contentDescription = n; isSelected = on; isClickable = true; setOnClickListener { if (!on) applyLook("look_accent", n) } }, LinearLayout.LayoutParams(dpi(40f), dpi(40f)).apply { marginEnd = dpi(8f) })
             } }) })
+        col.addView(groupTitle(UiText.text(this@MainActivity, R.string.ui_6742e04458)))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_449d113dca)))
         col.addView(chips(listOf("normal" to UiText.text(this@MainActivity, R.string.ui_bae7591bb2), "flip" to UiText.text(this@MainActivity, R.string.ui_a9d1bc7eca)), if (r1WheelLandscapeFlip) "flip" else "normal", "wheel_flip"))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_2c24e821f5)))
         col.addView(chips(listOf("1" to UiText.text(this@MainActivity, R.string.ui_3eb8a90885), "2" to UiText.text(this@MainActivity, R.string.ui_47742d68e8), "5" to UiText.text(this@MainActivity, R.string.ui_b45ebd80de), "10" to UiText.text(this@MainActivity, R.string.ui_4605ee7759), "never" to UiText.text(this@MainActivity, R.string.ui_ea4440bd94)), prefs.getString("idle_after", "1")!!, "idle_after"))
+        col.addView(groupTitle(UiText.text(this@MainActivity, R.string.ui_15a1464f73)))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_78cb0ec0e3)))
         col.addView(chips(listOf("ask" to UiText.text(this@MainActivity, R.string.ui_3cd50c52c0), "auto" to UiText.text(this@MainActivity, R.string.ui_9e67d0a179), "off" to UiText.text(this@MainActivity, R.string.ui_22938aeb5f)), DeviceActions.mode, "dev_actions"))
+        col.addView(groupTitle(UiText.text(this@MainActivity, R.string.ui_e0f65ded6a)))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_1b496fbbd9)))
         col.addView(chips((listOf("rubik") + Theme.FAMILIES.keys).map { it to it }, prefs.getString("look_font", "rubik")!!, "look_font", font = true))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_1456190f29))); col.addView(chips(listOf("glance" to UiText.text(this@MainActivity, R.string.ui_3d9a5cdfac), "home" to "home"), prefs.getString("start", "home")!!, "start"))
@@ -3617,6 +3628,15 @@ class MainActivity : Activity() {
                     if (!holder.isAttachedToWindow) return@runOnUiThread
                     holder.removeAllViews()
                     if (list.isEmpty()) holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_9fb9f54c76)))
+                    val cards = ArrayList<Pair<HermesSkill, View>>()
+                    if (list.size > 8) holder.addView(field(UiText.text(this@MainActivity, R.string.ui_cafd4e1fc8), "").apply {
+                        setSingleLine(true)
+                        addTextChangedListener(object : android.text.TextWatcher {
+                            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+                            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+                            override fun afterTextChanged(s: android.text.Editable?) { val q = s.toString().trim().lowercase(); cards.forEach { (sk, v) -> v.visibility = if (q.isEmpty() || sk.name.lowercase().contains(q) || sk.description.lowercase().contains(q)) View.VISIBLE else View.GONE } }
+                        })
+                    })
                     list.forEach { sk ->
                         val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)) }
                         val nameV = text(18f, 700, Theme.FG).keepCase().apply { text = sk.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; alpha = if (sk.enabled) 1f else 0.45f }
@@ -3627,7 +3647,7 @@ class MainActivity : Activity() {
                             Io.run { try { dash.toggleSkill(agent.profile, sk.name, on); runOnUiThread { if (on) cue("wink") } } catch (e: Exception) { runOnUiThread { cue("surprised", force = true); sw.set(!on, false); nameV.alpha = if (!on) 1f else 0.45f; snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, UiText.message(this@MainActivity, e.message)), long = true) } } }
                         }
                         card.addView(sw)
-                        holder.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+                        holder.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) }); cards += sk to card
                     }
                     Motion.stagger(holder, dp(10f))
                 }

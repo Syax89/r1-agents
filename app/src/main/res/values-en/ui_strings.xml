@@ -683,6 +683,11 @@
     <string name="ui_c6afddbe7d" formatted="false">"copy the command"</string>
     <string name="ui_032d1653f8" formatted="false">"command copied"</string>
     <string name="ui_c599cdc3c1" formatted="false">"swipe sideways for camera, apps and tools · hold the agent for its space"</string>
+    <string name="ui_147f3d4b53" formatted="false">"language and theme"</string>
+    <string name="ui_6742e04458" formatted="false">"wheel and screen"</string>
+    <string name="ui_15a1464f73" formatted="false">"agent on the phone"</string>
+    <string name="ui_e0f65ded6a" formatted="false">"text and background"</string>
+    <string name="ui_cafd4e1fc8" formatted="false">"search a skill"</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>
