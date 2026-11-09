@@ -1414,6 +1414,7 @@ class MainActivity : Activity() {
         fun paintLaneCaption() { laneCaption.text = (laneAt(lanePos)?.title ?: UiText.text(this@MainActivity, R.string.ui_a27ab2d196)).lowercase() }
         paintLaneDots(); paintLaneCaption()
         var laneView: View? = null
+        var laneFlight: BuddyFlight? = null
         fun buildLane(l: Lane): View {
             val a = agents.getOrNull(sel) ?: neutralBuddy
             val size = dpi(250f)
@@ -1467,6 +1468,7 @@ class MainActivity : Activity() {
                 // Da una pagina all'altra il buddy resta lì: cambia l'attrezzatura. L'oggetto vecchio esce ruotando, quello nuovo entra, i titoli scivolano.
                 val ob = ot.first as CharacterView; val oldProp = ot.second as PropView; val nb = nt.first as CharacterView; val newProp = nt.second as PropView
                 val oc = outgoing as LinearLayout; val ic = incoming as LinearLayout
+                laneFlight?.dispose(); laneFlight = null
                 val nbParent = nb.parent as ViewGroup; val lp = nb.layoutParams
                 (ob.parent as ViewGroup).removeView(ob); nbParent.removeView(nb); nbParent.addView(ob, 0, lp)   // lo stesso buddy passa alla nuova colonna: nessuna dissolvenza
                 incoming.tag = Triple(ob, newProp, l)
@@ -1481,6 +1483,41 @@ class MainActivity : Activity() {
                 oldProp.animate().cancel(); oldProp.animate().rotation(-dir * 60f).scaleX(.5f).scaleY(.5f).translationX(-shift).alpha(0f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).withEndAction { laneLayer.removeView(outgoing) }.start()
                 ob.lookAt(dir * 18f, 10f, hold = Motion.SLOW * 2)
                 laneView = incoming
+                return
+            }
+            // Dalla rotella (agenti) a una pagina e ritorno: il buddy vola da una posizione all'altra (un solo buddy in scena), la rotella si dissolve sul posto e titoli e oggetto scivolano.
+            val wheelBuddy = focusAvatar()
+            val laneCol = if (outgoing === wheel) incoming else outgoing
+            val laneTri = laneCol.tag as? Triple<*, *, *>
+            if (wheelBuddy != null && laneTri != null && laneCol !== wheel && (outgoing === wheel) != (incoming === wheel)) {
+                val toLane = outgoing === wheel
+                val laneBuddy = laneTri.first as CharacterView; val laneProp = laneTri.second as PropView
+                val lc = laneCol as LinearLayout; val shift = dpi(36f).toFloat() * dir
+                laneFlight?.dispose(); laneFlight = null
+                wheel.animate().cancel(); wheel.translationX = 0f
+                if (toLane) {
+                    incoming.visibility = View.VISIBLE; incoming.alpha = 1f; incoming.translationX = 0f
+                    for (i in 0..1) { val t = lc.getChildAt(i); t.translationX = shift; t.alpha = 0f; t.animate().translationX(0f).alpha(1f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start() }
+                    wheel.animate().alpha(0f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).withEndAction { if (lanePos != 0) wheel.visibility = View.INVISIBLE }.start()
+                } else {
+                    wheel.visibility = View.VISIBLE; wheel.alpha = 0f; wheel.animate().alpha(1f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start()
+                    for (i in 0..1) lc.getChildAt(i).animate().translationX(-shift).alpha(0f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).start()
+                    laneProp.animate().cancel(); laneProp.animate().rotation(-dir * 60f).scaleX(.5f).scaleY(.5f).translationX(-shift).alpha(0f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).withEndAction { laneLayer.removeView(laneCol) }.start()
+                }
+                // Il buddy: un clone vola dalla posizione della rotella a quella della pagina (o al contrario) dopo il primo layout.
+                laneBuddy.alpha = 0f; if (!toLane) wheelBuddy.alpha = 1f
+                val kickoff = object : android.view.ViewTreeObserver.OnPreDrawListener {
+                    override fun onPreDraw(): Boolean {
+                        laneCol.viewTreeObserver.removeOnPreDrawListener(this)
+                        if (!laneCol.isAttachedToWindow || wheelBuddy.width <= 0 || laneBuddy.width <= 0) { laneBuddy.alpha = 1f; return true }
+                        val f = BuddyFlight(root, wheel, laneCol, wheelBuddy, laneBuddy, if (toLane) 0f else 1f, fadePages = false) { c, _ -> c.dispose(restoreSource = true); if (laneFlight === c) laneFlight = null }
+                        laneFlight = f; f.animateTo(if (toLane) 1f else 0f)
+                        return true
+                    }
+                }
+                laneCol.viewTreeObserver.addOnPreDrawListener(kickoff)
+                laneView = if (l == null) null else incoming
+                if (l == null) laneLayer.postDelayed({ if (lanePos == 0) laneLayer.visibility = View.INVISIBLE }, Motion.SLOW + 60L)
                 return
             }
             incoming.visibility = View.VISIBLE; incoming.translationX = dir * w * 0.4f; incoming.alpha = 0f

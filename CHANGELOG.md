@@ -31,3 +31,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.4 (code 11): menu a pannello: il buddy non si sposta più scorrendo la lista; testo Sicurezza aggiornato.
 
 0.5.5 (code 12): chiusura del menu dal carosello senza buddy doppio; cambio pagina del carosello con scambio dell'attrezzatura (il buddy resta).
+
+0.5.6 (code 13): carosello: passaggio agenti↔pagine con buddy che vola (uno solo in scena).

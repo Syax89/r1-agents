@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 12,
-  "versionName": "0.5.5",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.5/r1agents-release-signed.apk",
-  "sha256": "5fa709243975cea231b68f9c73227c4a21b0911698883b156dac13701e078647",
+  "versionCode": 13,
+  "versionName": "0.5.6",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.6/r1agents-release-signed.apk",
+  "sha256": "5de4165b13967fc525099fc00b63e48ab4ae8b40475602d8ef95d145e1393b54",
   "sizeBytes": 1329479,
-  "notes": "0.5.5: il buddy non appare più doppio quando chiudi il menu da una pagina del carosello; tra le pagine del carosello il buddy resta fermo e cambia l'attrezzatura (l'oggetto esce ruotando, quello nuovo entra) invece di dissolversi."
+  "notes": "0.5.6: passaggio da e verso la colonna agenti nel carosello senza rotture: il buddy vola da una posizione all'altra (uno solo in scena) mentre titoli e oggetto scivolano; tra le altre pagine cambia solo l'attrezzatura."
 }
