@@ -204,3 +204,7 @@ Ottenuta senza ruotare il telefono: `--ez qa_portrait true` blocca solo l activi
 Tutte le 21 pagine riaperte una per una: impostazioni, fornitore, aspetto, sicurezza, azioni agente, informazioni, strumenti, traduttore, note, sveglie, nuova sveglia, timer, routine, nuova routine, app, memoria, gestisci chat, spazio agente, editor agente, attivita Hermes, competenze.
 Esito: OK per tutte. Titolo alla stessa quota (y ~82), indietro, buddy a destra o grande nelle pagine hub (impostazioni, informazioni, app), paragrafi intro/hint, righe e card uniformi, pulsanti primari in accento (salva, avvia, riprova, traduci, aggiungi), "aggiungi" della memoria nel colore dell agente per regola di dominio, errori Hermes classificati con "riprova".
 Con questa passata ogni sotto menu e verificato in orizzontale (pass9) e in verticale (pass10) sull ultima versione.
+
+## Unificazione dei componenti (0.5.32)
+- Chip: prima 7 copie con padding diversi (8/10/13 dp) e altezze diverse; ora un solo `chipView()` + `chipPaint()` (48 dp, raggio 14, accento) in traduttore, aspetto, opacita foto, giorni (sveglie/routine/attivita), agente (routine/attivita). Verificato in verticale: work/pass11/chips.png.
+- Interruttori: tolto `toggle()` (non usato); restano due stili con ruoli diversi: `SwitchView` per gli elementi di lista (sveglie, routine, attivita, competenze) e la spunta di `row(check)` per le impostazioni. `SwitchView` ora e un interruttore anche per TalkBack/rotella (ruolo, stato acceso/spento).

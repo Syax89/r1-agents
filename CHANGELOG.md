@@ -83,3 +83,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.30 (code 37): errori in parole semplici anche per indirizzi non validi (senza schema) nelle pagine Hermes; audit dei sotto menu con passata finale su tutte le pagine.
 
 0.5.31 (code 38): sicurezza: le schermate di prova (debug_screen, debug_req, debug_md) funzionano solo nelle build debuggabili; suoneria e bozza vocale accettano solo intent con il token privato dell app; la condivisione rifiuta file:// e i provider dell app; web_fetch fissa gli indirizzi verificati e blocca anche 100.64/10 e fc00::/7, leggendo la pagina per intero; l import dei backup toglie i percorsi degli allegati; la build debug ha il suffisso .debug.
+
+0.5.32 (code 39): design unificato: un solo chip di scelta in tutte le pagine (48 dp, stessi spazi e colori), interruttore riconosciuto da TalkBack e dalla rotella con il suo stato; tolto un componente non usato.

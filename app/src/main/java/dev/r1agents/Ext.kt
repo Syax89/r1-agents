@@ -660,8 +660,14 @@ class SwitchView(ctx: Context, on: Boolean, private val accent: Int, private val
         setOnClickListener { set(!checked, true) }
         setOnTouchListener { v, e -> Motion.touch(v, e); false }
     }
+    // Per TalkBack e la rotella: e' un interruttore, con il suo stato acceso/spento.
+    override fun getAccessibilityClassName(): CharSequence = android.widget.Switch::class.java.name
+    override fun onInitializeAccessibilityNodeInfo(info: android.view.accessibility.AccessibilityNodeInfo) {
+        super.onInitializeAccessibilityNodeInfo(info); info.isCheckable = true; info.isChecked = checked
+    }
     fun set(value: Boolean, notify: Boolean) {
         checked = value; spring.animateTo(if (value) 1f else 0f, 460f, 0.72f)
+        if (android.os.Build.VERSION.SDK_INT >= 30) stateDescription = if (value) "on" else "off"
         if (notify) { performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP); onChange(value) }
     }
     override fun onMeasure(w: Int, h: Int) = setMeasuredDimension(context.dpi(64f), context.dpi(48f))

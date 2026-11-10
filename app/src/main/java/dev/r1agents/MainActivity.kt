@@ -2836,8 +2836,7 @@ class MainActivity : Activity() {
             langCard.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@MainActivity).apply {
                 trLangs.forEach { l ->
                     val on = l == target()
-                    addView(text(15f, 700).apply { text = l; setPadding(dpi(14f), dpi(8f), dpi(14f), dpi(8f)); isClickable = true
-                        setTextColor(if (on) Theme.ON_ACCENT else Theme.FG); background = roundRect(if (on) toolAccent else Theme.FOCUS, dp(14f))
+                    addView(chipView(l).apply { chipPaint(this, on)
                         setOnClickListener { prefs.edit().putString("tr_lang", UiText.translationCodeAt(trLangs.indexOf(l))).apply(); stack.last().onShow?.invoke() } }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
                 } }) })
             (input.parent as? ViewGroup)?.removeView(input); (result.parent as? ViewGroup)?.removeView(result); (status.parent as? ViewGroup)?.removeView(status)
@@ -2891,9 +2890,8 @@ class MainActivity : Activity() {
             val row = LinearLayout(this)
             options.forEach { (id, label) ->
                 val on = id == current
-                row.addView(text(15f, 700).apply {
-                    text = label; setPadding(dpi(14f), dpi(13f), dpi(14f), dpi(13f)); isClickable = true; isSelected = on; minHeight = dpi(48f); gravity = Gravity.CENTER_VERTICAL
-                    setTextColor(if (on) Theme.ON_ACCENT else Theme.FG); background = roundRect(if (on) Theme.accent else Theme.FOCUS, dp(14f))
+                row.addView(chipView(label).apply {
+                    chipPaint(this, on)
                     if (font) typeface = Theme.fontOf(id, 700)
                     setOnClickListener { if (!on) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "idle_after") { prefs.edit().putString("idle_after", id).apply(); stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) } }
                 }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
@@ -2944,8 +2942,7 @@ class MainActivity : Activity() {
             col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@MainActivity).apply {
                 listOf(0f, 0.25f, 0.4f, 0.6f, 0.75f).forEach { d ->
                     val on = Math.abs(cur - d) < 0.01f
-                    addView(text(15f, 700).apply { text = UiText.text(this@MainActivity, R.string.ui_e2344072da, (d * 100).toInt()); setPadding(dpi(14f), dpi(8f), dpi(14f), dpi(8f)); isClickable = true
-                        setTextColor(if (on) Theme.ON_ACCENT else Theme.FG); background = roundRect(if (on) toolAccent else Theme.FOCUS, dp(14f))
+                    addView(chipView(UiText.text(this@MainActivity, R.string.ui_e2344072da, (d * 100).toInt())).apply { chipPaint(this, on)
                         setOnClickListener { prefs.edit().putFloat("bgd_$scr", d).putString("reopen", "look").apply(); recreate() } }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f); topMargin = dpi(6f) })
                 } }) })
         }
@@ -3155,9 +3152,9 @@ class MainActivity : Activity() {
 
     private fun daysChips(get: () -> Int, set: (Int) -> Unit): View {
         val row = LinearLayout(this); val views = ArrayList<TextView>()
-        fun paint() = views.forEachIndexed { i, v -> val on = get() and (1 shl i) != 0; v.setTextColor(if (on) Theme.ON_ACCENT else Theme.FG); v.background = roundRect(if (on) toolAccent else Theme.FOCUS, dp(14f)) }
+        fun paint() = views.forEachIndexed { i, v -> chipPaint(v, get() and (1 shl i) != 0) }
         AppLanguage.wrap(this@MainActivity).resources.getStringArray(R.array.weekdays_short).toList().forEachIndexed { i, d ->
-            val v = text(14f, 700).apply { text = d; setPadding(dpi(9f), dpi(8f), dpi(9f), dpi(8f)); isClickable = true; setOnClickListener { set(get() xor (1 shl i)); paint() } }
+            val v = chipView(d, 14f).apply { setPadding(dpi(9f), dpi(13f), dpi(9f), dpi(13f)); setOnClickListener { set(get() xor (1 shl i)); paint() } }
             views.add(v); row.addView(v, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(5f) })
         }
         paint(); daysRepaint = { paint() }
@@ -3172,7 +3169,13 @@ class MainActivity : Activity() {
     }
     private var daysRepaint: (() -> Unit)? = null
 
-    private fun toggle(on: Boolean, onClick: () -> Unit) = button(if (on) "on" else "off", if (on) Theme.colorOf("green") else Theme.MUTED, small = true, onClick = onClick)
+    /** Il chip di scelta usato in tutte le pagine: stesso testo, stessi spazi (bersaglio di 48 dp), stessi colori selezionato/no. */
+    private fun chipView(label: String, size: Float = 15f) = text(size, 700).apply {
+        text = label; setPadding(dpi(14f), dpi(13f), dpi(14f), dpi(13f)); minHeight = dpi(48f); gravity = Gravity.CENTER_VERTICAL; isClickable = true; isFocusable = true
+    }
+    private fun chipPaint(v: TextView, on: Boolean) {
+        v.isSelected = on; v.setTextColor(if (on) Theme.ON_ACCENT else Theme.FG); v.background = roundRect(if (on) Theme.accent else Theme.FOCUS, dp(14f))
+    }
 
     /** Intestazione comune a ogni schermata: tasto indietro (l'R1 non ne ha uno) e titolo. */
     private fun framed(title: String, body: View, trailing: View? = null, buddyHeader: Boolean = true, buddyOverflow: Boolean = false): View = LinearLayout(this).apply {
@@ -3606,8 +3609,8 @@ class MainActivity : Activity() {
         return listPage(if (existing == null) UiText.text(this@MainActivity, R.string.ui_16be2701de) else "routine", context = BuddySceneContext.CONFIGURE) { col ->
             col.addView(label(UiText.text(this@MainActivity, R.string.ui_168fedf261)))
             val chips = LinearLayout(this); val views = ArrayList<Pair<Long, TextView>>()
-            fun paint() = views.forEach { (id, v) -> val on = r.agentId == id; v.setTextColor(if (on) Theme.ON_ACCENT else Theme.FG); v.background = roundRect(if (on) toolAccent else Theme.FOCUS, dp(14f)) }
-            agents.forEach { ag -> views.add(ag.id to text(15f, 700).apply { text = ag.name; setPadding(dpi(14f), dpi(8f), dpi(14f), dpi(8f)); isClickable = true; setOnClickListener { r.agentId = ag.id; paint() } }.also { chips.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) }) }) }
+            fun paint() = views.forEach { (id, v) -> chipPaint(v, r.agentId == id) }
+            agents.forEach { ag -> views.add(ag.id to chipView(ag.name).apply { setOnClickListener { r.agentId = ag.id; paint() } }.also { chips.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) }) }) }
             paint(); col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(chips) })
             listOf<View>(name, prompt).forEach { (it.parent as? ViewGroup)?.removeView(it) }
             col.addView(label(UiText.text(this@MainActivity, R.string.ui_de4da44e7e))); col.addView(name)
@@ -3706,8 +3709,8 @@ class MainActivity : Activity() {
         return listPage(UiText.text(this@MainActivity, R.string.ui_f4266e420f), context = BuddySceneContext.CONFIGURE) { col ->
             col.addView(label(UiText.text(this@MainActivity, R.string.ui_168fedf261)))
             val chips = LinearLayout(this); val views = ArrayList<Pair<Long, TextView>>()
-            fun paint() = views.forEach { (id, v) -> val on = agent?.id == id; v.setTextColor(if (on) Theme.ON_ACCENT else Theme.FG); v.background = roundRect(if (on) Theme.accent else Theme.FOCUS, dp(14f)) }
-            agents.forEach { ag -> views.add(ag.id to text(15f, 700).apply { text = ag.name; setPadding(dpi(14f), dpi(10f), dpi(14f), dpi(10f)); isClickable = true; setOnClickListener { agent = ag; paint() } }.also { chips.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) }) }) }
+            fun paint() = views.forEach { (id, v) -> chipPaint(v, agent?.id == id) }
+            agents.forEach { ag -> views.add(ag.id to chipView(ag.name).apply { setOnClickListener { agent = ag; paint() } }.also { chips.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) }) }) }
             paint(); col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(chips) })
             listOf<View>(name, prompt).forEach { (it.parent as? ViewGroup)?.removeView(it) }
             col.addView(label(UiText.text(this@MainActivity, R.string.ui_de4da44e7e))); col.addView(name)
