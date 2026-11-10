@@ -585,8 +585,15 @@ fun Context.tile(icon: String, title: String, sub: String?, accent: Int, onClick
         setPadding(dpi(14f), dpi(14f), dpi(14f), dpi(14f)); minimumHeight = dpi(138f); background = roundRect(Theme.CARD, r) }
     val chip = chipOf(icon, accent, 52f)
     val t = text(22f, 700).apply { text = title; maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
-    val s = sub?.let { text(13f, 500, Theme.MUTED).keepCase().apply { text = it; maxLines = 2; ellipsize = TextUtils.TruncateAt.END; setPadding(0, dpi(2f), 0, 0) } }
-    l.addView(chip, LinearLayout.LayoutParams(dpi(52f), dpi(52f)))
+    // Due righe sempre riservate al sottotitolo: le schede affiancate hanno i titoli alla stessa altezza.
+    val s = sub?.let { text(13f, 500, Theme.MUTED).keepCase().apply { text = it; minLines = 2; maxLines = 2; ellipsize = TextUtils.TruncateAt.END; setPadding(0, dpi(2f), 0, 0) } }
+    // In alto: l'icona e, a destra, la freccia "si apre" come nelle liste.
+    l.addView(LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL; gravity = Gravity.TOP
+        addView(chip, LinearLayout.LayoutParams(dpi(52f), dpi(52f)))
+        addView(View(this@tile), LinearLayout.LayoutParams(0, 1, 1f))
+        addView(IconView(this@tile, "chevron", Theme.SUBTLE, Theme.ON_ACCENT), LinearLayout.LayoutParams(dpi(18f), dpi(18f)))
+    }, LinearLayout.LayoutParams(-1, -2))
     l.addView(View(this), LinearLayout.LayoutParams(1, 0, 1f))
     l.addView(t); s?.let { l.addView(it) }
     l.cardInput(accent, r, chip, t, s, onClick)
@@ -719,9 +726,12 @@ class SwitchView(ctx: Context, on: Boolean, private val accent: Int, private val
  * Unisce le righe consecutive (`GroupRow`) di una colonna in un'unica scheda arrotondata con divisori sottili, come le
  * impostazioni di un telefono: meno riquadri sparsi, gruppi leggibili a colpo d'occhio. Una riga sola resta una scheda a sé.
  */
+/** Segno per le schede di contenuto (sveglie, timer, note…) che `groupRows` può unire in un'unica scheda. */
+const val LIST_ITEM = "list-item"
+
 fun Context.groupRows(col: LinearLayout) {
     val kids = (0 until col.childCount).map { col.getChildAt(it) }
-    var run = ArrayList<GroupRow>()
+    var run = ArrayList<View>()
     fun flush() {
         if (run.isEmpty()) return
         val first = col.indexOfChild(run.first())
@@ -730,12 +740,25 @@ fun Context.groupRows(col: LinearLayout) {
             background = roundRect(Theme.CARD, dp(20f)); clipToOutline = true
             showDividers = LinearLayout.SHOW_DIVIDER_MIDDLE
             // Il divisore parte dopo l'icona, come nelle liste di sistema.
-            dividerDrawable = android.graphics.drawable.InsetDrawable(android.graphics.drawable.GradientDrawable().apply { setColor(Theme.withAlpha(Theme.FG, 0.08f)); setSize(1, maxOf(1, dpi(0.6f))) }, dpi(run.first().dividerInset), 0, dpi(14f), 0)
+            dividerDrawable = android.graphics.drawable.InsetDrawable(android.graphics.drawable.GradientDrawable().apply { setColor(Theme.withAlpha(Theme.FG, 0.08f)); setSize(1, maxOf(1, dpi(0.6f))) }, dpi((run.first() as? GroupRow)?.dividerInset ?: 14f), 0, dpi(14f), 0)
         }
-        run.forEach { r -> col.removeView(r); r.grouped = true; card.addView(r, LinearLayout.LayoutParams(-1, -2)) }
+        run.forEach { r ->
+            col.removeView(r)
+            if (r is GroupRow) r.grouped = true
+            else {
+                // Voce di lista (sveglia, timer, nota…): perde il fondo proprio e, a fuoco, mostra la stessa pillola delle righe.
+                r.background = null
+                val prev = r.onFocusChangeListener
+                r.setOnFocusChangeListener { v, f -> prev?.onFocusChange(v, f); v.background = if (f) android.graphics.drawable.InsetDrawable(Jelly(Theme.accent, dp(16f)), dpi(4f)) else null }
+            }
+            card.addView(r, LinearLayout.LayoutParams(-1, -2))
+        }
         col.addView(card, first, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dpi(8f) })
         run = ArrayList()
     }
-    for (v in kids) { if (v is GroupRow && v.visibility == View.VISIBLE) run.add(v) else flush() }
+    for (v in kids) {
+        val same = run.isEmpty() || (run.first() is GroupRow) == (v is GroupRow) // righe e voci di lista in gruppi separati
+        if ((v is GroupRow || v.tag == LIST_ITEM) && v.visibility == View.VISIBLE && same) run.add(v) else { flush(); if ((v is GroupRow || v.tag == LIST_ITEM) && v.visibility == View.VISIBLE) run.add(v) }
+    }
     flush()
 }

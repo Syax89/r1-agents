@@ -97,3 +97,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.37 (code 44): bozza e allegati non inviati restano quando Hermes aggiorna una chat appena aperta; spostare un agente, eliminare una chat e salvare un messaggio avvengono tutti insieme o per niente; un solo client di rete condiviso per voce, aggiornamenti, Hermes e pagine web; il prompt iniziale di kiwi e il messaggio sui file rifiutati seguono la lingua dell app; home, chat e standby in file separati.
 
 0.5.38 (code 45): menu ridisegnati: le voci vicine stanno in un unica scheda con divisori sottili (sicurezza, informazioni, app per sezione), una freccia indica cosa si apre, le icone stanno su un fondo tenue nel colore dell app, i titoli di sezione sono più leggibili e la voce a fuoco con la rotella diventa una pillola dentro la scheda; la rotella non si ferma più sul buddy in alto.
+
+0.5.39 (code 46): anche sveglie, timer, note, routine, attività di Hermes, competenze e chat da gestire stanno in un unica scheda con divisori e pillola a fuoco; le schede quadrate di strumenti e impostazioni hanno i titoli alla stessa altezza e una freccia in alto a destra.

@@ -93,7 +93,7 @@ internal fun MainActivity.notesScreen(): Screen {
         val notes = db.notes()
         if (notes.isEmpty()) col.addView(emptyState(UiText.text(this@notesScreen, R.string.ui_e48edacfc6), UiText.text(this@notesScreen, R.string.ui_9630587e64)))
         notes.forEach { (id, t, ts) ->
-            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(8f), dpi(10f)) ; isClickable = true; setOnClickListener { (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("nota", t)); it.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP); snack(UiText.text(this@notesScreen, R.string.ui_2eba76fd11)) }}
+            val card = LinearLayout(this).apply { tag = LIST_ITEM; orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(8f), dpi(10f)) ; isClickable = true; setOnClickListener { (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("nota", t)); it.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP); snack(UiText.text(this@notesScreen, R.string.ui_2eba76fd11)) }}
             card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
                 addView(text(17f, 500).keepCase().apply { text = t })
                 addView(text(12f, 500, Theme.MUTED).apply { text = ago(ts) }) }, LinearLayout.LayoutParams(0, -2, 1f))
@@ -289,7 +289,7 @@ internal fun MainActivity.tools(): Screen = listPage(UiText.text(this@tools, R.s
 
 internal fun MainActivity.alarmsScreen(): Screen = listPage(UiText.text(this@alarmsScreen, R.string.ui_70b85f50fe), context = BuddySceneContext.TIME) { col ->
     db.alarms().forEach { a ->
-        val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(8f), dpi(10f), dpi(8f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
+        val card = LinearLayout(this).apply { tag = LIST_ITEM; orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(8f), dpi(10f), dpi(8f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
             setOnClickListener { push(alarmEditor(a)) } }
         val timeV = text(34f, 700, Theme.FG).apply { text = Sched.time(a.hour, a.minute); alpha = if (a.on) 1f else 0.45f }
         fun alarmLine() = (UiText.days(this@alarmsScreen, a.days) + (if (a.label.isNotBlank()) " · ${a.label}" else "") + (if (a.on) " · " + UiText.text(this@alarmsScreen, R.string.ui_0ad2d49935, relativeIn(Sched.next(a.hour, a.minute, a.days) - System.currentTimeMillis())) else ""))
@@ -341,7 +341,7 @@ internal fun MainActivity.timersScreen(): Screen {
         val ticking = ArrayList<Pair<TextView, Timer>>()
         val timers = db.timers().filter { it.endAt > System.currentTimeMillis() }
         timers.forEach { t ->
-            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(8f), dpi(10f), dpi(8f)) }
+            val card = LinearLayout(this).apply { tag = LIST_ITEM; orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(8f), dpi(10f), dpi(8f)) }
             val v = text(34f, 700).apply { fontFeatureSettings = "tnum" }
             ticking.add(v to t)
             card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
@@ -388,7 +388,7 @@ internal fun MainActivity.routinesScreen(): Screen = if (hermesMode()) hermesJob
 internal fun MainActivity.localRoutinesScreen(): Screen = listPage("routine", context = BuddySceneContext.CONFIGURE) { col ->
     val agents = visibleAgents()
     db.routines().forEach { r ->
-        val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
+        val card = LinearLayout(this).apply { tag = LIST_ITEM; orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
             setOnClickListener { push(routineEditor(r)) } }
         val nameV = text(21f, 700, Theme.FG).apply { text = r.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; alpha = if (r.on) 1f else 0.45f }
         card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
@@ -457,7 +457,7 @@ internal fun MainActivity.hermesJobsScreen(): Screen = listPage(UiText.text(this
         return parts.joinToString(" · ")
     }
     fun card(j: HermesJob): View {
-        val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false }
+        val card = LinearLayout(this).apply { tag = LIST_ITEM; orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false }
         val nameV = text(20f, 700, Theme.FG).keepCase().apply { text = j.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; alpha = if (j.enabled) 1f else 0.45f }
         val lineV = text(14f, 500, Theme.MUTED).keepCase().apply { text = jobLine(j); maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END }
         card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(nameV); addView(lineV) }, LinearLayout.LayoutParams(0, -2, 1f))
@@ -484,6 +484,7 @@ internal fun MainActivity.hermesJobsScreen(): Screen = listPage(UiText.text(this
         holder.removeAllViews()
         if (jobs.isEmpty()) holder.addView(emptyState(UiText.text(this@hermesJobsScreen, R.string.ui_6ac0c607ab), UiText.text(this@hermesJobsScreen, R.string.ui_83e9847a79)))
         else jobs.forEach { holder.addView(card(it), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) }) }
+        groupRows(holder)
         Motion.stagger(holder, dp(10f))
     }
     val cached = jobsCache
@@ -547,7 +548,7 @@ internal fun MainActivity.skillsScreen(agent: Agent): Screen = listPage(UiText.t
                     })
                 })
                 list.forEach { sk ->
-                    val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)) }
+                    val card = LinearLayout(this).apply { tag = LIST_ITEM; orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)) }
                     val nameV = text(18f, 700, Theme.FG).keepCase().apply { text = sk.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; alpha = if (sk.enabled) 1f else 0.45f }
                     card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(nameV); if (sk.description.isNotBlank()) addView(text(13f, 500, Theme.MUTED).keepCase().apply { text = sk.description; maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END }) }, LinearLayout.LayoutParams(0, -2, 1f))
                     lateinit var sw: SwitchView
@@ -558,6 +559,7 @@ internal fun MainActivity.skillsScreen(agent: Agent): Screen = listPage(UiText.t
                     card.addView(sw)
                     holder.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) }); cards += sk to card
                 }
+                groupRows(holder)
                 Motion.stagger(holder, dp(10f))
             } }
         } catch (e: Exception) { runOnUiThread { whenAttached(holder) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@skillsScreen, R.string.ui_86750eb32f, errorText(e)))); holder.addView(button(UiText.text(this@skillsScreen, R.string.ui_6ed04a5eb7), Theme.accent) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@skillsScreen, R.string.ui_e400388645))); load() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) }) } } }
