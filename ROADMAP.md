@@ -1,4 +1,4 @@
-# Lavoro aperto — ordine di ripresa (aggiornato alla 0.5.36)
+# Lavoro aperto — ordine di ripresa (aggiornato alla 0.5.37)
 
 Dalla code review del 10 novembre 2026 (seconda passata a 0.5.34, piano in fasi 0/A-F). Fatte: sicurezza (0.5.31), design unificato e audit dei sotto menu (0.5.32-0.5.34), processo di rilascio e Hermes/motore (0.5.35: teardown unico del socket, READY a socket aperto, resume che non perde il contesto, routine sul dash condiviso, suonerie senza orfane, tool_use incompleti, NousAuth con lock unico, ErrorKind con cause; check.sh con QA e audit, device-check --all-suites con controllo versione, publish-update con note della versione, impronta e versionCode, watchdog per suite, test development senza gara di tempi).
 
