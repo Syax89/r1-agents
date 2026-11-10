@@ -1533,11 +1533,32 @@ class MainActivity : Activity() {
             }
             return col
         }
+        // Rete di sicurezza: a riposo, nel livello delle funzioni c'e' al piu' la colonna corrente; le altre sono residui di gesti interrotti.
+        var laneStale = 0
+        val laneJanitor = object : Runnable {
+            override fun run() {
+                if (!scope.alive) return
+                val moving = laneFlight?.isActive == true || laneKick != null
+                val keep = if (lanePos == 0) null else laneView
+                var extra = 0
+                for (i in 0 until laneLayer.childCount) if (laneLayer.getChildAt(i) !== keep) extra++
+                if (moving || extra == 0) laneStale = 0
+                else if (++laneStale >= 2) {
+                    laneStale = 0
+                    for (i in laneLayer.childCount - 1 downTo 0) { val c = laneLayer.getChildAt(i); if (c !== keep) { c.animate().cancel(); laneLayer.removeView(c) } }
+                }
+                laneLayer.postDelayed(this, 1000L)
+            }
+        }
+        laneLayer.postDelayed(laneJanitor, 1500L)
         fun laneGo(target: Int, instant: Boolean = false) {
             val t = target.coerceIn(-leftLanes.size, rightLanes.size)
             if (t == lanePos && !instant) return
             val dir = if (t > lanePos) 1 else -1
             val outgoing: View = if (lanePos == 0) wheel else (laneView ?: wheel)
+            // Colonne rimaste da gesti precedenti interrotti (animate().cancel() non esegue la rimozione a fine corsa): con scatti rapidi
+            // restavano nel livello con il loro buddy, sovrapposte a quello giusto. Qui si tiene solo quella che sta uscendo.
+            for (i in laneLayer.childCount - 1 downTo 0) { val c = laneLayer.getChildAt(i); if (c !== outgoing) { c.animate().cancel(); laneLayer.removeView(c) } }
             lanePos = t
             paintLaneDots(); paintLaneCaption()
             dots.animate().cancel(); dots.animate().alpha(if (t == 0) 1f else 0f).setDuration(Motion.BASE).start()

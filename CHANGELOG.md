@@ -63,3 +63,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.20 (code 27): il buddy delle pagine con lista (impostazioni, app, ecc.) non e piu tagliato dal bordo e sta sopra la barra del titolo; la lista delle app si crea a gruppi (scorrimento p95 da 39 a 22 ms).
 
 0.5.21 (code 28): scorrimento nelle pagine con testata fissa: la riga del buddy cambia altezza a passi di 3 dp invece che a ogni pixel (meno ricalcoli del layout, nel confronto A/B 25 fotogrammi lenti contro 69 nelle impostazioni).
+
+0.5.22 (code 29): causa trovata dei buddy doppi sovrapposti: scorrendo in fretta il carosello restavano nel livello delle funzioni colonne di gesti interrotti (con il loro buddy e oggetto), visibili dietro quella giusta. Ora a ogni cambio si tiene solo la colonna in uscita e un controllo periodico toglie i residui; verificato con un fuzz di interazioni (prima fino a 5 buddy visibili, ora al massimo 3 con la ruota e il nuovo agente).
