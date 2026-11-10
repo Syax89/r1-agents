@@ -149,7 +149,7 @@ class MainActivity : Activity() {
         }
     }
     private fun securityScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_9729d2de44), context = BuddySceneContext.SECURITY) { col ->
-        col.addView(text(15f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_d683ad2559) })
+        col.addView(intro(UiText.text(this@MainActivity, R.string.ui_d683ad2559)))
         col.post { // occhi attenti: scansione sinistra, destra, poi dritto
             cue(null, -24f, 0f, force = true)
             col.postDelayed({ cue(null, 24f, 0f, force = true) }, Motion.BASE * 2)
@@ -1327,7 +1327,11 @@ class MainActivity : Activity() {
 
     private fun hideKeyboard() { (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).hideSoftInputFromWindow(window.decorView.windowToken, 0) }
 
-    private fun groupTitle(t: String) = text(19f, 800, Theme.accent).apply { text = t; setPadding(dpi(4f), dpi(22f), 0, dpi(2f)) }
+    private fun groupTitle(t: String) = text(18f, 800, Theme.FG).apply { text = t; setPadding(dpi(4f), dpi(22f), 0, dpi(2f)) }
+    /** Paragrafo introduttivo in testa a una pagina: stessa dimensione, colore e spazi in tutti i sotto menu. */
+    private fun intro(t: String) = text(15f, 500, Theme.MUTED).keepCase().apply { text = t; setPadding(dpi(4f), dpi(2f), dpi(4f), dpi(12f)) }
+    /** Nota piccola sotto un controllo. */
+    private fun hint(t: String) = text(13f, 500, Theme.MUTED).keepCase().apply { text = t; setPadding(dpi(4f), dpi(6f), dpi(4f), dpi(2f)) }
     private fun label(t: String) = text(15f, 600, Theme.MUTED).apply { text = t; tag = "label"; setPadding(dpi(10f), dpi(16f), 0, dpi(6f)) }
 
     // ---- home: un agente alla volta, la rotella li gira -----------------------------------------
@@ -2708,9 +2712,9 @@ class MainActivity : Activity() {
     /** Mostra cosa contiene il file e chiede come importarlo: aggiungere ai dati attuali o sostituirli. */
     private fun confirmImport(json: String, sum: Backup.Summary) {
         overlay("import", UiText.text(this@MainActivity, R.string.ui_7c032d1cfb), { closeOverlay("import") }) { col, close ->
-            col.addView(text(16f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_242765df7c, UiText.owned(this@MainActivity, sum.toString())); setPadding(0, 0, 0, dpi(10f)) })
+            col.addView(intro(UiText.text(this@MainActivity, R.string.ui_242765df7c, UiText.owned(this@MainActivity, sum.toString()))))
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_17b0bf8e19), Theme.colorOf("green")) { close(); doImport(json, false) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
-            col.addView(text(13f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_688ccaab33); setPadding(dpi(4f), dpi(10f), 0, dpi(4f)) })
+            col.addView(hint(UiText.text(this@MainActivity, R.string.ui_688ccaab33)))
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_01885652ec), Theme.BAD, filled = false) { close(); doImport(json, true) }, LinearLayout.LayoutParams(-1, -2))
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_9cb9b85e99), Theme.MUTED, primary = false) { close() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(4f) })
         }
@@ -2879,7 +2883,7 @@ class MainActivity : Activity() {
         col.addView(groupTitle(UiText.text(this@MainActivity, R.string.ui_147f3d4b53)))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_1909c29a8f)))
         col.addView(chips(listOf("it" to "Italiano", "en" to "English"), AppLanguage.selected(this), "app_language"))
-        col.addView(text(14f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_7df11394ff) })
+        col.addView(hint(UiText.text(this@MainActivity, R.string.ui_7df11394ff)))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_b828c7599e))); col.addView(chips(listOf("dark" to UiText.text(this@MainActivity, R.string.ui_67d1d02f39), "light" to UiText.text(this@MainActivity, R.string.ui_e7e35d97b7)), prefs.getString("look_mode", "dark")!!, "look_mode"))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_bdbffaa426)))
         col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@MainActivity).apply {
@@ -2945,13 +2949,13 @@ class MainActivity : Activity() {
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_1fa7ec8671), toolAccent, primary = false, small = true) { prefs.edit().putString("weather_city", city.text.toString().trim()).remove("w_at").apply() }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dpi(4f) })
         }
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_de4a8ea6f8)))
-        col.addView(text(14f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_2245aa74cd); setPadding(dpi(4f), 0, 0, dpi(6f)) })
+        col.addView(hint(UiText.text(this@MainActivity, R.string.ui_2245aa74cd)))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_3d9a5cdfac))); col.addView(chips(listOf("bold", "light", "condensed", "stacked", "serif", "mono", "words", "dial").map { it to it }, prefs.getString("clock", "bold")!!, "clock"))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_41b75bd493))); col.addView(chips(listOf("left" to UiText.text(this@MainActivity, R.string.ui_3b72eca895), "center" to UiText.text(this@MainActivity, R.string.ui_d6b2c56f12)), prefs.getString("clock_align", "left")!!, "clock_align"))
         col.addView(label(getString(R.string.voice_read_chat))); col.addView(chips(listOf("off" to UiText.text(this@MainActivity, R.string.ui_8e6720c901), "on" to UiText.text(this@MainActivity, R.string.ui_5777f60da9)), if (prefs.getBoolean("tts", false)) "on" else "off", "tts"))
         col.addView(label(getString(R.string.voice_read_fullscreen)))
         col.addView(chips(listOf("off" to getString(R.string.voice_sound_off), "on" to getString(R.string.voice_sound_on)), if (prefs.getBoolean("voice_tts", true)) "on" else "off", "voice_tts"))
-        col.addView(text(14f, 500, Theme.MUTED).keepCase().apply { text = getString(if (SpeechSupport.hasEngine(this@MainActivity)) R.string.voice_read_fullscreen_hint else R.string.voice_engine_help) })
+        col.addView(hint(getString(if (SpeechSupport.hasEngine(this@MainActivity)) R.string.voice_read_fullscreen_hint else R.string.voice_engine_help)))
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_5393e82f8d))); col.addView(chips(listOf("device" to UiText.text(this@MainActivity, R.string.ui_843e6206e1), "groq" to "groq whisper"), prefs.getString("stt", "device")!!, "stt"))
         if (prefs.getString("stt", "device") == "groq") {
             val key = field(UiText.text(this@MainActivity, R.string.ui_6d3fd91ed0), prefs.secret("groq_key"), secret = true)
@@ -2967,9 +2971,9 @@ class MainActivity : Activity() {
                 Io.run { val r = GroqStt.test(this@MainActivity, key.text.toString().trim()); runOnUiThread { st.text = UiText.owned(this@MainActivity, r); st.setTextColor(if (r.startsWith("OK")) Theme.colorOf("green") else Theme.BAD) } }
             }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
             col.addView(st)
-            col.addView(text(12f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_08e8413321); setPadding(dpi(4f), dpi(6f), 0, 0) })
+            col.addView(hint(UiText.text(this@MainActivity, R.string.ui_08e8413321)))
         }
-        col.addView(text(13f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_c3c6e6b033); setPadding(dpi(4f), dpi(10f), 0, 0) })
+        col.addView(hint(UiText.text(this@MainActivity, R.string.ui_c3c6e6b033)))
         cardify(col)
     }
 
@@ -3154,7 +3158,8 @@ class MainActivity : Activity() {
     private fun framed(title: String, body: View, trailing: View? = null, buddyHeader: Boolean = true): View = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         clipChildren = false; clipToPadding = false   // il buddy della pagina non viene tagliato dal bordo del corpo: sta SOPRA la barra del titolo
-        val head = LinearLayout(this@MainActivity).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, 0, 0, dpi(6f)) }
+        // Stessa altezza con o senza il buddy piccolo: il titolo sta alla stessa quota in tutti i sotto menu.
+        val head = LinearLayout(this@MainActivity).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; minimumHeight = dpi(70f); setPadding(0, 0, 0, dpi(6f)) }
         head.addView(iconButton("back", Theme.accent, filled = false) { pop() })
         head.addView(text(28f, 700).apply { letterSpacing = -0.01f; text = title; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; setPadding(dpi(12f), 0, 0, 0) }, LinearLayout.LayoutParams(0, -2, 1f))
         trailing?.let { head.addView(it) }
@@ -3493,7 +3498,7 @@ class MainActivity : Activity() {
                     addView(button(UiText.text(this@MainActivity, r), toolAccent, small = true) { a.days = bits; daysRepaint?.invoke(); refreshPreview() }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f); topMargin = dpi(6f) })
                 }
             })
-            col.addView(text(13f, 500, Theme.MUTED).apply { text = UiText.text(this@MainActivity, R.string.ui_cfd2c18236); setPadding(dpi(4f), dpi(6f), 0, 0) })
+            col.addView(hint(UiText.text(this@MainActivity, R.string.ui_cfd2c18236)))
             (label.parent as? ViewGroup)?.removeView(label)
             col.addView(label, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_3517056179), toolAccent) { askNotificationsOnce(); a.label = label.text.toString().trim(); a.on = true; db.save(a); Sched.all(this, db); pop() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
@@ -3688,7 +3693,7 @@ class MainActivity : Activity() {
             col.addView(label(UiText.text(this@MainActivity, R.string.ui_d3610cf483))); col.addView(prompt)
             col.addView(timeCard({ hour }, { hour = it }, { minute }, { minute = it }), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
             col.addView(label(UiText.text(this@MainActivity, R.string.ui_aacd348c9b))); col.addView(daysChips({ days }, { days = it }))
-            col.addView(text(13f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_b30f24d128); setPadding(dpi(4f), dpi(6f), 0, 0) })
+            col.addView(hint(UiText.text(this@MainActivity, R.string.ui_b30f24d128)))
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_3517056179), Theme.accent) {
                 val ag = agent; val p = prompt.text.toString().trim()
                 if (ag == null || p.isEmpty()) { status.setTextColor(Theme.BAD); status.text = UiText.text(this@MainActivity, R.string.ui_8037c3e45e); return@button }
@@ -3781,11 +3786,12 @@ class MainActivity : Activity() {
         val headerBuddy = companion(64f, start)!!
         val headerName = text(28f, 700).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
         val headerSummary = text(16f, 650, Theme.MUTED).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
+        // Come tutti i sotto menu: indietro, titolo, buddy a destra (qui il titolo e' il nome dell'agente con la sua descrizione sotto).
         val header = LinearLayout(this).apply {
-            gravity = Gravity.CENTER_VERTICAL
+            gravity = Gravity.CENTER_VERTICAL; minimumHeight = dpi(70f); setPadding(0, 0, 0, dpi(6f))
             addView(iconButton("back", Theme.accent, filled = false) { pop() })
-            addView(headerBuddy, LinearLayout.LayoutParams(dpi(64f), dpi(64f)))
-            addView(LinearLayout(this@MainActivity).apply { orientation = LinearLayout.VERTICAL; setPadding(dpi(10f), 0, 0, 0); addView(headerName); addView(headerSummary) }, LinearLayout.LayoutParams(0, -2, 1f))
+            addView(LinearLayout(this@MainActivity).apply { orientation = LinearLayout.VERTICAL; setPadding(dpi(12f), 0, 0, 0); addView(headerName); addView(headerSummary) }, LinearLayout.LayoutParams(0, -2, 1f))
+            addView(headerBuddy, LinearLayout.LayoutParams(dpi(64f), dpi(64f)).apply { marginStart = dpi(4f) })
         }
         val pageBody = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(header); addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f)) }
         var headerLook = ""
@@ -3846,7 +3852,7 @@ class MainActivity : Activity() {
         val input = field(UiText.text(this@MainActivity, R.string.ui_9abd0dbc2a), "")
         fun render() {
             col.removeAllViews()
-            col.addView(text(15f, 500, Theme.MUTED).apply { text = UiText.text(this@MainActivity, R.string.ui_635a84c89c, agent.name) ; setPadding(0, dpi(4f), 0, dpi(8f)) }.keepCase())
+            col.addView(intro(UiText.text(this@MainActivity, R.string.ui_635a84c89c, agent.name)))
             val notes = db.memories(agent.id)
             if (notes.isEmpty()) col.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_7b938546c6), UiText.text(this@MainActivity, R.string.ui_2a838553c5)))
             notes.forEach { (id, t) ->
@@ -4168,7 +4174,7 @@ class MainActivity : Activity() {
         val id = "pairing"
         overlay(id, UiText.text(this@MainActivity, R.string.ui_30fe006e29), { closeOverlay(id) }) { col, close ->
             col.addView(text(18f, 650).keepCase().apply { text = pairing.origin })
-            col.addView(text(16f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_a4a9d83109, pairing.user.ifBlank { UiText.text(this@MainActivity, R.string.ui_197bbb6280) }) })
+            col.addView(intro(UiText.text(this@MainActivity, R.string.ui_a4a9d83109, pairing.user.ifBlank { UiText.text(this@MainActivity, R.string.ui_197bbb6280) })))
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_b4630216c8), Theme.accent) {
                 Io.run {
                     val configured = runCatching { hermesRuntime.configure(pairing) }
@@ -4193,7 +4199,7 @@ class MainActivity : Activity() {
             overlay(id, UiText.text(this@MainActivity, R.string.ui_6157f65d6b), { closeOverlay(id) }) { col, close ->
                 val size = dpi(260f)
                 col.addView(android.widget.ImageView(this).apply { setImageBitmap(PairingQr.image(pair, size)); contentDescription = UiText.text(this@MainActivity, R.string.ui_19e8e1e64e) }, LinearLayout.LayoutParams(size, size).apply { gravity = Gravity.CENTER_HORIZONTAL })
-                col.addView(text(14f, 500, Theme.MUTED).keepCase().apply { text = UiText.text(this@MainActivity, R.string.ui_ccbb348a08, pair.origin, pair.user) })
+                col.addView(hint(UiText.text(this@MainActivity, R.string.ui_ccbb348a08, pair.origin, pair.user)))
                 col.addView(button(UiText.text(this@MainActivity, R.string.ui_a7712b5b03), Theme.MUTED, primary = false) { close() })
             }
         }
@@ -4237,10 +4243,7 @@ class MainActivity : Activity() {
                     }
                 }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
                 col.addView(status)
-                col.addView(text(14f, 500, Theme.MUTED).keepCase().apply {
-                    text = UiText.text(this@MainActivity, R.string.ui_f120652037)
-                    setPadding(dpi(4f), dpi(10f), 0, 0)
-                })
+                col.addView(hint(UiText.text(this@MainActivity, R.string.ui_f120652037)))
                 col.addView(button(UiText.text(this@MainActivity, R.string.ui_c6afddbe7d), toolAccent, primary = false, small = true) {
                     (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("hermes", "hermes dashboard --host 0.0.0.0 --no-open"))
                     snack(UiText.text(this@MainActivity, R.string.ui_032d1653f8))
@@ -4261,10 +4264,7 @@ class MainActivity : Activity() {
             col.addView(label(UiText.text(this@MainActivity, R.string.ui_47d34ef65f))); col.addView(base)
 
             col.addView(label(UiText.text(this@MainActivity, R.string.ui_6bec3945e2))); col.addView(model)
-            if (cur.id == "hermes") col.addView(text(12f, 500, Theme.MUTED).keepCase().apply {
-                text = UiText.text(this@MainActivity, R.string.ui_1d8ca53d81)
-                setPadding(dpi(4f), dpi(8f), 0, 0)
-            })
+            if (cur.id == "hermes") col.addView(hint(UiText.text(this@MainActivity, R.string.ui_1d8ca53d81)))
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_3517056179), Theme.colorOf("green")) {
                 settings.set(cur, key.text.toString(), base.text.toString(), model.text.toString()); pop()
             }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
@@ -4313,10 +4313,7 @@ class MainActivity : Activity() {
             addView(text(26f, 800).apply { text = "R1 Agents"; gravity = Gravity.CENTER; setPadding(0, dpi(6f), 0, 0) })
             addView(text(14f, 600, Theme.MUTED).apply { text = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty(); gravity = Gravity.CENTER })
         })
-        col.addView(text(16f, 500, Theme.MUTED).keepCase().apply {
-            text = UiText.text(this@MainActivity, R.string.ui_391553b02f)
-            setPadding(dpi(10f), dpi(8f), dpi(10f), 0)
-        })
+        col.addView(intro(UiText.text(this@MainActivity, R.string.ui_391553b02f)))
         // Aggiornamenti: solo su richiesta, da un indirizzo https scelto dall'utente (il file update.json prodotto da tools/publish-update.py).
         col.addView(label(UiText.text(this@MainActivity, R.string.ui_f43d53399f)))
         val address = field(UiText.text(this@MainActivity, R.string.ui_e438a6ee2f), prefs.getString("update_url", "").orEmpty().ifBlank { "https://raw.githubusercontent.com/Syax89/r1-agents/main/update.json" }).apply { setSingleLine(true); inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI }
