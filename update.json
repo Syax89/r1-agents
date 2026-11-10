@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 46,
-  "versionName": "0.5.39",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.39/r1agents-release-signed.apk",
-  "sha256": "be8346beec206646f50e8a9bfda29146089fbec9985a116e791322413d6a741d",
+  "versionCode": 47,
+  "versionName": "0.5.40",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.40/r1agents-release-signed.apk",
+  "sha256": "7a6f1ff0d50e1455c03eb59d41684ec02829e189558e1e57527cdbeb677d33c0",
   "sizeBytes": 1374535,
-  "notes": "0.5.39 (code 46): anche sveglie, timer, note, routine, attività di Hermes, competenze e chat da gestire stanno in un unica scheda con divisori e pillola a fuoco; le schede quadrate di strumenti e impostazioni hanno i titoli alla stessa altezza e una freccia in alto a destra."
+  "notes": "0.5.40 (code 47): anche la pagina dell agente, il fornitore, la memoria e la gestione delle chat usano le liste raggruppate con freccia e pillola a fuoco; nel fornitore le due voci in alto hanno la stessa misura."
 }

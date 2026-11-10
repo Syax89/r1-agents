@@ -2092,8 +2092,10 @@ class MainActivity : Activity() {
             if (agent.profile.isEmpty()) col.addView(row(if (confirmRemove) UiText.text(this@MainActivity, R.string.ui_39ced40b15) else UiText.text(this@MainActivity, R.string.ui_235936fba8), Theme.BAD, icon = "close", sub = if (confirmRemove) UiText.text(this@MainActivity, R.string.ui_ff36018e8f) else null) {
                 if (!confirmRemove) { confirmRemove = true; render() } else { db.routines().filter { it.agentId == agent.id }.forEach { Sched.cancel(this, Sched.KIND_ROUTINE, it.id) }; db.delete(agent.id); homeIndex = 0; pop() }
             })
-            // Chat appena mostrate con «chat meno recenti»: entrano a cascata.
-            if (expandFrom >= 0) { Motion.stagger(col, dp(10f), from = (rowsBase + expandFrom).coerceAtMost(col.childCount)); expandFrom = -1 }
+            val firstChatRow = if (chats.isNotEmpty()) col.getChildAt(rowsBase) else null
+            groupRows(col) // come le altre pagine: righe vicine in un'unica scheda con divisori e freccia
+            // Chat appena mostrate con «chat meno recenti»: entrano a cascata, dentro la scheda delle chat.
+            if (expandFrom >= 0) { val chatCard = firstChatRow?.parent as? LinearLayout ?: col; Motion.stagger(chatCard, dp(10f), from = expandFrom.coerceAtMost(chatCard.childCount)); expandFrom = -1 }
         }
         render()
         if (hermesMode() && agent.profile.isNotEmpty()) Io.run { try { syncSessions(agent) } catch (e: Exception) { }; live = dash.live(); runOnUiThread { if (scope.alive) render() } }

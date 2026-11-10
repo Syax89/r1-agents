@@ -167,6 +167,7 @@ internal fun MainActivity.memoryScreen(agent: Agent): Screen {
         input.setText("")
         col.addView(input, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
         col.addView(button(UiText.text(this@memoryScreen, R.string.ui_6c15f34ba8), accent) { val t = input.text.toString().trim(); if (t.isNotEmpty()) { cue("nod", 0f, 10f); db.addMemory(agent.id, t); render() } }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+        groupRows(col) // righe vicine in un'unica scheda con divisori
     }
     render()
     return Screen(page(framed(UiText.text(this@memoryScreen, R.string.ui_7333237b9c), scroll)), buddyContext = BuddySceneContext.MEMORY)
@@ -191,6 +192,7 @@ internal fun MainActivity.manageChats(agent: Agent): Screen {
         if (chats.size > 1) col.addView(row(if (pendingAll) UiText.text(this@manageChats, R.string.ui_5f3fa10d52) else UiText.text(this@manageChats, R.string.ui_92b3efd6d5), Theme.BAD, icon = "close") {
             if (!pendingAll) { pendingAll = true; pending = null; render() } else { pendingAll = false; val ids = chats.map { it.id }; var left = ids.size; ids.forEach { removeChat(agent, it) { if (--left == 0) render() } } }
         })
+        groupRows(col) // righe vicine in un'unica scheda con divisori
     }
     render()
     return Screen(page(framed(UiText.text(this@manageChats, R.string.ui_07832915bd), scroll)), buddyContext = BuddySceneContext.CONFIGURE)
@@ -517,7 +519,8 @@ internal fun MainActivity.pairingMenu() = sheet(UiText.text(this@pairingMenu, R.
 internal fun MainActivity.providerScreen(): Screen {
     val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
     val scroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(col, -1, -2) }
-    fun build() {
+    var build: () -> Unit = {}
+    fun buildRaw(): Unit {
         col.removeAllViews()
         col.addView(label(UiText.text(this@providerScreen, R.string.ui_64ac619989)))
         val cur = settings.provider
@@ -526,7 +529,7 @@ internal fun MainActivity.providerScreen(): Screen {
             sheet(UiText.text(this@providerScreen, R.string.ui_64ac619989), Providers.all.map { provider -> UiText.owned(this, provider.label) to { if (settings.provider.id != provider.id) cancelLocalTurns(); settings.provider = provider; build() } })
         }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dpi(8f) })
         if (cur.id == "dashboard") {
-            col.addView(row(UiText.text(this@providerScreen, R.string.ui_14d48b2cdd), Theme.accent, sub = UiText.text(this@providerScreen, R.string.ui_f3589f24a4), icon = "look") { pairingMenu() })
+            col.addView(bigRow("look", UiText.text(this@providerScreen, R.string.ui_14d48b2cdd), UiText.text(this@providerScreen, R.string.ui_f3589f24a4), Theme.accent) { pairingMenu() }) // stessa misura della voce sopra, nello stesso gruppo
             val addr = field(UiText.text(this@providerScreen, R.string.ui_e4edbc6b81), dash.url)
             val usr = field(UiText.text(this@providerScreen, R.string.ui_6b4422410d), dash.user)
             val pwd = field("password", dash.password, secret = true)
@@ -573,6 +576,8 @@ internal fun MainActivity.providerScreen(): Screen {
             settings.set(cur, key.text.toString(), base.text.toString(), model.text.toString()); pop()
         }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
     }
+    // Ogni ricostruzione raggruppa le righe vicine (anche quando il ramo di Hermes esce prima dalla funzione).
+    build = { buildRaw(); groupRows(col) }
     scroll.post { build() }
     return Screen(page(framed(UiText.text(this@providerScreen, R.string.ui_64ac619989), scroll)), buddyContext = BuddySceneContext.CONFIGURE)
 }

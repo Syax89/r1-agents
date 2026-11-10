@@ -99,3 +99,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.38 (code 45): menu ridisegnati: le voci vicine stanno in un unica scheda con divisori sottili (sicurezza, informazioni, app per sezione), una freccia indica cosa si apre, le icone stanno su un fondo tenue nel colore dell app, i titoli di sezione sono più leggibili e la voce a fuoco con la rotella diventa una pillola dentro la scheda; la rotella non si ferma più sul buddy in alto.
 
 0.5.39 (code 46): anche sveglie, timer, note, routine, attività di Hermes, competenze e chat da gestire stanno in un unica scheda con divisori e pillola a fuoco; le schede quadrate di strumenti e impostazioni hanno i titoli alla stessa altezza e una freccia in alto a destra.
+
+0.5.40 (code 47): anche la pagina dell agente, il fornitore, la memoria e la gestione delle chat usano le liste raggruppate con freccia e pillola a fuoco; nel fornitore le due voci in alto hanno la stessa misura.
