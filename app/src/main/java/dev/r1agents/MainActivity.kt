@@ -735,6 +735,15 @@ class MainActivity : Activity() {
         snack(UiText.text(this, R.string.ui_b6ec5021d5))
     }
 
+    /** Esegue [f] quando la vista e' in finestra: un risultato (o un errore) che arriva prima dell'ingresso della pagina non va perso. */
+    private fun whenAttached(v: View, f: () -> Unit) {
+        if (v.isAttachedToWindow) { f(); return }
+        v.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(x: View) { v.removeOnAttachStateChangeListener(this); f() }
+            override fun onViewDetachedFromWindow(x: View) {}
+        })
+    }
+
     private var armedKey: String? = null
     private var armedAt = 0L
     /** Azione distruttiva: il primo tocco avvisa, il secondo entro 4 secondi la esegue. */
@@ -3670,8 +3679,8 @@ class MainActivity : Activity() {
         val cached = jobsCache
         if (cached != null) render(cached) else holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645)))
         fun load(): Unit = Io.run {
-            try { val jobs = dash.cronJobs(); jobsCache = jobs; runOnUiThread { if (holder.isAttachedToWindow) render(jobs) } }
-            catch (e: Exception) { runOnUiThread { if (holder.isAttachedToWindow) { if (jobsCache == null) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_86750eb32f, errorText(e)))); holder.addView(button(UiText.text(this@MainActivity, R.string.ui_6ed04a5eb7), Theme.accent) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645))); load() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) }) } else snack(errorText(e)) } } }
+            try { val jobs = dash.cronJobs(); jobsCache = jobs; runOnUiThread { whenAttached(holder) { render(jobs) } } }
+            catch (e: Exception) { runOnUiThread { whenAttached(holder) { if (jobsCache == null) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_86750eb32f, errorText(e)))); holder.addView(button(UiText.text(this@MainActivity, R.string.ui_6ed04a5eb7), Theme.accent) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645))); load() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) }) } else snack(errorText(e)) } } }
         }
         load()
     }
@@ -3712,11 +3721,10 @@ class MainActivity : Activity() {
         val holder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         col.addView(holder)
         holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645)))
-        Io.run {
+        fun load(): Unit = Io.run {
             try {
                 val list = dash.skills(agent.profile).sortedBy { it.name.lowercase() }
-                runOnUiThread {
-                    if (!holder.isAttachedToWindow) return@runOnUiThread
+                runOnUiThread { whenAttached(holder) {
                     holder.removeAllViews()
                     if (list.isEmpty()) holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_9fb9f54c76)))
                     val cards = ArrayList<Pair<HermesSkill, View>>()
@@ -3741,9 +3749,10 @@ class MainActivity : Activity() {
                         holder.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) }); cards += sk to card
                     }
                     Motion.stagger(holder, dp(10f))
-                }
-            } catch (e: Exception) { runOnUiThread { if (holder.isAttachedToWindow) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_86750eb32f, UiText.message(this@MainActivity, e.message)))) } } }
+                } }
+            } catch (e: Exception) { runOnUiThread { whenAttached(holder) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_86750eb32f, errorText(e)))); holder.addView(button(UiText.text(this@MainActivity, R.string.ui_6ed04a5eb7), Theme.accent) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645))); load() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) }) } } }
         }
+        load()
     }
 
     // -- suoneria (da notifica)

@@ -82,3 +82,7 @@ Metodo: per ciascuno, screenshot (`work/submenus/<nome>.png`, QA 480x640) + lett
 - Attivita pianificate, competenze, nuova attivita (app reale, dopo la 0.5.25): intestazione con titolo a y=82 e buddy a destra, righe con interruttore, campo di ricerca, selettore ora: OK, come gli altri sotto menu.
 - Stato "leggo da Hermes..." (QA, dashboard non raggiungibile): intestazione, buddy e riga "nuova attivita" uguali agli altri; lo stato di errore con "riprova" non l'ho visto entro 28 s: la connessione tenta 3 volte con timeout di 8 s, quindi l'errore compare dopo oltre mezzo minuto. Da accorciare (timeout piu brevi per le liste), non e' un problema di layout.
 - Stati con molti dati verificati: note (24), registro azioni (lista), app (decine di righe), competenze (centinaia), attivita (5). Non verificati: sveglie e routine con piu elementi.
+
+### Quinto giro: sveglie e routine con dati, stato di errore Hermes
+- Sveglie con 3 elementi e routine con 2 (QA): righe con orario grande/titolo, sottotitolo e interruttore uguali alle righe delle attivita Hermes: OK.
+- Errore Hermes: TROVATO UN DIFETTO REALE. Se il caricamento falliva subito (server non raggiungibile), il risultato arrivava prima che la pagina fosse in finestra e veniva scartato: restava "leggo da Hermes..." per sempre. Corretto con `whenAttached()` (attivita e competenze); ora si vede il messaggio ("non riesco a raggiungere il server: controlla rete e indirizzo") e il pulsante "riprova" in accento (aggiunto anche alle competenze). Verificato con screenshot nel QA.
