@@ -170,9 +170,9 @@ internal fun MainActivity.appsScreen(): Screen {
             val name = text(20f, 600).keepCase().apply { text = a.label; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
             addView(name, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dpi(14f) })
             // Dentro la scheda della sezione: a fuoco (rotella) la stessa pillola a gelatina delle altre liste.
-            setOnFocusChangeListener { _, f -> background = if (f) android.graphics.drawable.InsetDrawable(Jelly(Theme.accent, dp(16f)), dpi(4f)) else null; name.setTextColor(if (f) Theme.ON_ACCENT else Theme.FG) }
+            setOnFocusChangeListener { v, f -> name.setTextColor(if (f) Theme.ON_ACCENT else Theme.FG); (v.parent as? GroupCard)?.let { if (f) it.focusTo(v) else it.blur(v) } }
             setOnClickListener { launchApp(a) }
-            setOnTouchListener { v, e -> Motion.touch(v, e); false }
+            setOnTouchListener { v, e -> Motion.touch(v, e); liquidTouch(v, e); false }
             setOnLongClickListener {
                 performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
                 val fav = a.pkg in favoriteApps()
@@ -193,13 +193,9 @@ internal fun MainActivity.appsScreen(): Screen {
             val favs = favoriteApps()
             val shown = if (q.isEmpty()) apps else apps.filter { it.label.lowercase().contains(q) }
             // Ogni sezione (recenti, preferite, tutte) è un'unica scheda con divisori sottili, come le altre liste.
-            var card: LinearLayout? = null
+            var card: GroupCard? = null
             fun add(a: AppEntry) {
-                val c = card ?: LinearLayout(this@appsScreen).apply {
-                    orientation = LinearLayout.VERTICAL; background = roundRect(Theme.CARD, dp(20f)); clipToOutline = true
-                    showDividers = LinearLayout.SHOW_DIVIDER_MIDDLE
-                    dividerDrawable = android.graphics.drawable.InsetDrawable(android.graphics.drawable.GradientDrawable().apply { setColor(Theme.withAlpha(Theme.FG, 0.08f)); setSize(1, maxOf(1, dpi(0.6f))) }, dpi(70f), 0, dpi(14f), 0)
-                }.also { card = it; holder.addView(it, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) }) }
+                val c = card ?: groupCard(70f).also { card = it; holder.addView(it, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) }) }
                 c.addView(appRow(a), LinearLayout.LayoutParams(-1, -2))
             }
             fun section(t: String) { card = null; holder.addView(label(t)) }
@@ -477,7 +473,7 @@ internal fun MainActivity.hermesJobsScreen(): Screen = listPage(UiText.text(this
                 },
             ), subtitle = j.prompt.replace('\n', ' ').take(90))
         }
-        card.setOnTouchListener { v, e -> Motion.touch(v, e); false }
+        card.setOnTouchListener { v, e -> Motion.touch(v, e); liquidTouch(v, e); false }
         return card
     }
     fun render(jobs: List<HermesJob>) {

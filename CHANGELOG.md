@@ -101,3 +101,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.39 (code 46): anche sveglie, timer, note, routine, attività di Hermes, competenze e chat da gestire stanno in un unica scheda con divisori e pillola a fuoco; le schede quadrate di strumenti e impostazioni hanno i titoli alla stessa altezza e una freccia in alto a destra.
 
 0.5.40 (code 47): anche la pagina dell agente, il fornitore, la memoria e la gestione delle chat usano le liste raggruppate con freccia e pillola a fuoco; nel fornitore le due voci in alto hanno la stessa misura.
+
+0.5.41 (code 48): pillola liquida nei menu: con la rotella una goccia di colore scivola da una voce all altra, si allunga nel verso del movimento e si ricompatta, e compare anche sotto il dito; all apertura di una pagina le voci si dispiegano a fisarmonica una dopo l altra; l icona della voce a fuoco fa un piccolo salto elastico. Tutto si anima solo quando cambia qualcosa.

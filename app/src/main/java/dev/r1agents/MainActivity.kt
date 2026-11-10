@@ -1855,10 +1855,12 @@ class MainActivity : Activity() {
         var rendered = false
         fun render() {
             if (rendered && !Motion.reduced(this@MainActivity)) { scroll.animate().cancel(); scroll.alpha = .55f; scroll.animate().alpha(1f).setDuration(Motion.FAST).setInterpolator(Theme.EASE_OUT).start() } // il contenuto si riassesta invece di tagliare di netto
+            val firstRender = !rendered
             rendered = true
             col.removeAllViews()
             build(col)
             groupRows(col) // righe vicine in un'unica scheda con divisori
+            if (firstRender) unfold(col) // all'apertura le voci si dispiegano a fisarmonica
             pinned.removeAllViews()
             (0 until col.childCount).map { col.getChildAt(it) }.firstOrNull { it.tag == "scene-companion-row" }?.let { row ->
                 val height = row.layoutParams.height; col.removeView(row); pinned.addView(row, FrameLayout.LayoutParams(-1, height))

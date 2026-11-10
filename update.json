@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 47,
-  "versionName": "0.5.40",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.40/r1agents-release-signed.apk",
-  "sha256": "7a6f1ff0d50e1455c03eb59d41684ec02829e189558e1e57527cdbeb677d33c0",
-  "sizeBytes": 1374535,
-  "notes": "0.5.40 (code 47): anche la pagina dell agente, il fornitore, la memoria e la gestione delle chat usano le liste raggruppate con freccia e pillola a fuoco; nel fornitore le due voci in alto hanno la stessa misura."
+  "versionCode": 48,
+  "versionName": "0.5.41",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.41/r1agents-release-signed.apk",
+  "sha256": "6b061b8caaf7ace5036db6c665bf3821c884837fade4ba7b740790c3aa12315b",
+  "sizeBytes": 1378631,
+  "notes": "0.5.41 (code 48): pillola liquida nei menu: con la rotella una goccia di colore scivola da una voce all altra, si allunga nel verso del movimento e si ricompatta, e compare anche sotto il dito; all apertura di una pagina le voci si dispiegano a fisarmonica una dopo l altra; l icona della voce a fuoco fa un piccolo salto elastico. Tutto si anima solo quando cambia qualcosa."
 }

@@ -228,8 +228,9 @@ fun Context.row(label: String, accent: Int, bold: Boolean = false, sub: String? 
     val glyph = if (accent == Theme.BAD) Theme.BAD else Theme.accent
     fun paint(on: Boolean) {
         if (l.grouped) {
-            // Dentro la scheda del gruppo: fondo trasparente, a fuoco una pillola a gelatina con un piccolo margine.
-            l.background = if (on) android.graphics.drawable.InsetDrawable(Jelly(accent, dp(16f)), dpi(4f)) else null
+            // Dentro la scheda del gruppo: niente fondo proprio, la pillola liquida la disegna la scheda.
+            l.background = null
+            (l.parent as? GroupCard)?.let { if (on) it.focusTo(l) else it.blur(l) }
             l.setPadding(dpi(14f), dpi(11f), dpi(14f), dpi(11f)); l.minimumHeight = dpi(64f)
         } else {
             l.background = android.graphics.drawable.InsetDrawable(if (on) Jelly(accent, r) else roundRect(Theme.CARD, r), 0, 0, 0, gap)
@@ -243,9 +244,23 @@ fun Context.row(label: String, accent: Int, bold: Boolean = false, sub: String? 
     }
     l.repaint = { paint(l.isFocused) }
     paint(false)
-    l.setOnFocusChangeListener { _, f -> paint(f) }
-    l.setOnTouchListener { v, e -> Motion.touch(v, e); false }   // al tocco solo un movimento lieve: niente riempimenti colorati
+    l.setOnFocusChangeListener { _, f -> paint(f); if (f && chip != null) chipPop(chip) }
+    l.setOnTouchListener { v, e ->
+        Motion.touch(v, e)
+        // Nel gruppo, col dito: la goccia compare sotto la voce premuta e svanisce poco dopo il rilascio.
+        if (l.grouped) (l.parent as? GroupCard)?.let { when (e.action) { android.view.MotionEvent.ACTION_DOWN -> it.focusTo(l); android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> it.blur(l, 220L) } }
+        false
+    }
     return l
+}
+
+/** L'icona della voce che prende il fuoco fa un piccolo salto elastico (su e giù di scala, una volta). */
+fun chipPop(chip: View) {
+    if (Motion.reduced(chip.context)) return
+    chip.animate().cancel()
+    chip.animate().scaleX(1.16f).scaleY(1.16f).setDuration(110).setInterpolator(Theme.EASE_OUT).withEndAction {
+        chip.animate().scaleX(1f).scaleY(1f).setDuration(320).setInterpolator(android.view.animation.OvershootInterpolator(3.2f)).start()
+    }.start()
 }
 
 /** Il testo del titolo di una riga (per cambiarlo dopo). */
@@ -551,6 +566,7 @@ private fun android.view.View.cardInput(accent: Int, radius: Float, chip: androi
             if (e.action == android.view.MotionEvent.ACTION_DOWN) chip.animate().cancel().also { chip.animate().scaleX(1.04f).scaleY(1.04f).setDuration(Motion.FAST).setInterpolator(Theme.EASE_OUT).start() }
             else if (e.action == android.view.MotionEvent.ACTION_UP || e.action == android.view.MotionEvent.ACTION_CANCEL) chip.animate().scaleX(1f).scaleY(1f).setDuration(Motion.SLOW).setInterpolator(Theme.EASE_OUT).start()
         }
+        if (this is GroupRow && grouped) (parent as? GroupCard)?.let { when (e.action) { android.view.MotionEvent.ACTION_DOWN -> it.focusTo(this); android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> it.blur(this, 220L) } }
         Motion.touch(v, e); false
     }
 }
@@ -571,9 +587,9 @@ fun Context.bigRow(icon: String, title: String, sub: String?, accent: Int, onCli
     // In un gruppo: fondo della scheda comune, a fuoco la pillola a gelatina con un piccolo margine.
     fun paint(on: Boolean) {
         cardPaint(l, accent, r, chip, t, s, on)
-        if (l.grouped) l.background = if (on) android.graphics.drawable.InsetDrawable(Jelly(accent, dp(18f)), dpi(4f)) else null
+        if (l.grouped) { l.background = null; (l.parent as? GroupCard)?.let { if (on) it.focusTo(l) else it.blur(l) } }
     }
-    l.setOnFocusChangeListener { _, f -> paint(f) }
+    l.setOnFocusChangeListener { _, f -> paint(f); if (f) chipPop(chip) }
     l.repaint = { paint(l.isFocused) }
     return l
 }
@@ -726,6 +742,92 @@ class SwitchView(ctx: Context, on: Boolean, private val accent: Int, private val
  * Unisce le righe consecutive (`GroupRow`) di una colonna in un'unica scheda arrotondata con divisori sottili, come le
  * impostazioni di un telefono: meno riquadri sparsi, gruppi leggibili a colpo d'occhio. Una riga sola resta una scheda a sé.
  */
+/**
+ * La scheda di un gruppo di voci. Disegna lei la "pillola liquida" del fuoco: una sola goccia di colore che scivola da una voce
+ * all'altra. Il bordo nel verso del movimento corre (molla rigida), quello dietro insegue (molla morbida): la goccia si allunga,
+ * si assottiglia e si ricompatta. Entra piccola al centro della voce e si gonfia; col dito compare sotto la voce premuta.
+ * Si anima solo quando cambia il fuoco (molle su Choreographer, ferme a riposo): nessun costo a schermo fermo.
+ */
+class GroupCard(ctx: Context) : LinearLayout(ctx) {
+    private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+    private var top = 0f; private var bot = 0f; private var alphaK = 0f
+    private val sTop = dev.r1os.host.ui.Spring { top = it; invalidate() }
+    private val sBot = dev.r1os.host.ui.Spring { bot = it; invalidate() }
+    private val sAlpha = dev.r1os.host.ui.Spring { alphaK = it.coerceIn(0f, 1f); invalidate() }
+    private var target: View? = null
+    init { setWillNotDraw(false) }
+
+    fun focusTo(v: View) {
+        if (v.height == 0) { post { if (v.isFocused || v.isPressed) focusTo(v) }; return }
+        val t = v.top.toFloat(); val b = v.bottom.toFloat()
+        if (Motion.reduced(context)) { sTop.snapTo(t); sBot.snapTo(b); sAlpha.snapTo(1f); target = v; return }
+        if (alphaK < 0.05f || target == null) {
+            // Nasce compressa al centro della voce e si gonfia.
+            val mid = (t + b) / 2f; val half = (b - t) * 0.16f
+            sTop.snapTo(mid - half); sBot.snapTo(mid + half)
+            sTop.animateTo(t, 520f, 0.62f); sBot.animateTo(b, 520f, 0.62f)
+        } else if (t > top) { sBot.animateTo(b, 950f, 0.8f); sTop.animateTo(t, 240f, 0.74f) }   // giù: davanti il bordo basso
+        else { sTop.animateTo(t, 950f, 0.8f); sBot.animateTo(b, 240f, 0.74f) }                    // su: davanti il bordo alto
+        sAlpha.animateTo(1f, 700f, 1f)
+        target = v
+    }
+    fun blur(v: View, delay: Long = 0L) {
+        postDelayed({ if (target === v && !v.isFocused && !v.isPressed) { target = null; sAlpha.animateTo(0f, 420f, 1f) } }, delay)
+    }
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        super.onLayout(changed, l, t, r, b)
+        // Le voci si sono spostate (testo cambiato, gruppo ricostruito): la goccia resta sulla sua voce senza scivolare.
+        if (changed) target?.let { sTop.snapTo(it.top.toFloat()); sBot.snapTo(it.bottom.toFloat()) }
+    }
+    override fun dispatchDraw(c: android.graphics.Canvas) {
+        if (alphaK > 0.01f && bot > top) {
+            val inset = context.dp(4f); val h = bot - top
+            val rowH = (target?.height?.takeIf { it > 0 } ?: h.toInt()).toFloat()
+            val stretch = (h / rowH - 1f).coerceIn(0f, 1.2f)
+            val side = inset + stretch * context.dp(7f)   // allungata = più sottile, come una goccia
+            val r = minOf(context.dp(16f), (h - 2 * inset) / 2f).coerceAtLeast(0f)
+            paint.color = Theme.accent; paint.alpha = (alphaK * 255).toInt()
+            c.drawRoundRect(side, top + inset, width - side, bot - inset, r, r, paint)
+        }
+        super.dispatchDraw(c)
+    }
+}
+
+/** Col dito, dentro una scheda di gruppo: la goccia compare sotto la voce premuta e svanisce poco dopo il rilascio. */
+fun liquidTouch(v: View, e: android.view.MotionEvent) {
+    (v.parent as? GroupCard)?.let { when (e.action) { android.view.MotionEvent.ACTION_DOWN -> it.focusTo(v); android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> it.blur(v, 220L) } }
+}
+
+/**
+ * Apertura a fisarmonica: le voci delle schede di gruppo si dispiegano dall'alto come carta piegata (rotazione sull'asse
+ * orizzontale con prospettiva), una dopo l'altra. Una volta sola all'apertura della pagina; niente con le animazioni ridotte.
+ */
+fun unfold(col: ViewGroup) {
+    if (Motion.reduced(col.context)) return
+    var i = 0
+    val d = col.resources.displayMetrics.density
+    for (k in 0 until col.childCount) {
+        val card = col.getChildAt(k) as? GroupCard ?: continue
+        for (j in 0 until card.childCount) {
+            val r = card.getChildAt(j); if (r.visibility != View.VISIBLE) continue
+            val delay = 70L + minOf(i++, 9) * 42L
+            r.alpha = 0f; r.rotationX = -72f; r.translationY = -6f * d; r.cameraDistance = 9000f * d
+            r.post {
+                r.pivotX = r.width / 2f; r.pivotY = 0f
+                r.animate().rotationX(0f).alpha(1f).translationY(0f).setStartDelay(delay).setDuration(460L).setInterpolator(Theme.SETTLE).start()
+            }
+        }
+    }
+}
+
+/** Una scheda di gruppo vuota, con fondo, angoli e divisori (che partono da `dividerInset` dp). */
+fun Context.groupCard(dividerInset: Float = 14f): GroupCard = GroupCard(this).apply {
+    orientation = LinearLayout.VERTICAL
+    background = roundRect(Theme.CARD, dp(20f)); clipToOutline = true
+    showDividers = LinearLayout.SHOW_DIVIDER_MIDDLE
+    dividerDrawable = android.graphics.drawable.InsetDrawable(android.graphics.drawable.GradientDrawable().apply { setColor(Theme.withAlpha(Theme.FG, 0.08f)); setSize(1, maxOf(1, dpi(0.6f))) }, dpi(dividerInset), 0, dpi(14f), 0)
+}
+
 /** Segno per le schede di contenuto (sveglie, timer, note…) che `groupRows` può unire in un'unica scheda. */
 const val LIST_ITEM = "list-item"
 
@@ -735,13 +837,8 @@ fun Context.groupRows(col: LinearLayout) {
     fun flush() {
         if (run.isEmpty()) return
         val first = col.indexOfChild(run.first())
-        val card = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            background = roundRect(Theme.CARD, dp(20f)); clipToOutline = true
-            showDividers = LinearLayout.SHOW_DIVIDER_MIDDLE
-            // Il divisore parte dopo l'icona, come nelle liste di sistema.
-            dividerDrawable = android.graphics.drawable.InsetDrawable(android.graphics.drawable.GradientDrawable().apply { setColor(Theme.withAlpha(Theme.FG, 0.08f)); setSize(1, maxOf(1, dpi(0.6f))) }, dpi((run.first() as? GroupRow)?.dividerInset ?: 14f), 0, dpi(14f), 0)
-        }
+        // Il divisore parte dopo l'icona, come nelle liste di sistema.
+        val card = groupCard((run.first() as? GroupRow)?.dividerInset ?: 14f)
         run.forEach { r ->
             col.removeView(r)
             if (r is GroupRow) r.grouped = true
@@ -749,7 +846,7 @@ fun Context.groupRows(col: LinearLayout) {
                 // Voce di lista (sveglia, timer, nota…): perde il fondo proprio e, a fuoco, mostra la stessa pillola delle righe.
                 r.background = null
                 val prev = r.onFocusChangeListener
-                r.setOnFocusChangeListener { v, f -> prev?.onFocusChange(v, f); v.background = if (f) android.graphics.drawable.InsetDrawable(Jelly(Theme.accent, dp(16f)), dpi(4f)) else null }
+                r.setOnFocusChangeListener { v, f -> prev?.onFocusChange(v, f); v.background = null; (v.parent as? GroupCard)?.let { if (f) it.focusTo(v) else it.blur(v) } }
             }
             card.addView(r, LinearLayout.LayoutParams(-1, -2))
         }
