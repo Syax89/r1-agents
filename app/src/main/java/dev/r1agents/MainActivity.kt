@@ -1683,6 +1683,8 @@ class MainActivity : Activity() {
         var talking = false
         var talkStartY = 0f
         var talkCancelled = false
+        // Con TalkBack o la tastiera non si puo' "tenere premuto": un clic avvia l'ascolto senza tenere, un altro lo ferma e invia (come la doppia pressione del tasto laterale).
+        pill.setOnClickListener { if (pttLatched) { pttLatched = false; pttStop() } else { pttLatched = true; pttStart() } }
         pill.setOnTouchListener { v, e ->
             when (e.action) {
                 android.view.MotionEvent.ACTION_DOWN -> { talkStartY = e.rawY; talkCancelled = false; focusAvatar()?.lookAt(0f, 20f, -1); v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(Motion.PRESS).start(); if (agents.getOrNull(sel) != null) { talking = true; homeVoiceGesture = true; homeVoiceStartY = e.rawY; pttStart() } }
@@ -1793,7 +1795,7 @@ class MainActivity : Activity() {
             paintDot(); stopHomeState = dash.watchState { runOnUiThread { if (scope.alive) paintDot() } }
             // Il pallino e' piccolo: sta in una zona da 40 dp che, toccata, dice a parole lo stato del collegamento.
             val dotBox = FrameLayout(this).apply {
-                contentDescription = "stato Hermes"
+                contentDescription = UiText.text(this@MainActivity, R.string.ui_62db8301e1)
                 addView(dot, FrameLayout.LayoutParams(dpi(12f), dpi(12f), Gravity.CENTER))
                 setOnClickListener { if (dash.state == HermesDash.State.ERROR || dash.state == HermesDash.State.OFF) sheet(UiText.text(this@MainActivity, R.string.ui_4814f6f7f6), listOf(UiText.text(this@MainActivity, R.string.ui_6ed04a5eb7) to { Io.run { runCatching { dash.profiles() } } }, UiText.text(this@MainActivity, R.string.ui_64ac619989) to { push(providerScreen()) })) else snack(UiText.text(this@MainActivity, when (dash.state) { HermesDash.State.READY -> R.string.ui_f24ee25561; else -> R.string.ui_7c1cae1c78 })) }
             }
