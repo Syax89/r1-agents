@@ -77,3 +77,8 @@ Metodo: per ciascuno, screenshot (`work/submenus/<nome>.png`, QA 480x640) + lett
 | Spazio agente | OK: indietro, titolo+descrizione, buddy a destra |
 | Editor agente | OK: pulsante "salva" in accento |
 | Attivita / competenze / nuova attivita Hermes | OK (app reale): intestazione, righe, campo di ricerca e selettore come gli altri |
+
+### Quarto giro: pagine Hermes e stati (work/pass4)
+- Attivita pianificate, competenze, nuova attivita (app reale, dopo la 0.5.25): intestazione con titolo a y=82 e buddy a destra, righe con interruttore, campo di ricerca, selettore ora: OK, come gli altri sotto menu.
+- Stato "leggo da Hermes..." (QA, dashboard non raggiungibile): intestazione, buddy e riga "nuova attivita" uguali agli altri; lo stato di errore con "riprova" non l'ho visto entro 28 s: la connessione tenta 3 volte con timeout di 8 s, quindi l'errore compare dopo oltre mezzo minuto. Da accorciare (timeout piu brevi per le liste), non e' un problema di layout.
+- Stati con molti dati verificati: note (24), registro azioni (lista), app (decine di righe), competenze (centinaia), attivita (5). Non verificati: sveglie e routine con piu elementi.
