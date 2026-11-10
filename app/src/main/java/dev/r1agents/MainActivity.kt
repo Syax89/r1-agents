@@ -4330,12 +4330,12 @@ class MainActivity : Activity() {
         val address = field(UiText.text(this@MainActivity, R.string.ui_e438a6ee2f), prefs.getString("update_url", "").orEmpty().ifBlank { "https://raw.githubusercontent.com/Syax89/r1-agents/main/update.json" }).apply { setSingleLine(true); inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI }
         val status = text(14f, 600, Theme.MUTED).keepCase().apply { setPadding(dpi(4f), dpi(8f), dpi(4f), 0) }
         col.addView(address)
-        col.addView(button(UiText.text(this@MainActivity, R.string.ui_56169e629e), Theme.colorOf("blue")) { checkUpdates(address.text.toString().trim(), status) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+        col.addView(button(UiText.text(this@MainActivity, R.string.ui_56169e629e), toolAccent) { checkUpdates(address.text.toString().trim(), status) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
         col.addView(status)
     }
 
     private fun updateMessage(status: TextView, e: Exception) {
-        val text = if (e is UpdateError) (if (e.arg != null) UiText.text(this, e.resource, e.arg) else UiText.text(this, e.resource)) else UiText.text(this, R.string.ui_483f5c9b20, UiText.message(this, e.message) ?: e::class.java.simpleName)
+        val text = if (e is UpdateError) (if (e.arg != null) UiText.text(this, e.resource, e.arg) else UiText.text(this, e.resource)) else UiText.text(this, R.string.ui_483f5c9b20, errorText(e) ?: e::class.java.simpleName)
         status.setTextColor(Theme.BAD); status.text = text
     }
 

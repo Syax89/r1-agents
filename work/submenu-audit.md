@@ -97,7 +97,7 @@ Legenda: V = visto in screenshot dopo l ultima modifica; C = verificato solo leg
 | Aspetto | V | V | - |
 | Sicurezza | V | V | - |
 | Azioni agente / registro | V (nessuna azione) | V (5 voci) | - |
-| Informazioni | V | V | C (errore aggiornamenti: provato un solo tentativo, saltato per la rotazione del telefono) |
+| Informazioni | V | V | V (errore aggiornamenti provocato con un indirizzo non valido: "non riesco a raggiungere il server"; pulsante ora in accento) |
 | Strumenti | V | V | - |
 | Traduttore | V | V (campo/tasti) | C |
 | Note | V | V (24) | - |
@@ -105,7 +105,7 @@ Legenda: V = visto in screenshot dopo l ultima modifica; C = verificato solo leg
 | Nuova sveglia / timer | V | V | - |
 | Routine locali | V | V (2) | - |
 | Nuova routine | V | V | - |
-| App | V | V | C (caricamento lista) |
+| App | V | V (decine di righe, dopo le ultime modifiche) | C (caricamento lista) |
 | Controlli | V | V | - |
 | Memoria | V | V (3 note, orizzontale: riga con "togli" come in note) | - |
 | Gestisci chat | V | V (1) | - |
@@ -118,3 +118,5 @@ Legenda: V = visto in screenshot dopo l ultima modifica; C = verificato solo leg
 Non verificati: gli errori fuori da attivita e competenze (provocarli richiederebbe un server o una rete guasta), "memoria" con note, la lista app con molti dati dopo l'ultima modifica.
 
 Aggiornamento: "memoria con note" verificata (screenshot work/pass4/mem3.png, telefono in orizzontale 640x480). Restano non verificati solo gli errori fuori da attivita/competenze e l errore del controllo aggiornamenti: servono una rete o un server guasti, quindi un intervento sulle impostazioni del telefono che non faccio senza il tuo ok.
+
+Sesto giro (0.5.27): errore del controllo aggiornamenti verificato (work/pass4/about_err3.png): il pulsante era blu, ora usa l accento; il messaggio era tecnico ("Unable to resolve host ..."), ora usa la stessa classificazione degli altri errori. Lista app con molti dati riverificata (work/pass4/apps3.png). Restano non verificati gli errori di altre pagine che richiedono una rete o un server guasti.

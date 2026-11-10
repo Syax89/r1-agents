@@ -73,3 +73,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.25 (code 32): controlli: la riga di stato usa lo stesso stile dei paragrafi introduttivi; solo nel pacchetto QA, --ez qa_visible true permette gli screenshot delle pagine con campi segreti per le verifiche visive.
 
 0.5.26 (code 33): corretto un difetto: le pagine Hermes (attivita e competenze) restavano su "leggo da Hermes..." se il server rispondeva subito con un errore (risultato scartato prima dell ingresso della pagina); ora mostrano l errore e "riprova", anche nelle competenze.
+
+0.5.27 (code 34): controlla aggiornamenti: pulsante in accento (era blu) ed errore in parole semplici.
