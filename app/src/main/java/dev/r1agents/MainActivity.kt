@@ -2245,6 +2245,10 @@ class MainActivity : Activity() {
             voiceCancelled = true; recording = false; voice.cancel(); Motion.hide(listen); buddyStage.flash("cancel", UiText.text(this@MainActivity, R.string.ui_4435ce3621))
             if (!busy) headChar.show(agent, "idle")
         }
+        // TalkBack, tastiera e rotella non possono "tenere premuto": un clic avvia l'ascolto, il clic successivo lo ferma e trascrive.
+        mic.setOnClickListener {
+            if (recording && !voiceCancelled) { recording = false; buddyStage.show("transcribing", UiText.text(this@MainActivity, R.string.ui_79b0b7c1f7)); voice.stop() } else talk()
+        }
         mic.setOnTouchListener { v, e ->
             Motion.touch(v, e)
             when (e.actionMasked) {

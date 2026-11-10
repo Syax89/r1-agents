@@ -251,3 +251,8 @@ Gli altri stati sono stati visti nei giri precedenti dopo le modifiche che li ri
 | Competenze (app reale) | elenco reale con ricerca e interruttori, aperto dal carosello |
 | Gestisci chat | vuoto (nessuna chat nel QA ripulito) |
 Con questo ogni sotto menu e verificato alla 0.5.33 in verticale e orizzontale e, dove la pagina ha dati, anche con dati sulla stessa versione.
+
+## Editor con dati alla 0.5.34 (work/final_data)
+- Sveglia esistente: selettore sull orario salvato, giorni, preset: OK (alarms_edit.png).
+- Routine esistente: agente, nome "routine1", richiesta "cosa_fare1", selettore: OK (routines_edit.png).
+- Gestisci chat: riga chat con conteggio e data: OK (manage_3.png).

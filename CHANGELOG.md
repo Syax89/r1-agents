@@ -87,3 +87,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.32 (code 39): design unificato: un solo chip di scelta in tutte le pagine (48 dp, stessi spazi e colori), interruttore riconosciuto da TalkBack e dalla rotella con il suo stato; tolto un componente non usato.
 
 0.5.33 (code 40): la pillola del microfono si attiva anche con TalkBack o la tastiera (un clic ascolta senza tenere, un altro invia); etichetta del pallino Hermes tradotta.
+
+0.5.34 (code 41): il microfono della chat si usa anche con TalkBack, tastiera e rotella (un clic ascolta, il successivo trascrive); documenti di stato allineati.
