@@ -169,3 +169,32 @@ Restano non verificate solo cose che richiedono hardware o server reali: nessun 
 | Attivita Hermes | 4 attivita reali con ultimo esito (app reale) |
 | Competenze | centinaia di righe con interruttori e ricerca (app reale) |
 Con questo ogni pagina e stata vista sia vuota sia con dati dopo l ultima modifica che la riguarda, e gli errori sono stati provocati dove la pagina usa la rete. Nessuna cella resta "C" o "-"; le celle "n/a" sono pagine locali senza rete.
+
+## Passata completa alla 0.5.30 (work/pass9, QA, telefono in orizzontale 640x480): TUTTE le 21 pagine riaperte una per una
+Controllato in ogni foto: titolo alla stessa quota, pulsante indietro, buddy a destra (o grande nelle pagine hub), paragrafi intro/hint, righe/card, pulsante primario in accento.
+
+| # | Pagina | Esito alla 0.5.30 |
+|---|---|---|
+| 1 | Impostazioni | OK (hub: buddy grande, riga fornitore, tessere) |
+| 2 | Fornitore | OK (etichette/campi, intestazione standard) |
+| 3 | Aspetto | OK (titolo gruppo bianco, schede uniformi) |
+| 4 | Sicurezza | OK (intro 15 sp + 3 righe) |
+| 5 | Azioni agente | OK (2 voci + svuota registro) |
+| 6 | Informazioni | OK (hub: buddy grande, testo 15 sp) |
+| 7 | Strumenti | OK (tessere con contatori) |
+| 8 | Traduttore | OK (lingue, campo, traduci/tieni e parla) |
+| 9 | Note | OK (24 note) |
+| 10 | Sveglie | OK (2 sveglie con interruttore) |
+| 11 | Nuova sveglia | OK (selettore, chip giorni) |
+| 12 | Timer | OK (selettore, preset, avvia) |
+| 13 | Routine | OK (2 routine con interruttore) |
+| 14 | Nuova routine | OK (agente, nome, richiesta) |
+| 15 | App | OK (hub: buddy grande, ricerca, righe) |
+| 16 | Memoria | OK (intro + 3 note con togli) |
+| 17 | Gestisci chat | OK (1 chat) |
+| 18 | Spazio agente | OK (nome+descrizione, buddy a destra; "3 note" in memoria) |
+| 19 | Editor agente | OK (forma, salva in accento) |
+| 20 | Attivita Hermes | OK (errore classificato + riprova) |
+| 21 | Competenze | OK (errore classificato + riprova) |
+
+Gli stati con dati veri di attivita e competenze Hermes sono nell app reale (work/pass8/real.png, 0.5.30). Nota di metodo: la pagina fornitore richiede `--ez qa_visible true` nell intent INIZIALE (con force-stop) per essere fotografabile.
