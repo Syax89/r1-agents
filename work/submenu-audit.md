@@ -154,3 +154,18 @@ Tutte e 21 le pagine sono state riaperte e viste nello stato "vuoto" (QA appena 
 
 Nota di metodo: con force-stop prima dell avvio si cattura spesso la schermata di avvio di Android (grigia con il buddy arancione): le schermate buone si ottengono avviando l activity gia in esecuzione.
 Restano non verificate solo cose che richiedono hardware o server reali: nessun errore "di rete" per le pagine locali perche non applicabile.
+
+## Passata finale con dati (0.5.30, work/pass8) - stati con dati rivisti DOPO l ultima modifica
+| Pagina | Dati visti in 0.5.30 |
+|---|---|
+| Azioni agente | 2 voci + "svuota registro" |
+| Sveglie | 2 sveglie con orario e interruttore (QA popolato apposta) |
+| Routine locali | 2 routine con interruttore |
+| Memoria | 3 note con "togli" |
+| Note | 24 note (card con "togli") |
+| Gestisci chat | 1 chat |
+| Strumenti | contatori "24 salvate", "nessuna attiva" |
+| Impostazioni / Spazio agente | riga fornitore con dati, elenco "di lui" |
+| Attivita Hermes | 4 attivita reali con ultimo esito (app reale) |
+| Competenze | centinaia di righe con interruttori e ricerca (app reale) |
+Con questo ogni pagina e stata vista sia vuota sia con dati dopo l ultima modifica che la riguarda, e gli errori sono stati provocati dove la pagina usa la rete. Nessuna cella resta "C" o "-"; le celle "n/a" sono pagine locali senza rete.
