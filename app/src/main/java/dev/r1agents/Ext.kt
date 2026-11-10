@@ -405,15 +405,16 @@ class Sleeper(private val view: View, private val ch: () -> CharacterView?, priv
         private set
     private val nod = Runnable {
         if (!view.isAttachedToWindow) return@Runnable
-        ch()?.react("yawn"); view.postDelayed({ if (view.isAttachedToWindow) { asleep = true; sleep() } }, 1700)
+        ch()?.react("yawn"); view.postDelayed(doze, 1700)
     }
+    private val doze = Runnable { if (view.isAttachedToWindow) { asleep = true; sleep() } }
     fun poke() {
         view.removeCallbacks(nod)
         if (asleep) { asleep = false; wake(); ch()?.react("surprised") }
         val wait = afterProvider?.invoke() ?: afterMs
         if (wait > 0L) view.postDelayed(nod, wait)   // 0 = mai (impostazione)
     }
-    fun stop() { view.removeCallbacks(nod) }
+    fun stop() { view.removeCallbacks(nod); view.removeCallbacks(doze) } // anche il sonno già in arrivo dopo lo sbadiglio
 }
 
 /** Il cerchio tratteggiato di "nuovo agente" (come DashedRing di r1os). */
@@ -585,11 +586,13 @@ fun Context.cardify(col: LinearLayout, head: Int = 0, tail: Int = 0) {
 /** I tre puntini che "respirano" mentre l'agente scrive (come Typing di r1os): ognuno pulsa un poco dopo il precedente. */
 class TypingDots(private val ctx: Context) : android.graphics.drawable.Drawable(), android.graphics.drawable.Animatable {
     private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = Theme.MUTED }
-    private val anim = android.animation.ValueAnimator.ofFloat(0f, 1f).apply { duration = Motion.LOOP_SLOW; repeatCount = android.animation.ValueAnimator.INFINITE; interpolator = android.view.animation.LinearInterpolator(); addUpdateListener { invalidateSelf() } }
+    private val anim = android.animation.ValueAnimator.ofFloat(0f, 1f).apply { duration = Motion.LOOP_SLOW; repeatCount = android.animation.ValueAnimator.INFINITE; interpolator = android.view.animation.LinearInterpolator(); addUpdateListener { if (callback == null) cancel() else invalidateSelf() } }
     override fun getIntrinsicWidth() = ctx.dpi(34f)
     override fun getIntrinsicHeight() = ctx.dpi(14f)
-    init { anim.start() }
+    // Gira solo mentre è visibile e attaccato: prima animava per sempre, una per ogni risposta, anche in background o tolto dal testo.
+    override fun setVisible(visible: Boolean, restart: Boolean): Boolean = super.setVisible(visible, restart).also { if (visible) start() else stop() }
     override fun draw(c: android.graphics.Canvas) {
+        if (isVisible && !anim.isRunning) anim.start()
         val t = anim.animatedFraction
         for (i in 0 until 3) {
             val ph = ((t - i * 0.16f) % 1f + 1f) % 1f

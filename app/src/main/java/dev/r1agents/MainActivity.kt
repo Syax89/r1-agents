@@ -33,7 +33,9 @@ class MainActivity : Activity() {
     private lateinit var hermesRuntime: HermesRuntime
     private lateinit var root: FrameLayout
     private class Screen(val view: View, val keys: ((KeyEvent) -> Boolean)? = null, val onLeave: (() -> Unit)? = null, val onShow: (() -> Unit)? = null, val isChat: Boolean = false,
-                         val scope: Scope = Scope(), val onResume: (() -> Unit)? = null, val chatKey: Long? = null, val buddyContext: BuddySceneContext = BuddySceneContext.READ, val isVoice: Boolean = false, val onSuspend: (() -> Unit)? = null, val leaveGuard: (() -> Boolean)? = null) {
+                         val scope: Scope = Scope(), val onResume: (() -> Unit)? = null, val chatKey: Long? = null, val buddyContext: BuddySceneContext = BuddySceneContext.READ, val isVoice: Boolean = false, val onSuspend: (() -> Unit)? = null, val leaveGuard: (() -> Boolean)? = null,
+                         /** La home: riceve anche il rilascio del tasto centrale (click = esegui, tenuto = torna all'agente) e gestisce Indietro nel carosello. */
+                         val isHome: Boolean = false) {
         /** Da dove si e' aperta (il rettangolo dell'elemento toccato, nel root): chiudendola torna li'. */
         var pendingEntry: android.view.ViewTreeObserver.OnPreDrawListener? = null
         var posedBuddy: CharacterView? = null
@@ -62,7 +64,7 @@ class MainActivity : Activity() {
     private fun setChatLocked(id: Long, on: Boolean) { prefs.edit().putStringSet("locked_chats", lockedChats().toMutableSet().also { if (on) it.add(id.toString()) else it.remove(id.toString()) }).apply() }
     /** Esce da una chat bloccata senza il PIN: toglie il gate e torna indietro. */
     private fun leaveLockedChat() {
-        pinGate?.let { root.removeView(it) }; pinGate = null; pinUnlocked = false; deferredPinIntent = null
+        pinGate?.let { root.removeView(it) }; pinGate = null; pinUnlocked = false; deferredPinIntent = null; updateSecure()
         cancelModalBuddyFlight(); clearCarriedBuddy(); hideKeyboard()
         if (stack.size > 1) pop()
     }
@@ -85,18 +87,25 @@ class MainActivity : Activity() {
                 if (first != second) snack(UiText.text(this@MainActivity, R.string.ui_8bbb3165d5), long = true)
                 else Io.run { val hash = PinHash.create(first); runOnUiThread {
                     prefs.edit().putString("app_pin_hash", hash).remove("pin_failures").remove("pin_wait_until").apply()
-                    pinUnlocked = true; window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                    pinUnlocked = true; updateSecure()
                     snack(UiText.text(this@MainActivity, R.string.ui_875796699c)); stack.lastOrNull()?.onShow?.invoke()
                 } }
             }
         }
     }
     private fun showPinGate() = showPinGate(false)
+    /** Campi segreti a schermo (chiavi, password): finché ce n'è uno, niente screenshot. Prima un campo staccato toglieva la protezione anche con un altro ancora visibile. */
+    private var secretFields = 0
+    /** Unico punto che decide FLAG_SECURE: gate del PIN, chat bloccata in cima o campo segreto a schermo. */
+    private fun updateSecure() {
+        val on = pinGate != null || chatLocked(stack.lastOrNull()?.chatKey) || (secretFields > 0 && !qaVisible)
+        if (on) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+    }
     /** Solo nel pacchetto QA e su richiesta (`--ez qa_visible true`): permette gli screenshot delle pagine con campi segreti per le verifiche visive. Mai sul pacchetto dell'utente. */
     private val qaVisible get() = packageName.endsWith(".qa") && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 && intent?.getBooleanExtra("qa_visible", false) == true
     private fun showPinGate(animate: Boolean) {
         if (!pinEnabled() || pinUnlocked || pinGate != null) return
-        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) // subito, prima che il gate sia costruito
         if (animate) carryMovingBuddy()
         val under = currentBuddyPage()
         val source = carriedBuddy ?: under?.let { sceneAvatar(it, companionAgent?.id) }
@@ -126,7 +135,7 @@ class MainActivity : Activity() {
                             var finished = false
                             val finishUnlock = {
                                 if (!finished) {
-                                    finished = true; gate.animate().cancel(); root.removeView(gate); pinGate = null; clearCarriedBuddy(); restoreBuddies()
+                                    finished = true; gate.animate().cancel(); root.removeView(gate); pinGate = null; updateSecure(); clearCarriedBuddy(); restoreBuddies()
                                     if (deferred != null) { applyIntent(deferred); handle(deferred) }
                                 }
                             }
@@ -170,7 +179,7 @@ class MainActivity : Activity() {
         if (!pinEnabled()) col.addView(row(UiText.text(this@MainActivity, R.string.ui_e067157f40), Theme.accent, icon = "lock") { pinSetup() })
         else {
             col.addView(row(UiText.text(this@MainActivity, R.string.ui_8c9d3158f9), Theme.accent, icon = "sliders") { pinPrompt(UiText.text(this@MainActivity, R.string.ui_c64ec43f51)) { pin -> Io.run { val ok = PinHash.verify(pin, prefs.getString("app_pin_hash", "").orEmpty()); runOnUiThread { if (ok) pinSetup() else snack(UiText.text(this@MainActivity, R.string.ui_1265e93b8f)) } } } })
-            col.addView(row(UiText.text(this@MainActivity, R.string.ui_d8ebc0990d), Theme.BAD, icon = "close") { pinPrompt(UiText.text(this@MainActivity, R.string.ui_c64ec43f51)) { pin -> Io.run { val ok = PinHash.verify(pin, prefs.getString("app_pin_hash", "").orEmpty()); runOnUiThread { if (ok) { prefs.edit().remove("app_pin_hash").remove("pin_failures").remove("pin_wait_until").apply(); window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE); stack.lastOrNull()?.onShow?.invoke() } else snack(UiText.text(this@MainActivity, R.string.ui_1265e93b8f)) } } } })
+            col.addView(row(UiText.text(this@MainActivity, R.string.ui_d8ebc0990d), Theme.BAD, icon = "close") { pinPrompt(UiText.text(this@MainActivity, R.string.ui_c64ec43f51)) { pin -> Io.run { val ok = PinHash.verify(pin, prefs.getString("app_pin_hash", "").orEmpty()); runOnUiThread { if (ok) { prefs.edit().remove("app_pin_hash").remove("pin_failures").remove("pin_wait_until").apply(); updateSecure(); stack.lastOrNull()?.onShow?.invoke() } else snack(UiText.text(this@MainActivity, R.string.ui_1265e93b8f)) } } } })
             col.addView(row(UiText.text(this@MainActivity, R.string.ui_7789e4318d), Theme.accent, check = prefs.getBoolean("lock_all_chats", false), icon = "lock") { prefs.edit().putBoolean("lock_all_chats", !prefs.getBoolean("lock_all_chats", false)).apply(); stack.last().onShow?.invoke() })
         }
     }
@@ -188,6 +197,8 @@ class MainActivity : Activity() {
 
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
+        // Se il sistema chiude l'app mentre la fotocamera è aperta, al ritorno si sa ancora quale file c'era (scatta e chiedi, o da cancellare).
+        b?.getString("photo_file")?.let { photoFile = java.io.File(it) }
         Theme.init(this); Md.copyHandler = { t -> runOnUiThread { copyText(t) } }
         prefs = getSharedPreferences("settings", MODE_PRIVATE)
         Vault.migrate(prefs) // cifra nel Keystore i segreti salvati in chiaro dalle versioni precedenti
@@ -866,14 +877,19 @@ class MainActivity : Activity() {
             return
         }
         // Prima volta: la home resta (con l'avatar che "pensa") e la chat arriva con la dissolvenza e il volo; senza volo, la pagina "carico".
+        if (!opening.add(chatId)) return // doppio tocco: una sola apertura alla volta
         val flying = hero != null
+        val origin = stack.lastOrNull()
         val loading = if (flying) null else loadingScreen(a, UiText.text(this@MainActivity, R.string.ui_6c766bf934)).also { push(it) }
         Io.run {
             var err: String? = null
             var working = false
             try { db.replaceMessages(a.id, chatId, dash.open(chatId, hsid, a.profile)); working = dash.liveChecked()[hsid] in listOf("working", "waiting") } catch (e: Exception) { err = UiText.message(this@MainActivity, e.message) }
             runOnUiThread {
-                if (loading == null) { if (err == null) push(chat(a, chatId, say, share, observeHsid = if (working) hsid else null)) else hero = null }
+                opening.remove(chatId)
+                // Risposta tardiva: se nel frattempo l'utente è andato altrove la chat non si apre sopra la sua pagina.
+                val stillHere = !isDestroyed && stack.lastOrNull() === origin
+                if (loading == null) { if (err == null && stillHere) push(chat(a, chatId, say, share, observeHsid = if (working) hsid else null)) else hero = null }
                 else if (stack.lastOrNull() === loading) replaceTop(chat(a, chatId, say, share, observeHsid = if (working) hsid else null))
                 err?.let { snack(UiText.text(this@MainActivity, R.string.ui_cd083a17e7, it), long = true) }
             }
@@ -883,6 +899,8 @@ class MainActivity : Activity() {
     /** Impronta del contenuto locale di una chat (ultimi messaggi): serve a capire se la rilettura da Hermes ha cambiato qualcosa. */
     private fun chatSignature(chatId: Long): String = db.messagesPage(chatId, 3, null).joinToString("|") { it.second + it.third.hashCode() }
     private val sessionSyncAt = HashMap<Long, Long>()
+    /** Aperture in corso (id chat, o -id agente): un doppio tocco apriva due chat una sopra l'altra. */
+    private val opening = HashSet<Long>()
 
     /** L'ultima chat dell'agente (per gli agenti di Hermes: dopo aver riletto le sessioni). */
     private fun openLatest(a: Agent, say: String? = null, share: Share? = null) {
@@ -893,12 +911,19 @@ class MainActivity : Activity() {
             Io.run { try { syncSessions(a) } catch (e: Exception) { } }
             openChat(a, known, say, share); return
         }
+        if (!opening.add(-a.id)) return // doppio tocco sullo stesso agente
         val flying = hero != null
+        val origin = stack.lastOrNull()
         val loading = if (flying) null else loadingScreen(a, UiText.text(this@MainActivity, R.string.ui_d4758167e0, a.name)).also { push(it) }
         Io.run {
             try { syncSessions(a) } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_af1c39a0e8, UiText.message(this@MainActivity, e.message)), long = true) } }
             val id = db.lastChat(a.id) ?: db.newChat(a.id)
-            runOnUiThread { if (loading == null) openChat(a, id, say, share) else if (stack.lastOrNull() === loading) { pop(); openChat(a, id, say, share) } }
+            runOnUiThread {
+                opening.remove(-a.id)
+                if (isDestroyed) return@runOnUiThread
+                if (loading == null) { if (stack.lastOrNull() === origin) openChat(a, id, say, share) else hero = null }
+                else if (stack.lastOrNull() === loading) { pop(); openChat(a, id, say, share) }
+            }
         }
     }
 
@@ -947,6 +972,7 @@ class MainActivity : Activity() {
 
     private fun runtimeVisibility() {
         applySceneContext(stack.lastOrNull())
+        updateSecure()
         if (::hermesRuntime.isInitialized) { hermesRuntime.foreground = visible; hermesRuntime.visibleChat = if (visible) { if (voiceConversation != null) voiceConversation?.visibleChatId else stack.lastOrNull()?.chatKey } else null }
     }
     /** Quanto arretra la pagina sotto (parallasse) e quanto si scurisce mentre quella nuova scorre sopra. */
@@ -1236,11 +1262,13 @@ class MainActivity : Activity() {
         if (stack.size <= 1) return
         hideKeyboard()
         val s = stack.removeAt(stack.size - 1); cancelPendingEntry(s); s.scope.alive = false
-        if (chatLocked(s.chatKey)) { pinUnlocked = false; if (pinGate == null) window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
+        if (chatLocked(s.chatKey)) pinUnlocked = false
         if (s.view.tag == "ring") { setShowWhenLocked(false); setTurnScreenOn(false) }
         s.onLeave?.invoke()
-        if (stack.size == 1 && rootProvider != settings.provider.id) { stack[0].scope.alive = false; detach(stack[0].view); stack[0] = root() }
+        if (stack.size == 1 && rootProvider != settings.provider.id) { stack[0].scope.alive = false; stack[0].onLeave?.invoke(); detach(stack[0].view); stack[0] = root() }
         val back = stack.last()
+        // Da una chat bloccata a un'altra chat bloccata: prima si toglieva lo sblocco ma non si chiedeva il PIN, e la chat sotto restava leggibile.
+        if (chatLocked(back.chatKey) && !pinUnlocked) root.post { if (stack.lastOrNull() === back) showPinGate(false) }
         if (s.heroOrigin != null && !s.view.isLaidOut) {
             root.removeView(s.view)
             if (back.view.parent == null) root.addView(back.view, 0, ViewGroup.LayoutParams(-1, -1))
@@ -1278,7 +1306,8 @@ class MainActivity : Activity() {
         if (pinGate != null) { if (gateWanted()) leaveLockedChat() else if (!isDefaultLauncher()) finish(); return }
         overlays.keys.lastOrNull()?.let { overlayBack[it]?.invoke(); return }   // prima le finestre sopra tutto (permessi, menu)
         if (pttView != null) { pttClose(); return }
-        if (stack.size == 1 && homeLaneBack?.invoke() == true) return
+        // Anche quando la radice è la glance e la home le sta sopra: Indietro prima riporta il carosello all'agente.
+        if (stack.lastOrNull()?.isHome == true && homeLaneBack?.invoke() == true) return
         if (stack.size > 1 && stack.last().leaveGuard?.invoke() == true) return
         if (stack.size > 1) pop() else if (!isDefaultLauncher()) finish()   // come ogni app indietro esce; da schermata iniziale non esce (come ogni launcher)
     }
@@ -1293,7 +1322,9 @@ class MainActivity : Activity() {
         val ptt = e.keyCode == KeyEvent.KEYCODE_BUTTON_1 || e.keyCode == KeyEvent.KEYCODE_HEADSETHOOK
         val modal = overlays.isNotEmpty() || voiceConversation != null || carriedBuddy != null || modalBuddyFlight != null
         // Una sola consegna: prima lo stesso evento veniva passato due volte al carosello.
-        if (!modal && (e.action == KeyEvent.ACTION_DOWN || ptt) && stack.lastOrNull()?.keys?.invoke(e) == true) return true
+        // Il rilascio del tasto centrale va solo alla home: senza, il click della rotella nel carosello non eseguiva mai l'azione.
+        val centerUp = e.action == KeyEvent.ACTION_UP && (e.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || e.keyCode == KeyEvent.KEYCODE_ENTER) && stack.lastOrNull()?.isHome == true
+        if (!modal && (e.action == KeyEvent.ACTION_DOWN || ptt || centerUp) && stack.lastOrNull()?.keys?.invoke(e) == true) return true
         if (ptt && voiceConversation == null && (carriedBuddy != null || modalBuddyFlight != null)) return true
         if (ptt && overlays.isEmpty() && (voiceConversation != null || stack.lastOrNull()?.isChat != true)) {
             val now = android.os.SystemClock.uptimeMillis()
@@ -1340,8 +1371,8 @@ class MainActivity : Activity() {
             transformationMethod = android.text.method.PasswordTransformationMethod.getInstance(); importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
             // Finché un campo segreto è sullo schermo, niente screenshot né anteprima nei recenti (anche senza PIN).
             addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-                override fun onViewAttachedToWindow(v: View) { if (!qaVisible) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
-                override fun onViewDetachedFromWindow(v: View) { if (!pinEnabled()) window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
+                override fun onViewAttachedToWindow(v: View) { secretFields++; updateSecure() }
+                override fun onViewDetachedFromWindow(v: View) { secretFields = (secretFields - 1).coerceAtLeast(0); updateSecure() }
             })
         }
     }
@@ -1788,6 +1819,11 @@ class MainActivity : Activity() {
                 if (dash.state == HermesDash.State.CONNECTING) dot.tag = android.animation.ObjectAnimator.ofFloat(dot, View.ALPHA, 1f, 0.25f).apply { duration = Motion.PULSE; repeatCount = android.animation.ValueAnimator.INFINITE; repeatMode = android.animation.ValueAnimator.REVERSE; start() }
             }
             paintDot(); stopHomeState = dash.watchState { runOnUiThread { if (scope.alive) paintDot() } }
+            // La pulsazione "in collegamento" è infinita: si ferma quando la home è coperta da un'altra pagina o chiusa, e riparte al ritorno.
+            dot.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                override fun onViewAttachedToWindow(v: View) { if (scope.alive) paintDot() }
+                override fun onViewDetachedFromWindow(v: View) { (dot.tag as? android.animation.Animator)?.cancel() }
+            })
             // Il pallino e' piccolo: sta in una zona da 40 dp che, toccata, dice a parole lo stato del collegamento.
             val dotBox = FrameLayout(this).apply {
                 contentDescription = UiText.text(this@MainActivity, R.string.ui_62db8301e1)
@@ -1821,7 +1857,7 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { if (lanePos != 0) laneAction() else open(); true }
                 else -> false
             }
-        }, buddyContext = BuddySceneContext.LIVE, scope = scope, onLeave = { stopHomeState?.invoke(); sleeper.stop(); homeLaneBack = null }, onShow = { laneLayer.alpha = 1f; refreshLive(); sleeper.poke(); agents = visibleAgents(); if (signature() != sig || homeIndex != sel) rebuild() else agents.getOrNull(sel)?.let { focusAvatar()?.show(it) } })
+        }, buddyContext = BuddySceneContext.LIVE, scope = scope, isHome = true, onLeave = { stopHomeState?.invoke(); sleeper.stop(); homeLaneBack = null }, onShow = { laneLayer.alpha = 1f; refreshLive(); sleeper.poke(); agents = visibleAgents(); if (signature() != sig || homeIndex != sel) rebuild() else agents.getOrNull(sel)?.let { focusAvatar()?.show(it) } })
     }
 
     // ---- chat -----------------------------------------------------------------------------------
@@ -2230,6 +2266,10 @@ class MainActivity : Activity() {
             else if (!voice.startFailed && checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) add(UiText.text(this@MainActivity, R.string.ui_4d225fc3f1), false, error = true)
         }
         pttHandler = { e -> if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount == 0) talk() else if (e.action == KeyEvent.ACTION_UP && recording) { recording = false; buddyStage.show("transcribing", UiText.text(this@MainActivity, R.string.ui_79b0b7c1f7)); voice.stop() }; true }
+        // Gli agganci di QUESTA chat: quando una chat viene sostituita (rilettura da Hermes) o ne copre un'altra, la vecchia azzerava
+        // quelli della nuova (PTT, voce, allegati morti). Ora ognuna toglie solo i suoi e li rimette quando torna in cima.
+        val myVoice = onVoice; val myMic = cancelActiveMic; val myPtt = pttHandler; val myAttach = attachHook
+        fun restoreHooks() { onVoice = myVoice; cancelActiveMic = myMic; pttHandler = myPtt; attachHook = myAttach }
         openAttach = { headChar.lookAt(-10f, 10f, 1200); sheet(UiText.text(this@MainActivity, R.string.ui_0fd7b04a53), listOf(UiText.text(this@MainActivity, R.string.ui_aaa045009b) to { pickPhoto() }, UiText.text(this@MainActivity, R.string.ui_9ef61a89bf) to { pickFile(true) }, UiText.text(this@MainActivity, R.string.ui_7656d6d3ad) to { pickFile(false) }), mapOf(UiText.text(this@MainActivity, R.string.ui_aaa045009b) to "attach", UiText.text(this@MainActivity, R.string.ui_9ef61a89bf) to "look", UiText.text(this@MainActivity, R.string.ui_7656d6d3ad) to "note")) }
         val attachBtn = iconButton("attach", accent, filled = false, size = 48f) { openAttach() }
         // Un solo tasto d'azione a destra: microfono (tieni premuto e parla) a campo vuoto, invio con del testo, stop mentre lavora.
@@ -2373,7 +2413,7 @@ class MainActivity : Activity() {
                 KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { input.requestFocus(); true }
                 else -> false
             }
-        }, scope = chatScope, onLeave = { prefs.edit().apply { val d = input.text.toString(); if (d.isBlank() || busy) remove("draft_$chatId") else putString("draft_$chatId", d) }.apply(); stopSmooth(); connectionAlive = false; stopConnectionWatch(); buddyStage.dismiss(); avatarSlot.removeCallbacks(collapseAvatar); avatarMotion?.cancel(); engine?.let { it.cancel(); localTurns.remove(it) }; stopTaskWatch?.invoke(); onVoice = null; cancelActiveMic = null; pttHandler = null; attachHook = null; pending.forEach { it.file.delete() }; pending.clear(); voiceCancelled = true; voice.cancel(); tts?.stop() }, isChat = true, chatKey = chatId, onSuspend = { if (voiceActive) suspendVoice() }, leaveGuard = { if (busy && !hermesMode()) { val now = android.os.SystemClock.uptimeMillis(); if (armedKey == "leave" && now - armedAt < 4000) false else { armedKey = "leave"; armedAt = now; val m = UiText.text(this@MainActivity, R.string.ui_8cec984fbd); snack(m); buddyStage.flash("cancel", m, 3000); true } } else false })
+        }, scope = chatScope, onShow = { restoreHooks() }, onLeave = { prefs.edit().apply { val d = input.text.toString(); if (d.isBlank() || busy) remove("draft_$chatId") else putString("draft_$chatId", d) }.apply(); stopSmooth(); connectionAlive = false; stopConnectionWatch(); buddyStage.dismiss(); avatarSlot.removeCallbacks(collapseAvatar); avatarMotion?.cancel(); engine?.let { it.cancel(); localTurns.remove(it) }; stopTaskWatch?.invoke(); if (onVoice === myVoice) onVoice = null; if (cancelActiveMic === myMic) cancelActiveMic = null; if (pttHandler === myPtt) pttHandler = null; if (attachHook === myAttach) attachHook = null; pending.forEach { it.file.delete() }; pending.clear(); voiceCancelled = true; voice.cancel(); tts?.stop() }, isChat = true, chatKey = chatId, onSuspend = { if (voiceActive) suspendVoice() }, leaveGuard = { if (busy && !hermesMode()) { val now = android.os.SystemClock.uptimeMillis(); if (armedKey == "leave" && now - armedAt < 4000) false else { armedKey = "leave"; armedAt = now; val m = UiText.text(this@MainActivity, R.string.ui_8cec984fbd); snack(m); buddyStage.flash("cancel", m, 3000); true } } else false })
     }
 
     /** Il microfono scelto in Aspetto e voce: Groq Whisper (se c'è la chiave) o il riconoscimento del dispositivo. */
@@ -2489,7 +2529,7 @@ class MainActivity : Activity() {
         hermesRuntime.requests.values.forEach { showRequest(it) }
         if (hermesMode()) hermesRuntime.ensureRecoveryService()
          if (::prefs.isInitialized && gateWanted()) showPinGate(); Dim.on(this); characters(root) { it.setActive(true) }; heldBuddies.forEach { it.setActive(false) }; stack.lastOrNull()?.onResume?.invoke() }
-    override fun onPause() { root.removeCallbacks(buddyReaper); stopShake(); stack.forEach { it.onSuspend?.invoke() }; pttClose(immediate = true); cancelBuddyFlight(); cancelModalBuddyFlight(restoreSource = overlays.isEmpty()); clearCarriedBuddy(restore = overlays.isEmpty()); if (::prefs.isInitialized && gateWanted()) { cancelActiveMic?.invoke(); pttClose(immediate = true); tts?.stop(); pinUnlocked = false; showPinGate() }; visible = false; runtimeVisibility(); hermesRuntime.requestListener = null; hermesRuntime.requestCancelListener = null; characters(root) { it.setActive(false) }; Dim.off(); super.onPause() }
+    override fun onPause() { root.removeCallbacks(buddyReaper); stopShake(); stack.forEach { it.onSuspend?.invoke() }; pttClose(immediate = true); cancelBuddyFlight(); cancelModalBuddyFlight(restoreSource = overlays.isEmpty()); clearCarriedBuddy(restore = overlays.isEmpty()); if (::prefs.isInitialized && gateWanted()) { cancelActiveMic?.invoke(); tts?.stop(); pinUnlocked = false; showPinGate() }; visible = false; runtimeVisibility(); hermesRuntime.requestListener = null; hermesRuntime.requestCancelListener = null; characters(root) { it.setActive(false) }; Dim.off(); super.onPause() }
     private val KEYCODE_NAV_NEXT = 261   // KEYCODE_NAVIGATE_NEXT
     private val KEYCODE_NAV_PREV = 260   // KEYCODE_NAVIGATE_PREVIOUS
 
@@ -2754,6 +2794,7 @@ class MainActivity : Activity() {
 
     private var attachHook: ((Attachment) -> Unit)? = null
     private var photoFile: java.io.File? = null
+    override fun onSaveInstanceState(out: Bundle) { super.onSaveInstanceState(out); photoFile?.let { out.putString("photo_file", it.path) } }
     private var photoAttachTarget: ((Attachment) -> Unit)? = null
     private var fileAttachTarget: ((Attachment) -> Unit)? = null
 
