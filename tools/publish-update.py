@@ -26,12 +26,29 @@ def tool(name):
     if not values:
         raise SystemExit('Strumento Android non trovato: ' + name)
     return str(values[-1])
-subprocess.run([tool('apksigner'), 'verify', str(args.apk)], check=True)
+certs = subprocess.run([tool('apksigner'), 'verify', '--print-certs', str(args.apk)], capture_output=True, text=True, check=True).stdout
+# L'impronta pubblica attesa sta in tools/release-cert.sha256: un APK firmato con un'altra chiave verrebbe rifiutato dall'Updater sul telefono.
+expected_file = Path(__file__).with_name('release-cert.sha256')
+if expected_file.is_file():
+    expected = expected_file.read_text(encoding='utf-8').strip().lower()
+    found = re.findall(r'certificate SHA-256 digest: ([0-9a-f]{64})', certs)
+    if found != [expected]:
+        raise SystemExit('Firma inattesa: l APK non e firmato con il certificato di rilascio (tools/release-cert.sha256).')
 badging = subprocess.run([tool('aapt'), 'dump', 'badging', str(args.apk)], capture_output=True, text=True, check=True).stdout
 package = re.search(r"package: name='([^']+)' versionCode='(\d+)' versionName='([^']*)'", badging)
 if not package or package[1] != 'dev.r1agents':
     raise SystemExit('Il manifest di rilascio accetta solo il pacchetto dev.r1agents, mai la copia QA.')
+if args.output.is_file():
+    previous = json.loads(args.output.read_text(encoding='utf-8')).get('versionCode', 0)
+    if int(package[2]) <= int(previous):
+        raise SystemExit(f'versionCode {package[2]} non maggiore di quello gia pubblicato ({previous}).')
 notes = args.notes_file.read_text(encoding='utf-8') if args.notes_file else ''
+# Da un CHANGELOG si prende solo il paragrafo della versione che si pubblica ("0.5.35 (code 42): ...").
+section = re.search(r'^' + re.escape(package[3]) + r' \(code \d+\):.*?(?=\n\s*\n|\Z)', notes, re.M | re.S)
+if section:
+    notes = section[0].strip()
+elif args.notes_file and args.notes_file.name.upper().startswith('CHANGELOG'):
+    raise SystemExit(f'Nel CHANGELOG manca la riga "{package[3]} (code {package[2]}): ...".')
 if len(notes) > 12000:
     raise SystemExit('Note troppo lunghe (massimo 12000 caratteri).')
 digest = hashlib.sha256()

@@ -20,7 +20,7 @@ import dev.r1os.host.ui.text
 class BuddyStage(ctx: Context, private val agent: Agent) : LinearLayout(ctx) {
     private val buddy = CharacterView(ctx, ctx.dpi(40f)).also { it.show(agent) }
     private val motion = BuddyMotionLayer(ctx, buddy, agent)
-    private val words = ctx.text(14f, 600).keepCase().apply { maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END }
+    private val words = ctx.text(14f, 600).keepCase().apply { maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END; accessibilityLiveRegion = android.view.View.ACCESSIBILITY_LIVE_REGION_POLITE }   // stato del buddy annunciato da TalkBack
     private val cue = object : View(ctx) {
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         override fun onDraw(c: Canvas) {

@@ -184,7 +184,9 @@ internal class VoiceConversation(
                     if (runtime.active(id) != null) { reset(); showPhase("working", R.string.voice_existing_turn); return@runOnUiThread }
                     if (db.messagesPage(id, 1, null).isEmpty()) db.title(id, text.replace('\n', ' ').take(40))
                     if (dashboard) {
-                        val task = runtime.start(agent, id, text, false, emptyList())
+                        // Siamo sul thread principale, fuori dal try di sotto: un rifiuto (Hermes in configurazione) faceva chiudere l'app.
+                        val task = try { runtime.start(agent, id, text, false, emptyList()) }
+                            catch (e: Exception) { reset(); showPhase("error", R.string.voice_error); Toast.makeText(act, UiText.message(act, e.message), Toast.LENGTH_LONG).show(); return@runOnUiThread }
                         unsubscribe?.invoke()
                         unsubscribe = task.progress.subscribe { snapshot -> act.runOnUiThread { if (alive && token == generation) render(snapshot) } }
                     } else {

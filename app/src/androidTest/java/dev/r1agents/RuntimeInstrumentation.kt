@@ -24,19 +24,16 @@ class RuntimeInstrumentation : Instrumentation() {
     private var voiceSuite = false
     override fun onCreate(arguments: Bundle?) { super.onCreate(arguments); functionalSuite = arguments?.getString("suite") == "functional"; voiceSuite = arguments?.getString("suite") == "voice"; developmentSuite = arguments?.getString("suite") == "development"; sceneEdgesOnly = arguments?.getString("suite") == "scene_edges"; sceneSuite = sceneEdgesOnly || arguments?.getString("suite") == "scenes"; start() }
     private fun step(label: String) { android.util.Log.i("R1QA", label); sendStatus(1, Bundle().apply { putString("stream", label + "\n") }) }
+    /** Ogni suite ha un tempo massimo: una suite bloccata prima teneva fermo `am instrument` per sempre. */
+    private fun suite(prefix: String, limitMs: Long, body: () -> Unit) {
+        val watchdog = java.util.Timer("qa-timeout-$prefix", true).apply { schedule(object : java.util.TimerTask() { override fun run() { finish(Activity.RESULT_CANCELED, Bundle().apply { putString("stream", "${prefix}_QA_RESULT=FAIL\ntimeout della suite\n") }) } }, limitMs) }
+        try { body() } catch (e: Throwable) { finish(Activity.RESULT_CANCELED, Bundle().apply { putString("stream", "${prefix}_QA_RESULT=FAIL\n" + android.util.Log.getStackTraceString(e)) }) } finally { watchdog.cancel() }
+    }
     override fun onStart() {
-        if (functionalSuite) {
-            try { FunctionalQa(this).run() } catch (e: Throwable) { finish(Activity.RESULT_CANCELED, Bundle().apply { putString("stream", "FUNCTIONAL_QA_RESULT=FAIL\n" + android.util.Log.getStackTraceString(e)) }) }; return
-        }
-        if (sceneSuite) {
-            try { SceneQa(this, sceneEdgesOnly).run() } catch (e: Throwable) { finish(Activity.RESULT_CANCELED, Bundle().apply { putString("stream", "SCENE_QA_RESULT=FAIL\n" + android.util.Log.getStackTraceString(e)) }) }; return
-        }
-        if (developmentSuite) {
-            try { DevelopmentQa(this).run() } catch (e: Throwable) { finish(Activity.RESULT_CANCELED, Bundle().apply { putString("stream", "DEVELOPMENT_QA_RESULT=FAIL\n" + android.util.Log.getStackTraceString(e)) }) }; return
-        }
-        if (voiceSuite) {
-            try { VoiceQa(this).run() } catch (e: Throwable) { finish(Activity.RESULT_CANCELED, Bundle().apply { putString("stream", "VOICE_QA_RESULT=FAIL\n" + android.util.Log.getStackTraceString(e)) }) }; return
-        }
+        if (functionalSuite) { suite("FUNCTIONAL", 300_000) { FunctionalQa(this).run() }; return }
+        if (sceneSuite) { suite("SCENE", 300_000) { SceneQa(this, sceneEdgesOnly).run() }; return }
+        if (developmentSuite) { suite("DEVELOPMENT", 400_000) { DevelopmentQa(this).run() }; return }
+        if (voiceSuite) { suite("VOICE", 300_000) { VoiceQa(this).run() }; return }
         val watchdog = java.util.Timer("qa-timeout", true).apply { schedule(object : java.util.TimerTask() { override fun run() { finish(Activity.RESULT_CANCELED, Bundle().apply { putString("stream", "QA_RESULT=FAIL\ntimeout della suite QA\n") }) } }, 90000) }
         val result = Bundle()
         var outcome = Activity.RESULT_CANCELED

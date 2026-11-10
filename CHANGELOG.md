@@ -89,3 +89,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.33 (code 40): la pillola del microfono si attiva anche con TalkBack o la tastiera (un clic ascolta senza tenere, un altro invia); etichetta del pallino Hermes tradotta.
 
 0.5.34 (code 41): il microfono della chat si usa anche con TalkBack, tastiera e rotella (un clic ascolta, il successivo trascrive); documenti di stato allineati.
+
+0.5.35 (code 42): Hermes più solido: una connessione caduta chiude subito i turni in attesa invece di lasciarli appesi, il collegamento è pronto solo a socket aperto, un attimo di rete persa non fa più perdere il contesto della chat, le routine usano la stessa connessione (approvazioni comprese); due sveglie insieme non lasciano la prima a suonare; una risposta tagliata a metà di uno strumento non blocca più la chat; accesso Nous senza logout per rinnovi contemporanei; errori riconosciuti anche dentro altri errori; annunci TalkBack per lo stato della chat; controlli di rilascio con il QA, tutte le suite e la firma.

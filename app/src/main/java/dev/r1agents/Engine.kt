@@ -164,7 +164,9 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
             val (content, stop) = if (pr.anthropic) streamAnthropic(agent, chatId, pr, key, base, onText) else streamOpenAi(agent, chatId, pr, key, base, onText)
             if (cancelled) return
             if (stop != "tool_use") {
-                if (content.length() > 0) db.add(agent.id, chatId, "assistant", content.toString())
+                // Risposta tagliata (max_tokens) a metà di una chiamata: un tool_use senza tool_result rendeva la chat inutilizzabile (400 a ogni messaggio).
+                val kept = withoutToolUse(content)
+                if (kept.length() > 0) db.add(agent.id, chatId, "assistant", kept.toString())
                 return
             }
             val results = JSONArray()
@@ -347,7 +349,8 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
                 .put("name", name.toString())
                 .put("input", runCatching { JSONObject(args.toString().ifBlank { "{}" }) }.getOrDefault(JSONObject())))
         }
-        return out to if (calls.isNotEmpty()) "tool_use" else finish
+        // Con finish_reason "length" gli argomenti sono troncati: lo strumento non parte (niente note vuote o azioni a metà).
+        return out to if (calls.isNotEmpty() && finish != "length") "tool_use" else finish
     }
 
     // ---- HTTP + SSE -----------------------------------------------------------------------------
@@ -442,4 +445,11 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
         }
         error("troppi redirect")
     }
+}
+
+/** Toglie i blocchi tool_use: si salvano solo quando seguono i loro tool_result. */
+internal fun withoutToolUse(content: JSONArray): JSONArray {
+    val out = JSONArray()
+    for (i in 0 until content.length()) content.optJSONObject(i)?.takeIf { it.optString("type") != "tool_use" }?.let { out.put(it) }
+    return out
 }

@@ -198,9 +198,12 @@ class HermesDash(private val p: SharedPreferences) {
     fun needsIntro(a: Long) = stored(a) == null
     fun forget(a: Long) { p.edit().remove("dash_sid_$a").apply(); sessions.remove(a) }
 
+    /** Un solo collegamento alla volta, con un lock suo: login e ticket fanno rete e prima, tenendo `this`, bloccavano anche `closed()`. */
+    private val connectLock = Any()
+
     /** Collega (login, ticket, WebSocket). Riprova per errori di rete con attesa crescente; per credenziali e configurazione no. */
-    @Synchronized private fun connect() {
-        if (ws != null) return
+    private fun connect(): Unit = synchronized(connectLock) {
+        if (synchronized(this) { ws } != null) return
         setState(State.CONNECTING)
         var last: java.io.IOException? = null
         for (attempt in 0 until 3) {
@@ -217,45 +220,65 @@ class HermesDash(private val p: SharedPreferences) {
         val t = ticket()
         val wsUrl = origin.replaceFirst("http", "ws") + "/api/ws"
         val ready = CountDownLatch(1)
+        val opened = CountDownLatch(1)
+        var failure: String? = null
         val req = Request.Builder().url(wsUrl).header("Origin", origin)
             .header("Sec-WebSocket-Protocol", "hermes-gateway-v1, hermes-gateway-ticket.$t").build()
-        ws = http.newWebSocket(req, object : WebSocketListener() {
+        val socket = http.newWebSocket(req, object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: Response) { opened.countDown() }
             override fun onMessage(webSocket: WebSocket, text: String) {
                 for (line in text.split('\n')) {
                     if (line.isBlank()) continue
-                    val j = runCatching { JSONObject(line) }.getOrNull() ?: continue
-                    if (j.optString("method") == "request.cancel") {
-                        j.optJSONObject("params")?.optString("id")?.let { onRequestCancel?.invoke(it) }
-                    } else if (j.optString("method") == "event" || j.optString("method") == "gateway.ready") {
-                        val ev = j.optJSONObject("params") ?: continue
-                        if (ev.optString("type") == "gateway.ready") ready.countDown()
-                        else ev.optString("session_id").takeIf { it.isNotEmpty() }?.let { turns[it]?.onEvent?.invoke(ev) }
-                    } else if (j.has("method") && j.has("id")) {
-                        val method = j.optString("method")
-                        if ((method == "approval" || method == "clarify") && onRequest != null) deliver(SrvRequest(j.get("id"), method, j.optJSONObject("params") ?: JSONObject()))
-                        else webSocket.send(JSONObject().put("jsonrpc", "2.0").put("id", j.get("id"))   // le altre domande (sudo, segreti, anteprime…) non le gestiamo
-                            .put("error", JSONObject().put("code", -32601).put("message", "unsupported by this client")).toString())
-                    } else if (j.has("id")) {
-                        pending.remove(j.optLong("id"))?.complete(j)
-                    }
+                    // Un errore in una callback (UI, db) non deve far cadere il socket di tutte le chat: OkHttp lo tratterebbe come onFailure.
+                    try { handleLine(webSocket, line, ready) } catch (e: Exception) { android.util.Log.w("HermesDash", "evento non gestito", e) }
                 }
             }
-            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) = closed(webSocket, "chiuso ($code ${reason.take(60)})")
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) = closed(webSocket, t.message ?: "errore di rete")
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { failure = "chiuso ($code ${reason.take(60)})"; opened.countDown(); closed(webSocket, failure!!) }
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                failure = response?.let { "HTTP ${it.code}" } ?: t.message ?: "errore di rete"; opened.countDown(); closed(webSocket, failure!!)
+            }
         })
+        synchronized(this) { ws = socket }
+        // READY solo a socket aperto: prima si diceva "pronto" anche con il ticket rifiutato, e l'utente vedeva "connessione persa" invece del motivo.
+        if (!opened.await(10, TimeUnit.SECONDS) || failure != null) {
+            drop(socket, failure ?: "nessuna risposta")
+            throw java.io.IOException("WebSocket rifiutato: ${failure ?: "nessuna risposta"}")
+        }
         ready.await(6, TimeUnit.SECONDS) // alcune versioni non annunciano gateway.ready: si prosegue comunque
         // Diciamo a Hermes che sappiamo rispondere alle sue domande (approvazioni, chiarimenti): senza questo le scarta.
-        ws?.send(JSONObject().put("jsonrpc", "2.0").put("id", ids.getAndIncrement()).put("method", "client.capabilities").put("params", JSONObject().put("server_requests", true)).toString() + "\n")
-        setState(State.READY)
+        socket.send(JSONObject().put("jsonrpc", "2.0").put("id", ids.getAndIncrement()).put("method", "client.capabilities").put("params", JSONObject().put("server_requests", true)).toString() + "\n")
+        if (synchronized(this) { ws } === socket) setState(State.READY)
+        else throw java.io.IOException("connessione persa durante l'avvio")
     }
+
+    private fun handleLine(webSocket: WebSocket, line: String, ready: CountDownLatch) {
+        val j = runCatching { JSONObject(line) }.getOrNull() ?: return
+        if (j.optString("method") == "request.cancel") {
+            j.optJSONObject("params")?.optString("id")?.let { onRequestCancel?.invoke(it) }
+        } else if (j.optString("method") == "event" || j.optString("method") == "gateway.ready") {
+            val ev = j.optJSONObject("params") ?: return
+            if (ev.optString("type") == "gateway.ready") ready.countDown()
+            else ev.optString("session_id").takeIf { it.isNotEmpty() }?.let { turns[it]?.onEvent?.invoke(ev) }
+        } else if (j.has("method") && j.has("id")) {
+            val method = j.optString("method")
+            if ((method == "approval" || method == "clarify") && onRequest != null) deliver(SrvRequest(j.get("id"), method, j.optJSONObject("params") ?: JSONObject()))
+            else webSocket.send(JSONObject().put("jsonrpc", "2.0").put("id", j.get("id"))   // le altre domande (sudo, segreti, anteprime…) non le gestiamo
+                .put("error", JSONObject().put("code", -32601).put("message", "unsupported by this client")).toString())
+        } else if (j.has("id")) {
+            pending.remove(j.optLong("id"))?.complete(j)
+        }
+    }
+
+    /** Chiude un socket e fa subito la pulizia: prima si azzerava `ws` a mano e `closed()`, arrivando dopo, non puliva più nulla (turni appesi fino a 15 min). */
+    private fun drop(w: WebSocket, why: String) { w.cancel(); closed(w, why) }
 
     private fun closed(w: WebSocket, why: String) {
         val mine = synchronized(this) { if (ws === w) { ws = null; true } else false }
         if (!mine) return
         sessions.clear()
         pending.values.forEach { it.completeExceptionally(java.io.IOException(why)) }; pending.clear()
-        turns.values.forEach { it.onEvent?.invoke(JSONObject().put("type", "__closed").put("why", why)) }
-        setState(State.OFF)
+        turns.values.forEach { runCatching { it.onEvent?.invoke(JSONObject().put("type", "__closed").put("why", why)) } }
+        setState(State.OFF, why) // il motivo resta in lastError per l'indicatore
     }
 
     /** Una chiamata JSON-RPC. Se la connessione cade prima della risposta la riprova una volta (`retry`), tranne per l'invio dei messaggi. */
@@ -268,7 +291,7 @@ class HermesDash(private val p: SharedPreferences) {
             val w = ws
             val frame = JSONObject().put("jsonrpc", "2.0").put("id", id).put("method", method).put("params", params).toString() + "\n"
             if (w == null || !w.send(frame)) {
-                pending.remove(id); synchronized(this) { if (ws === w) ws = null }
+                pending.remove(id); if (w != null) drop(w, "invio non riuscito")
                 if (retry && attempt++ < 1) continue
                 throw java.io.IOException("connessione persa")
             }
@@ -337,8 +360,11 @@ class HermesDash(private val p: SharedPreferences) {
     private fun session(key: Long, profile: String = ""): String {
         sessions[key]?.let { return it }
         stored(key)?.let { st ->
-            runCatching { rpc("session.resume", scope(profile).put("session_id", st)).optString("session_id").takeIf { it.isNotEmpty() } }.getOrNull()
-                ?.let { sessions[key] = it; return it }
+            // Errore di rete o timeout: si rilancia. Solo se Hermes risponde con un errore (sessione sparita) se ne crea una nuova,
+            // altrimenti un attimo di rete persa sovrascriveva la sessione salvata e la chat perdeva il contesto.
+            val resumed = try { rpc("session.resume", scope(profile).put("session_id", st)).optString("session_id").takeIf { it.isNotEmpty() } }
+                catch (e: java.io.IOException) { throw e } catch (e: RuntimeException) { null }
+            resumed?.let { sessions[key] = it; return it }
         }
         val r = rpc("session.create", scope(profile))
         val sid = r.getString("session_id")
@@ -378,7 +404,7 @@ class HermesDash(private val p: SharedPreferences) {
 
     /** Un turno di chat. Ritorna il testo completo della risposta. Più chat possono avere un turno insieme (uno per sessione). */
     fun turn(key: Long, profile: String, text: String, onActivity: ((String) -> Unit)? = null, onText: (String) -> Unit): String {
-        val sid = try { session(key, profile) } catch (e: java.io.IOException) { synchronized(this) { ws?.cancel(); ws = null }; throw e }
+        val sid = try { session(key, profile) } catch (e: java.io.IOException) { synchronized(this) { ws }?.let { drop(it, e.message ?: "connessione persa") }; throw e }
         val t = Turn(sid); val acc = StringBuilder()
         t.onEvent = { ev ->
             when (ev.optString("type")) {
@@ -487,7 +513,14 @@ class HermesDash(private val p: SharedPreferences) {
         try {
             val deadline = System.currentTimeMillis() + 15 * 60_000
             var complete = false
+            var nextCheck = System.currentTimeMillis() + 20_000
             while (System.currentTimeMillis() < deadline) {
+                // Se il turno finisce prima che ci registriamo, nessun evento arriverà più: ogni 20 s si guarda se è ancora vivo.
+                if (System.currentTimeMillis() > nextCheck) {
+                    nextCheck = System.currentTimeMillis() + 20_000
+                    val still = runCatching { liveChecked()[hsid] in listOf("working", "waiting") }.getOrDefault(true)
+                    if (!still) { complete = true; break }
+                }
                 val (kind, _) = t.inbox.poll(1, TimeUnit.SECONDS) ?: continue
                 if (kind == "closed") throw java.io.IOException("Connessione con Hermes persa.")
                 complete = true; break
@@ -549,7 +582,7 @@ class HermesDash(private val p: SharedPreferences) {
 
     /** Prova completa: login, ticket, WebSocket. Ritorna un messaggio per l'utente. */
     fun test(): String = try {
-        synchronized(this) { ws?.close(1000, null); ws = null }; sessions.clear()
+        synchronized(this) { ws }?.let { drop(it, "nuova prova") }; sessions.clear()
         connect()
         "OK: connesso a Hermes" + serverVersion.takeIf { it.isNotBlank() }?.let { " $it" }.orEmpty()
     } catch (e: Exception) { e.message ?: "errore" }

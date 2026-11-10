@@ -86,7 +86,9 @@ class NousAuth(private val p: SharedPreferences) {
     }
 
     /** Access token valido (rinnovato se scade entro 2 minuti). */
-    @Synchronized fun accessToken(): String {
+    // Lock unico per tutte le istanze (activity, runtime Hermes, voce, routine): con un lock per istanza due rinnovi insieme
+    // usavano lo stesso refresh token e il secondo, rifiutato, faceva il logout.
+    fun accessToken(): String = synchronized(LOCK) {
         val refresh = p.secret("nous_refresh")
         if (refresh.isEmpty()) throw IllegalStateException("Non hai fatto l'accesso a Nous. Aprilo dalle Impostazioni.")
         val tok = p.secret("nous_access")
@@ -94,7 +96,10 @@ class NousAuth(private val p: SharedPreferences) {
         val (st, j) = form("$portal/api/oauth/token", mapOf("grant_type" to "refresh_token", "client_id" to clientId),
             mapOf("x-nous-refresh-token" to refresh))
         if (st in 200..299 && j.has("access_token")) { store(j, refresh); return j.getString("access_token") }
-        if (st in listOf(400, 401)) { logout(); throw IllegalStateException("Sessione Nous scaduta: accedi di nuovo dalle Impostazioni.") }
+        // Logout solo se il token è davvero rifiutato, non per un errore di configurazione del portale.
+        if (st == 401 || (st == 400 && j.optString("error") == "invalid_grant")) { logout(); throw IllegalStateException("Sessione Nous scaduta: accedi di nuovo dalle Impostazioni.") }
         throw RuntimeException("Nous Portal non raggiungibile (HTTP $st). Riprova tra poco.")
     }
+
+    private companion object { val LOCK = Any() }
 }

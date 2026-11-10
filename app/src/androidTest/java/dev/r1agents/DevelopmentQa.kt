@@ -161,17 +161,36 @@ internal class DevelopmentQa(private val test: Instrumentation) {
                 while (!widgetText && System.currentTimeMillis() < wtUntil) { ui { widgetText = views(activity!!.window.decorView).filterIsInstance<android.widget.TextView>().any { it.isShown && it.text.toString().startsWith("hermes ·") && it.text.toString().contains("Prova UI") } }; Thread.sleep(200) }
                 check(widgetText) { "Standby: il widget Hermes non mostra la prossima attività" }
                 step("standby: il widget Hermes mostra la prossima attività dal vivo: OK")
-                ui { activity!!.onBackPressed() }; Thread.sleep(600)
                 // Home con Hermes: l'agente con una chat in lavorazione lo dice sotto il nome.
+                // Agente e chat attiva esistono PRIMA di tornare alla home: altrimenti la home li vedeva solo se la lettura dei profili
+                // finiva dopo il salvataggio (gara di tempi, il test falliva quando il collegamento era rapido).
                 val hAgent = Agent(0, "Hermes QA", "", "", profile = "qa").also { db.save(it) }
                 val liveChat = db.upsertChat(hAgent.id, "qa-live", "live", System.currentTimeMillis(), 0)
+                jobMock.markActive("qa-live")
+                ui { activity!!.onBackPressed() }; Thread.sleep(600)
                 try {
-                    jobMock.markActive("qa-live")
                     ui { MainActivity::class.java.getDeclaredMethod("goHome").apply { isAccessible = true }.invoke(activity) }
                     val workingText = ctx.getString(R.string.ui_9449f5bbc8)
-                    var working = false; val wUntil = System.currentTimeMillis() + 12000
-                    while (!working && System.currentTimeMillis() < wUntil) { ui { working = views(activity!!.window.decorView).filterIsInstance<android.widget.TextView>().any { it.isShown && it.text.toString() == workingText } }; Thread.sleep(250) }
-                    check(working) { "Home: l'agente con una chat in lavorazione non lo dice" }
+                    // La home si aggiorna ogni 15 s (liveLoop) e la chiamata può durare fino a 10 s: con 12 s il test falliva una volta su cinque.
+                    var working = false; val wUntil = System.currentTimeMillis() + 40000
+                    var nextPoke = System.currentTimeMillis() + 8000
+                    while (!working && System.currentTimeMillis() < wUntil) {
+                        ui { working = views(activity!!.window.decorView).filterIsInstance<android.widget.TextView>().any { it.isShown && it.text.toString() == workingText } }
+                        // Come farebbe l'utente: apre e chiude una pagina, la home torna in primo piano e rilegge agenti e stato dal vivo
+                        // (la home costruita prima che esistesse l'agente non lo conosce finché non si mostra di nuovo).
+                        if (!working && System.currentTimeMillis() > nextPoke) {
+                            nextPoke = System.currentTimeMillis() + 8000
+                            ui { test.callActivityOnNewIntent(activity!!, Intent(ctx, MainActivity::class.java).putExtra("debug_screen", "settings")) }; Thread.sleep(900)
+                            ui { MainActivity::class.java.getDeclaredMethod("goHome").apply { isAccessible = true }.invoke(activity) }; Thread.sleep(900)
+                        }
+                        Thread.sleep(250)
+                    }
+                    if (!working) {
+                        val d = HermesRuntime.get(ctx).dash
+                        val live = runCatching { d.liveChecked().toString() }.getOrElse { "errore: " + it.message }
+                        var shown = ""; ui { shown = views(activity!!.window.decorView).filterIsInstance<android.widget.TextView>().filter { it.isShown }.joinToString(" | ") { it.text.toString().take(30) }.take(500) }
+                        error("Home: l'agente con una chat in lavorazione non lo dice [stato=${d.state} errore=${d.lastError} live=$live provider=${prefs.getString("provider", "")} url=${d.url} hsid=${db.hsid(liveChat)} testi=$shown]")
+                    }
                     step("home: l'agente che lavora su Hermes lo dice sotto il nome: OK")
                 } finally { db.deleteChat(liveChat); db.delete(hAgent.id) }
             } finally {

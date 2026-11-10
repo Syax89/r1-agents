@@ -1348,12 +1348,6 @@ class MainActivity : Activity() {
 
     private fun hideKeyboard() { (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).hideSoftInputFromWindow(window.decorView.windowToken, 0) }
 
-    private fun groupTitle(t: String) = text(18f, 800, Theme.FG).apply { text = t; setPadding(dpi(4f), dpi(22f), 0, dpi(2f)) }
-    /** Paragrafo introduttivo in testa a una pagina: stessa dimensione, colore e spazi in tutti i sotto menu. */
-    private fun intro(t: String) = text(15f, 500, Theme.MUTED).keepCase().apply { text = t; setPadding(dpi(4f), dpi(2f), dpi(4f), dpi(12f)) }
-    /** Nota piccola sotto un controllo. */
-    private fun hint(t: String) = text(13f, 500, Theme.MUTED).keepCase().apply { text = t; setPadding(dpi(4f), dpi(6f), dpi(4f), dpi(2f)) }
-    private fun label(t: String) = text(15f, 600, Theme.MUTED).apply { text = t; tag = "label"; setPadding(dpi(10f), dpi(16f), 0, dpi(6f)) }
 
     // ---- home: un agente alla volta, la rotella li gira -----------------------------------------
 
@@ -2118,7 +2112,7 @@ class MainActivity : Activity() {
             updateAction()
         }
         attachHook = { a -> runOnUiThread { pending.add(a); refreshChips(); Motion.enter(chipsScroll, dx = -dp(14f), dy = dp(6f), dur = Motion.BASE); headChar.lookAt(-9f, 9f, 900); buddyStage.flash(if (a.kind == Kind.IMAGE) "photo" else "file", UiText.text(this@MainActivity, R.string.ui_da45045b61, a.name)) } }
-        val activity = text(14f, 600, Theme.MUTED).keepCase().apply { visibility = View.GONE; gravity = Gravity.CENTER; setPadding(dpi(4f), dpi(6f), dpi(4f), dpi(4f)); maxLines = 2 }
+        val activity = text(14f, 600, Theme.MUTED).keepCase().apply { visibility = View.GONE; gravity = Gravity.CENTER; setPadding(dpi(4f), dpi(6f), dpi(4f), dpi(4f)); maxLines = 2; accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE }   // TalkBack annuncia "sto cercando...", "leggo il file..."
         var lastAct = ""
         // Riga di stato sotto la conversazione: solo mentre l'agente lavora, mai a riposo (come r1os).
         fun setActivity(s: String) {
@@ -3176,13 +3170,6 @@ class MainActivity : Activity() {
     }
     private var daysRepaint: (() -> Unit)? = null
 
-    /** Il chip di scelta usato in tutte le pagine: stesso testo, stessi spazi (bersaglio di 48 dp), stessi colori selezionato/no. */
-    private fun chipView(label: String, size: Float = 15f) = text(size, 700).apply {
-        text = label; setPadding(dpi(14f), dpi(13f), dpi(14f), dpi(13f)); minHeight = dpi(48f); gravity = Gravity.CENTER_VERTICAL; isClickable = true; isFocusable = true
-    }
-    private fun chipPaint(v: TextView, on: Boolean) {
-        v.isSelected = on; v.setTextColor(if (on) Theme.ON_ACCENT else Theme.FG); v.background = roundRect(if (on) Theme.accent else Theme.FOCUS, dp(14f))
-    }
 
     /** Intestazione comune a ogni schermata: tasto indietro (l'R1 non ne ha uno) e titolo. */
     private fun framed(title: String, body: View, trailing: View? = null, buddyHeader: Boolean = true, buddyOverflow: Boolean = false): View = LinearLayout(this).apply {
@@ -3805,7 +3792,6 @@ class MainActivity : Activity() {
         return when { s < 60 -> UiText.text(this@MainActivity, R.string.ui_b6ea728a1e); s < 3600 -> UiText.text(this@MainActivity, R.string.ui_1aad585811, s / 60); s < 86400 -> UiText.text(this@MainActivity, R.string.ui_21d1dcf49a, s / 3600); else -> UiText.text(this@MainActivity, R.string.ui_1b030d23ea, s / 86400) }
     }
 
-    private fun section(t: String) = text(15f, 600, Theme.MUTED).apply { text = t; setPadding(dpi(10f), dpi(16f), 0, dpi(6f)) }
 
     private fun space(start: Agent): Screen {
         val scope = Scope()

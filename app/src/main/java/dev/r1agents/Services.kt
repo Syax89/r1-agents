@@ -41,6 +41,8 @@ class RingService : Service() {
             .setCategory(Notification.CATEGORY_ALARM).setOngoing(true).setContentIntent(show).setFullScreenIntent(show, true)
             .addAction(act("snooze", UiText.text(this@RingService, R.string.ui_8d6a685440))).addAction(act("stop", "stop")).build()
         startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+        // Una seconda sveglia mentre suona la prima: la prima si ferma (prima restava in loop) e il minuto riparte da qui.
+        handler.removeCallbacksAndMessages(null); ringtone?.stop()
         ringtone = RingtoneManager.getRingtone(this, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))?.apply {
             audioAttributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
             isLooping = true; play()
@@ -71,7 +73,8 @@ class RoutineService : Service() {
                 val r = db.routine(id); val agent = db.agents().firstOrNull { it.id == r?.agentId }
                 if (r != null && agent != null) {
                     val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-                    val engine = Engine(db, Settings(prefs), NousAuth(prefs), HermesDash(prefs))
+                    // Il dash condiviso: un secondo HermesDash rifiutava le approvazioni, non salvava la sessione e lasciava un socket aperto.
+                    val engine = Engine(db, Settings(prefs), NousAuth(prefs), HermesRuntime.get(ctx).dash)
                     val chat = db.newChat(agent.id); db.title(chat, r.name)
                     var text = ""
                     try { engine.turn(agent, chat, r.prompt) { } } catch (e: Exception) { text = UiText.text(this@RoutineService, R.string.ui_2f38b99da3, UiText.message(this@RoutineService, e.message)) }
@@ -82,7 +85,7 @@ class RoutineService : Service() {
                         Notification.Builder(ctx, Sched.CH_INFO).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("${agent.name} · ${r.name}")
                             .setContentText(text.take(120)).setStyle(Notification.BigTextStyle().bigText(text.take(600))).setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(open).setAutoCancel(true).build())
                 }
-            } finally { stopSelf() }
+            } finally { stopSelf(startId) } // con due routine insieme, la prima che finisce non ferma la seconda
         }
         return START_NOT_STICKY
     }

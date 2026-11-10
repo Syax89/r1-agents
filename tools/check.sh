@@ -11,9 +11,14 @@ fi
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 [ -x "./gradlew" ] || { echo "gradlew non trovato: esegui lo script dalla cartella del progetto."; exit 2; }
 
-echo "== test unitari, lint, APK =="
+echo "== traduzioni =="
+python3 tools/i18n/audit.py >/dev/null || { echo "Audit i18n non superato: python3 tools/i18n/audit.py"; exit 1; }
+echo "ok"
+
+# Anche il QA: device-check installa quello, e prima un QA vecchio veniva certificato al posto del nuovo.
+echo "== test unitari, lint, APK di rilascio e QA =="
 set +e
-./gradlew --no-daemon testDebugUnitTest lintRelease assembleRelease 2>&1 | grep -E "^e: |BUILD|FAILED|Lint found|FAIL"
+./gradlew --no-daemon testDebugUnitTest lintRelease assembleRelease assembleQa assembleQaAndroidTest 2>&1 | grep -E "^e: |BUILD|FAILED|Lint found|FAIL"
 status=${PIPESTATUS[0]}
 set -e
 if [ "$status" -ne 0 ]; then
