@@ -11,6 +11,7 @@ class ErrorKindTest {
         assertEquals(ErrorKind.NETWORK, ErrorKind.of(java.net.UnknownHostException("x")))
         assertEquals(ErrorKind.TIMEOUT, ErrorKind.of(java.net.SocketTimeoutException("t")))
         assertEquals(ErrorKind.KEY, ErrorKind.of(IllegalStateException("Manca la chiave API di X.")))
+        assertEquals(ErrorKind.CONFIG, ErrorKind.of(IllegalArgumentException("expected url scheme")))
         assertEquals(ErrorKind.OTHER, ErrorKind.of(RuntimeException("boh")))
     }
 }

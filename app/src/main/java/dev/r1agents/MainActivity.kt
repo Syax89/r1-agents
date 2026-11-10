@@ -727,6 +727,7 @@ class MainActivity : Activity() {
         ErrorKind.TIMEOUT -> UiText.text(this, R.string.ui_423e5043b2)
         ErrorKind.RATE -> UiText.text(this, R.string.ui_0d3b9428e5)
         ErrorKind.SERVER -> UiText.text(this, R.string.ui_a8a7633f72)
+        ErrorKind.CONFIG -> UiText.text(this, R.string.ui_7726650957)
         ErrorKind.OTHER -> UiText.message(this, e.message) ?: UiText.text(this, R.string.ui_00ea95d6d1)
     }
 

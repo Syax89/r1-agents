@@ -690,6 +690,7 @@
     <string name="ui_cafd4e1fc8" formatted="false">"cerca una skill"</string>
     <string name="ui_b6ec5021d5" formatted="false">"codice copiato"</string>
     <string name="ui_570d5b3ff8" formatted="false">"scorri di lato per fotocamera, app e strumenti · tieni premuto l\'agente per il suo spazio · rotella premuta a lungo: torna all\'agente"</string>
+    <string name="ui_7726650957" formatted="false">"indirizzo non valido: controlla le impostazioni"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

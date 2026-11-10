@@ -126,3 +126,31 @@ Ancora non verificato: salvataggio di una nuova attivita Hermes con errore (nel 
 
 Ottavo giro (0.5.29): salvataggio di una nuova attivita Hermes con server non raggiungibile provocato nel QA senza toccare la rete (il dashboard QA punta a una porta chiusa): mostrava l errore tecnico "Failed to connect to /127.0.0.1:...". Ora tutte le azioni Hermes (salva, pausa, elimina, modello, comprimi...) usano la stessa classificazione degli errori. Verificato (work/pass4/job_save_err2.png).
 Restano senza prova solo: il caricamento della lista app in errore (e' locale, non ha rete: non applicabile) e il "prova" dei fornitori diversi da Hermes (il fornitore custom non ha un pulsante di prova: si salva e basta).
+
+## Passata finale (0.5.30): tutte le pagine rifotografate DOPO l ultima modifica (work/pass7, QA pulito)
+Tutte e 21 le pagine sono state riaperte e viste nello stato "vuoto" (QA appena ripulito) dopo l ultima modifica; i contenuti con dati sono stati visti nei giri precedenti dopo le modifiche che li riguardavano.
+
+| Pagina | Vuoto (0.5.29/30) | Errore | Note |
+|---|---|---|---|
+| Informazioni | V | V (aggiornamenti) | |
+| Azioni agente | V | n/a (locale) | |
+| Editor agente | V | n/a (locale) | |
+| Nuova sveglia / Sveglie | V | n/a (locale) | |
+| App | V | n/a (locale) | |
+| Fornitore | V | V (accedi su server non raggiungibile) | |
+| Attivita Hermes | V | V (rete e "indirizzo non valido") | nuovo messaggio per indirizzi senza schema |
+| Aspetto | V | n/a (locale) | |
+| Gestisci chat | V | n/a (locale) | |
+| Memoria | V | n/a (locale) | con note visto in 0.5.25 |
+| Note | V | n/a (locale) | |
+| Nuova routine / Routine | V | n/a (locale) | |
+| Sicurezza | V | n/a (locale) | |
+| Impostazioni | V | n/a | |
+| Competenze | V | V (come attivita) | |
+| Spazio agente | V | n/a (locale) | |
+| Timer | V | n/a (locale) | |
+| Strumenti | V | n/a | |
+| Traduttore | V | V (errore di rete in rosso e in parole semplici) | |
+
+Nota di metodo: con force-stop prima dell avvio si cattura spesso la schermata di avvio di Android (grigia con il buddy arancione): le schermate buone si ottengono avviando l activity gia in esecuzione.
+Restano non verificate solo cose che richiedono hardware o server reali: nessun errore "di rete" per le pagine locali perche non applicabile.

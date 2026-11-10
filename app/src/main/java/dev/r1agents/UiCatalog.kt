@@ -697,6 +697,7 @@ internal object UiCatalog {
         UiEntry(R.string.ui_cafd4e1fc8, "cerca una skill"),
         UiEntry(R.string.ui_b6ec5021d5, "codice copiato"),
         UiEntry(R.string.ui_570d5b3ff8, "scorri di lato per fotocamera, app e strumenti · tieni premuto l'agente per il suo spazio · rotella premuta a lungo: torna all'agente"),
+        UiEntry(R.string.ui_7726650957, "indirizzo non valido: controlla le impostazioni"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

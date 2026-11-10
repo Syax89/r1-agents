@@ -79,3 +79,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.28 (code 35): corretto un difetto introdotto in 0.5.20: nelle pagine con scroll diretto (fornitore, memoria, gestisci chat, editor) il contenuto si disegnava sopra la barra del titolo; il buddy esce dalla barra solo nelle liste con buddy fisso.
 
 0.5.29 (code 36): errori delle azioni Hermes (salva, pausa, elimina, modello, comprimi...) in parole semplici invece dei messaggi tecnici di rete.
+
+0.5.30 (code 37): errori in parole semplici anche per indirizzi non validi (senza schema) nelle pagine Hermes; audit dei sotto menu con passata finale su tutte le pagine.
