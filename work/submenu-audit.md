@@ -113,7 +113,7 @@ Legenda: V = visto in screenshot dopo l ultima modifica; C = verificato solo leg
 | Editor agente | V | V | - |
 | Attivita Hermes | V | V (app reale) | V (errore + riprova, QA) |
 | Competenze | V | V (app reale) | V (errore + riprova, QA) |
-| Nuova attivita Hermes | V | V | C |
+| Nuova attivita Hermes | V | V | V (salvataggio con server non raggiungibile: "Hermes non ha accettato: non riesco a raggiungere il server: controlla rete e indirizzo") |
 
 Non verificati: gli errori fuori da attivita e competenze (provocarli richiederebbe un server o una rete guasta), "memoria" con note, la lista app con molti dati dopo l'ultima modifica.
 
@@ -123,3 +123,6 @@ Sesto giro (0.5.27): errore del controllo aggiornamenti verificato (work/pass4/a
 
 Settimo giro (0.5.28): provando l accesso al fornitore Hermes ho visto un DIFETTO NUOVO che avevo introdotto in 0.5.20: nelle pagine con scroll diretto (fornitore, memoria, gestisci chat, editor) il contenuto che scorre verso l alto si disegnava SOPRA la barra del titolo (testi dietro il titolo), perche avevo tolto il taglio a tutte le pagine per far uscire il buddy dalla barra. Ora il buddy esce dalla barra solo nelle liste con buddy fisso (listPage) e le altre pagine tagliano di nuovo. Verificato con screenshot (work/pass4/clip.png).
 Ancora non verificato: salvataggio di una nuova attivita Hermes con errore (nel QA non ci sono profili Hermes), "prova" delle altre pagine e caricamento della lista app in errore.
+
+Ottavo giro (0.5.29): salvataggio di una nuova attivita Hermes con server non raggiungibile provocato nel QA senza toccare la rete (il dashboard QA punta a una porta chiusa): mostrava l errore tecnico "Failed to connect to /127.0.0.1:...". Ora tutte le azioni Hermes (salva, pausa, elimina, modello, comprimi...) usano la stessa classificazione degli errori. Verificato (work/pass4/job_save_err2.png).
+Restano senza prova solo: il caricamento della lista app in errore (e' locale, non ha rete: non applicabile) e il "prova" dei fornitori diversi da Hermes (il fornitore custom non ha un pulsante di prova: si salva e basta).

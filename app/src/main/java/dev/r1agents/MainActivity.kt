@@ -784,7 +784,7 @@ class MainActivity : Activity() {
                     else if (ex.name != name || ex.prompt != p.description) { ex.name = name; ex.prompt = p.description; db.save(ex) }
                 }
                 runOnUiThread { if (scope.alive) done() }
-            } catch (e: Exception) { runOnUiThread { if (scope.alive) error(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1)) } }
+            } catch (e: Exception) { runOnUiThread { if (scope.alive) error(errorText(e)) } }
         }
     }
 
@@ -1824,11 +1824,11 @@ class MainActivity : Activity() {
     private fun pickModel(agent: Agent, chatId: Long, say: (String) -> Unit) {
         snack(UiText.text(this@MainActivity, R.string.ui_ead8aeac15))
         Io.run {
-            val rows = try { dash.models(agent.profile) } catch (e: Exception) { runOnUiThread { snack(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1), long = true) }; return@run }
+            val rows = try { dash.models(agent.profile) } catch (e: Exception) { runOnUiThread { snack(errorText(e), long = true) }; return@run }
             runOnUiThread {
                 if (rows.isEmpty()) { snack(UiText.text(this@MainActivity, R.string.ui_473ec0d778), long = true); return@runOnUiThread }
                 fun apply(r: HermesDash.ModelRow, confirm: Boolean = false): Unit = Io.run {
-                    val res = try { dash.setModel(chatId, agent.profile, r, confirm) } catch (e: Exception) { UiText.text(this@MainActivity, R.string.ui_589110f583, UiText.message(this@MainActivity, e.message)) }
+                    val res = try { dash.setModel(chatId, agent.profile, r, confirm) } catch (e: Exception) { UiText.text(this@MainActivity, R.string.ui_589110f583, errorText(e)) }
                     runOnUiThread { if (res == "CONFERMA") sheet(UiText.text(this@MainActivity, R.string.ui_99f20c7f7e), listOf(UiText.text(this@MainActivity, R.string.ui_8e62ad1ad1, r.model) to { apply(r, true) })) else say(UiText.text(this@MainActivity, R.string.ui_e308e43542, res)) }
                 }
                 val provs = rows.groupBy { it.provider }.entries.sortedByDescending { e -> e.value.any { it.current } }
@@ -2040,12 +2040,12 @@ class MainActivity : Activity() {
             }
             val hs = db.hsid(chatId)
             if (hermesMode() && agent.profile.isNotEmpty()) {
-                items += UiText.text(this@MainActivity, R.string.ui_eef051cd40) to { askText(UiText.text(this@MainActivity, R.string.ui_00c9325b04), UiText.text(this@MainActivity, R.string.ui_a87537ff47)) { t -> Io.run { try { dash.rename(chatId, agent.profile, t); db.title(chatId, t.take(60)); runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_9ea5d517e7)) } } catch (e: Exception) { runOnUiThread { snack(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1), long = true) } } } } }
+                items += UiText.text(this@MainActivity, R.string.ui_eef051cd40) to { askText(UiText.text(this@MainActivity, R.string.ui_00c9325b04), UiText.text(this@MainActivity, R.string.ui_a87537ff47)) { t -> Io.run { try { dash.rename(chatId, agent.profile, t); db.title(chatId, t.take(60)); runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_9ea5d517e7)) } } catch (e: Exception) { runOnUiThread { snack(errorText(e), long = true) } } } } }
                 items += UiText.text(this@MainActivity, R.string.ui_6bec3945e2) to { pickModel(agent, chatId) { m -> note(m) } }
-                items += UiText.text(this@MainActivity, R.string.ui_03fdb016df) to { note(UiText.text(this@MainActivity, R.string.ui_9c76b629d1)); Io.run { val r = try { dash.compress(chatId, agent.profile) } catch (e: Exception) { UiText.text(this@MainActivity, R.string.ui_589110f583, UiText.message(this@MainActivity, e.message)) }; runOnUiThread { note(UiText.text(this@MainActivity, R.string.ui_12aa930947, r)) } } }
+                items += UiText.text(this@MainActivity, R.string.ui_03fdb016df) to { note(UiText.text(this@MainActivity, R.string.ui_9c76b629d1)); Io.run { val r = try { dash.compress(chatId, agent.profile) } catch (e: Exception) { UiText.text(this@MainActivity, R.string.ui_589110f583, errorText(e)) }; runOnUiThread { note(UiText.text(this@MainActivity, R.string.ui_12aa930947, r)) } } }
                 if (hs.isNotEmpty()) items += UiText.text(this@MainActivity, R.string.ui_09af77c5ae) to {
                     snack(UiText.text(this@MainActivity, R.string.ui_7f784011b7))
-                    Io.run { try { val nh = dash.branch(hs, agent.profile); val id = db.upsertChat(agent.id, nh, (db.chats(agent.id).firstOrNull { it.id == chatId }?.title ?: "chat").take(50) + UiText.text(this@MainActivity, R.string.ui_798b410cf8), System.currentTimeMillis(), 0); runOnUiThread { if (chatScope.alive) openChat(agent, id) } } catch (e: Exception) { runOnUiThread { if (chatScope.alive) snack(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1), long = true) } } }
+                    Io.run { try { val nh = dash.branch(hs, agent.profile); val id = db.upsertChat(agent.id, nh, (db.chats(agent.id).firstOrNull { it.id == chatId }?.title ?: "chat").take(50) + UiText.text(this@MainActivity, R.string.ui_798b410cf8), System.currentTimeMillis(), 0); runOnUiThread { if (chatScope.alive) openChat(agent, id) } } catch (e: Exception) { runOnUiThread { if (chatScope.alive) snack(errorText(e), long = true) } } }
                 }
                 if (hs.isNotEmpty() && !busy) items += UiText.text(this@MainActivity, R.string.ui_2e5a083bde) to { confirmTap("archive$chatId") {
                     chatFeedback("upload", UiText.text(this@MainActivity, R.string.ui_f3596da8e1))
@@ -2057,7 +2057,7 @@ class MainActivity : Activity() {
                         } catch (e: Exception) { runOnUiThread { if (chatScope.alive) chatFeedback("error", UiText.text(this@MainActivity, R.string.ui_0f2784f610)) } }
                     }
                 } }
-                items += UiText.text(this@MainActivity, R.string.ui_5f7b655465) to { Io.run { val subs = try { dash.subagents(chatId, agent.profile) } catch (e: Exception) { runOnUiThread { snack(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1), long = true) }; return@run }
+                items += UiText.text(this@MainActivity, R.string.ui_5f7b655465) to { Io.run { val subs = try { dash.subagents(chatId, agent.profile) } catch (e: Exception) { runOnUiThread { snack(errorText(e), long = true) }; return@run }
                     runOnUiThread {
                         if (subs.isEmpty()) { snack(UiText.text(this@MainActivity, R.string.ui_d2ba27adf3)); return@runOnUiThread }
                         sheet(UiText.text(this@MainActivity, R.string.ui_5f7b655465), subs.map { sa -> ("${sa.goal.take(44)} · ${sa.status}" ) to {
@@ -2813,7 +2813,7 @@ class MainActivity : Activity() {
                     val chat = db.newChat(-1)
                     try { turnEngine.turn(ag, chat, t) { d -> sb.append(d); runOnUiThread { if (translationScope.alive) { result.text = sb.toString(); cue(null, -18f + 36f * ((sb.length % 40) / 40f), 12f) } } } } finally { db.deleteChat(chat); localTurns.remove(turnEngine) }
                     runOnUiThread { if (translationScope.alive) { trResult = sb.toString().trim(); status.text = ""; cue("nod", force = true) } }
-                } catch (e: Exception) { runOnUiThread { if (!translationScope.alive) return@runOnUiThread; cue("surprised", force = true); status.setTextColor(Theme.BAD); status.text = UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1); if (sb.isEmpty()) result.visibility = View.GONE } }
+                } catch (e: Exception) { runOnUiThread { if (!translationScope.alive) return@runOnUiThread; cue("surprised", force = true); status.setTextColor(Theme.BAD); status.text = errorText(e); if (sb.isEmpty()) result.visibility = View.GONE } }
                 runOnUiThread { running = false }
             }
         }
@@ -3655,16 +3655,16 @@ class MainActivity : Activity() {
             lateinit var sw: SwitchView
             sw = SwitchView(this, j.enabled, Theme.colorOf("green")) { on ->
                 nameV.animate().alpha(if (on) 1f else 0.45f).setDuration(Motion.BASE).start()
-                Io.run { try { dash.cronAction(j, if (on) "resume" else "pause"); jobsCache = null; runOnUiThread { if (on) cue("wink") } } catch (e: Exception) { runOnUiThread { cue("surprised", force = true); sw.set(!on, false); nameV.alpha = if (!on) 1f else 0.45f; snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, UiText.message(this@MainActivity, e.message)), long = true) } } }
+                Io.run { try { dash.cronAction(j, if (on) "resume" else "pause"); jobsCache = null; runOnUiThread { if (on) cue("wink") } } catch (e: Exception) { runOnUiThread { cue("surprised", force = true); sw.set(!on, false); nameV.alpha = if (!on) 1f else 0.45f; snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, errorText(e)), long = true) } } }
             }
             card.addView(sw)
             card.setOnClickListener {
                 sheetOf(j.name, listOf(
                     SheetItem(UiText.text(this@MainActivity, R.string.ui_7bafdb870a), icon = "repeat", sub = if (j.lastStatus.isNotBlank()) UiText.text(this@MainActivity, R.string.ui_d304528aa4, j.lastStatus) else null) {
-                        Io.run { try { dash.cronAction(j, "trigger"); runOnUiThread { cue("bounce", force = true); snack(UiText.text(this@MainActivity, R.string.ui_cdf273e773)) } } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, UiText.message(this@MainActivity, e.message)), long = true) } } }
+                        Io.run { try { dash.cronAction(j, "trigger"); runOnUiThread { cue("bounce", force = true); snack(UiText.text(this@MainActivity, R.string.ui_cdf273e773)) } } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, errorText(e)), long = true) } } }
                     },
                     SheetItem(UiText.text(this@MainActivity, R.string.ui_4a28ceb2d8), icon = "close", danger = true) {
-                      sheet(UiText.text(this@MainActivity, R.string.ui_66bebee3af), listOf(UiText.text(this@MainActivity, R.string.ui_4a28ceb2d8) to { Io.run { try { dash.cronDelete(j); jobsCache = jobsCache?.filter { it.id != j.id }; runOnUiThread { stack.lastOrNull()?.onShow?.invoke() } } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, UiText.message(this@MainActivity, e.message)), long = true) } } } }))
+                      sheet(UiText.text(this@MainActivity, R.string.ui_66bebee3af), listOf(UiText.text(this@MainActivity, R.string.ui_4a28ceb2d8) to { Io.run { try { dash.cronDelete(j); jobsCache = jobsCache?.filter { it.id != j.id }; runOnUiThread { stack.lastOrNull()?.onShow?.invoke() } } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, errorText(e)), long = true) } } } }))
                     },
                 ), subtitle = j.prompt.replace('\n', ' ').take(90))
             }
@@ -3711,7 +3711,7 @@ class MainActivity : Activity() {
                 if (ag == null || p.isEmpty()) { status.setTextColor(Theme.BAD); status.text = UiText.text(this@MainActivity, R.string.ui_8037c3e45e); return@button }
                 status.setTextColor(Theme.MUTED); status.text = ""
                 Io.run { try { dash.cronCreate(ag.profile, name.text.toString().trim().ifEmpty { p.take(30) }, p, cronExpression(hour, minute, days), days == 0); jobsCache = null; runOnUiThread { pop() } }
-                    catch (e: Exception) { runOnUiThread { status.setTextColor(Theme.BAD); status.text = UiText.text(this@MainActivity, R.string.ui_25d155617f, UiText.message(this@MainActivity, e.message)) } } }
+                    catch (e: Exception) { runOnUiThread { status.setTextColor(Theme.BAD); status.text = UiText.text(this@MainActivity, R.string.ui_25d155617f, errorText(e)) } } }
             }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
             col.addView(status, LinearLayout.LayoutParams(-1, -2).apply { leftMargin = dpi(4f) })
         }
@@ -3744,7 +3744,7 @@ class MainActivity : Activity() {
                         lateinit var sw: SwitchView
                         sw = SwitchView(this, sk.enabled, Theme.colorOf("green")) { on ->
                             nameV.animate().alpha(if (on) 1f else 0.45f).setDuration(Motion.BASE).start()
-                            Io.run { try { dash.toggleSkill(agent.profile, sk.name, on); runOnUiThread { if (on) cue("wink") } } catch (e: Exception) { runOnUiThread { cue("surprised", force = true); sw.set(!on, false); nameV.alpha = if (!on) 1f else 0.45f; snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, UiText.message(this@MainActivity, e.message)), long = true) } } }
+                            Io.run { try { dash.toggleSkill(agent.profile, sk.name, on); runOnUiThread { if (on) cue("wink") } } catch (e: Exception) { runOnUiThread { cue("surprised", force = true); sw.set(!on, false); nameV.alpha = if (!on) 1f else 0.45f; snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, errorText(e)), long = true) } } }
                         }
                         card.addView(sw)
                         holder.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) }); cards += sk to card
@@ -4170,7 +4170,7 @@ class MainActivity : Activity() {
                         body.postDelayed({ if (!cancelled) pop() }, 1200)
                     }
                 } catch (e: Exception) {
-                    runOnUiThread { if (!cancelled) { think(false); avatar.react("surprised"); show(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_00ea95d6d1), true) } }
+                    runOnUiThread { if (!cancelled) { think(false); avatar.react("surprised"); show(errorText(e), true) } }
                 }
             }
         }
