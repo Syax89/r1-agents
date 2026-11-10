@@ -245,7 +245,7 @@ internal class VoiceQa(private val test: Instrumentation) {
     }
     private fun clockAndTimerChecks() {
         ui {
-            val screen = MainActivity::class.java.getDeclaredMethod("glance").apply { isAccessible = true }.invoke(activity)
+            val screen = Class.forName("dev.r1agents.GlanceScreenKt").getDeclaredMethod("glance", MainActivity::class.java).apply { isAccessible = true }.invoke(null, activity)
             val view = screen.javaClass.getDeclaredField("view").apply { isAccessible = true }.get(screen) as View
             @Suppress("UNCHECKED_CAST")
             val refresh = screen.javaClass.getDeclaredField("onResume").apply { isAccessible = true }.get(screen) as () -> Unit

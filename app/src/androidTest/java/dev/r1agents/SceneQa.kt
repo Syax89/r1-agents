@@ -213,7 +213,7 @@ internal class SceneQa(private val test: Instrumentation, private val edgesOnly:
             ui { activity.onBackPressed() }; await("ritorno dopo caricamento") { stack().size == 1 && settled() }
             step("caricamento sostituito durante il volo senza duplicati: OK")
             ui {
-                val glance = MainActivity::class.java.getDeclaredMethod("glance").apply { isAccessible = true }.invoke(activity)
+                val glance = Class.forName("dev.r1agents.GlanceScreenKt").getDeclaredMethod("glance", MainActivity::class.java).apply { isAccessible = true }.invoke(null, activity)
                 MainActivity::class.java.getDeclaredMethod("push", glance.javaClass, Boolean::class.javaPrimitiveType).apply { isAccessible = true }.invoke(activity, glance, true)
             }
             await("glance") { settled() }; assertCentre("glance")
