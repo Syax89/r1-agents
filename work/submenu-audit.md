@@ -238,3 +238,16 @@ Ottenute senza toccare le impostazioni del telefono: `--ez qa_portrait true` / `
 
 Criteri controllati in ogni foto: titolo alla stessa quota, indietro (arancione pieno = stato di fuoco da tasti), buddy a destra o grande nelle pagine hub, paragrafi intro/hint, chip unico a 48 dp, righe e card uniformi, pulsanti primari in accento, errori classificati.
 Gli altri stati sono stati visti nei giri precedenti dopo le modifiche che li riguardavano: sveglie/routine/memoria con dati (pass8, 0.5.30), attivita e competenze con dati reali nell app vera (pass8/real.png, 0.5.30), errori di traduttore, aggiornamenti, fornitore Hermes e salvataggio attivita (0.5.27-0.5.29). Da allora quelle pagine hanno cambiato solo i chip (verificati in pass11) e nulla nel layout delle righe.
+
+## Stati con dati alla 0.5.33 (work/final_data) - completa la checklist finale
+| Pagina | Dati visti alla 0.5.33 |
+|---|---|
+| Sveglie | 2 sveglie con orario grande e interruttore |
+| Routine | 2 routine con interruttore |
+| Memoria | 3 note con "togli" |
+| Strumenti | contatori con dati ("20:00 una volta", "12 salvate", "2 attive") |
+| Spazio agente | "memoria: 3 note" |
+| Attivita Hermes (app reale) | 4 attivita reali con ultimo esito, aperte dal carosello (debug_screen e ora ignorato nell app reale, come voluto) |
+| Competenze (app reale) | elenco reale con ricerca e interruttori, aperto dal carosello |
+| Gestisci chat | vuoto (nessuna chat nel QA ripulito) |
+Con questo ogni sotto menu e verificato alla 0.5.33 in verticale e orizzontale e, dove la pagina ha dati, anche con dati sulla stessa versione.
