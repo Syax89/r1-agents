@@ -134,7 +134,8 @@ internal class FunctionalQa(private val test: Instrumentation) {
             }
             checkCase("allegati: copie indipendenti anche con lo stesso nome") {
                 val file = File(ctx.cacheDir, "uguale.txt").apply { writeText("contenuto QA") }
-                val copies = (1..64).map { Attach.fromUri(ctx, android.net.Uri.fromFile(file)) }
+                val copies = (1..64).map { Attach.copyFromUri(ctx, android.net.Uri.fromFile(file)) }
+                check(runCatching { Attach.fromUri(ctx, android.net.Uri.fromFile(file)) }.isFailure) { "un file:// condiviso deve essere rifiutato" }
                 try {
                     check(copies.map { it.file.canonicalPath }.distinct().size == copies.size) { "copie con nome uguale sovrascritte" }
                     check(copies.all { it.kind == Kind.TEXT && Attach.text(it) == "contenuto QA" })
@@ -158,7 +159,7 @@ internal class FunctionalQa(private val test: Instrumentation) {
                 val before = File(ctx.filesDir, "attach").listFiles()?.map { it.name }?.toSet().orEmpty()
                 try {
                     var rejected = false
-                    try { Attach.fromUri(ctx, android.net.Uri.fromFile(large)) } catch (_: IllegalStateException) { rejected = true }
+                    try { Attach.copyFromUri(ctx, android.net.Uri.fromFile(large)) } catch (_: IllegalStateException) { rejected = true }
                     check(rejected && File(ctx.filesDir, "attach").listFiles()?.map { it.name }?.toSet().orEmpty() == before)
                 } finally { large.delete() }
             }

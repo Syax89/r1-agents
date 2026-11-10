@@ -198,3 +198,9 @@ Controllato in ogni foto: titolo alla stessa quota, pulsante indietro, buddy a d
 | 21 | Competenze | OK (errore classificato + riprova) |
 
 Gli stati con dati veri di attivita e competenze Hermes sono nell app reale (work/pass8/real.png, 0.5.30). Nota di metodo: la pagina fornitore richiede `--ez qa_visible true` nell intent INIZIALE (con force-stop) per essere fotografabile.
+
+## Passata in VERTICALE (work/pass10, 480x640) sul codice della 0.5.31 (fase 1 sicurezza inclusa)
+Ottenuta senza ruotare il telefono: `--ez qa_portrait true` blocca solo l activity del pacchetto QA in verticale.
+Tutte le 21 pagine riaperte una per una: impostazioni, fornitore, aspetto, sicurezza, azioni agente, informazioni, strumenti, traduttore, note, sveglie, nuova sveglia, timer, routine, nuova routine, app, memoria, gestisci chat, spazio agente, editor agente, attivita Hermes, competenze.
+Esito: OK per tutte. Titolo alla stessa quota (y ~82), indietro, buddy a destra o grande nelle pagine hub (impostazioni, informazioni, app), paragrafi intro/hint, righe e card uniformi, pulsanti primari in accento (salva, avvia, riprova, traduci, aggiungi), "aggiungi" della memoria nel colore dell agente per regola di dominio, errori Hermes classificati con "riprova".
+Con questa passata ogni sotto menu e verificato in orizzontale (pass9) e in verticale (pass10) sull ultima versione.

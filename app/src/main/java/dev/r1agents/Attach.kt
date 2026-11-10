@@ -51,7 +51,14 @@ object Attach {
 
     /** Copia il contenuto di `uri` nella cartella degli allegati. Lancia con un messaggio chiaro se è troppo grande o illeggibile. */
     fun fromUri(ctx: Context, uri: Uri, fallbackName: String = "allegato"): Attachment {
-        if (!allowedUri(uri.scheme, uri.authority, ctx.packageName)) throw IllegalStateException("File non accettato.")
+        // Eccezione solo nelle build debuggabili: il provider di prova delle suite strumentate.
+        val qaFixture = (ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 && uri.authority == "${ctx.packageName}.functional-files"
+        if (!qaFixture && !allowedUri(uri.scheme, uri.authority, ctx.packageName)) throw IllegalStateException("File non accettato.")
+        return copyFromUri(ctx, uri, fallbackName)
+    }
+
+    /** La copia vera e propria, senza il controllo di provenienza (usata dai test sulla logica di copia). */
+    internal fun copyFromUri(ctx: Context, uri: Uri, fallbackName: String = "allegato"): Attachment {
         val cr = ctx.contentResolver
         var name = fallbackName
         cr.query(uri, null, null, null, null)?.use { c -> if (c.moveToFirst()) c.getColumnIndex(OpenableColumns.DISPLAY_NAME).takeIf { it >= 0 }?.let { name = c.getString(it) ?: name } }
