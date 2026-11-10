@@ -93,7 +93,7 @@ Legenda: V = visto in screenshot dopo l ultima modifica; C = verificato solo leg
 | Pagina | Vuoto | Con dati | Errore / caricamento |
 |---|---|---|---|
 | Impostazioni | V | V | C |
-| Fornitore (custom / Hermes) | V | V | C (esito del "prova" non provocato) |
+| Fornitore (custom / Hermes) | V | V | V (accesso a un dashboard non raggiungibile: errore rosso in parole semplici + istruzioni; dash_err.png) |
 | Aspetto | V | V | - |
 | Sicurezza | V | V | - |
 | Azioni agente / registro | V (nessuna azione) | V (5 voci) | - |
@@ -120,3 +120,6 @@ Non verificati: gli errori fuori da attivita e competenze (provocarli richiedere
 Aggiornamento: "memoria con note" verificata (screenshot work/pass4/mem3.png, telefono in orizzontale 640x480). Restano non verificati solo gli errori fuori da attivita/competenze e l errore del controllo aggiornamenti: servono una rete o un server guasti, quindi un intervento sulle impostazioni del telefono che non faccio senza il tuo ok.
 
 Sesto giro (0.5.27): errore del controllo aggiornamenti verificato (work/pass4/about_err3.png): il pulsante era blu, ora usa l accento; il messaggio era tecnico ("Unable to resolve host ..."), ora usa la stessa classificazione degli altri errori. Lista app con molti dati riverificata (work/pass4/apps3.png). Restano non verificati gli errori di altre pagine che richiedono una rete o un server guasti.
+
+Settimo giro (0.5.28): provando l accesso al fornitore Hermes ho visto un DIFETTO NUOVO che avevo introdotto in 0.5.20: nelle pagine con scroll diretto (fornitore, memoria, gestisci chat, editor) il contenuto che scorre verso l alto si disegnava SOPRA la barra del titolo (testi dietro il titolo), perche avevo tolto il taglio a tutte le pagine per far uscire il buddy dalla barra. Ora il buddy esce dalla barra solo nelle liste con buddy fisso (listPage) e le altre pagine tagliano di nuovo. Verificato con screenshot (work/pass4/clip.png).
+Ancora non verificato: salvataggio di una nuova attivita Hermes con errore (nel QA non ci sono profili Hermes), "prova" delle altre pagine e caricamento della lista app in errore.

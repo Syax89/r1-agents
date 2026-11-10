@@ -75,3 +75,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.26 (code 33): corretto un difetto: le pagine Hermes (attivita e competenze) restavano su "leggo da Hermes..." se il server rispondeva subito con un errore (risultato scartato prima dell ingresso della pagina); ora mostrano l errore e "riprova", anche nelle competenze.
 
 0.5.27 (code 34): controlla aggiornamenti: pulsante in accento (era blu) ed errore in parole semplici.
+
+0.5.28 (code 35): corretto un difetto introdotto in 0.5.20: nelle pagine con scroll diretto (fornitore, memoria, gestisci chat, editor) il contenuto si disegnava sopra la barra del titolo; il buddy esce dalla barra solo nelle liste con buddy fisso.

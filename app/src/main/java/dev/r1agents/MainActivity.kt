@@ -3166,9 +3166,10 @@ class MainActivity : Activity() {
     private fun toggle(on: Boolean, onClick: () -> Unit) = button(if (on) "on" else "off", if (on) Theme.colorOf("green") else Theme.MUTED, small = true, onClick = onClick)
 
     /** Intestazione comune a ogni schermata: tasto indietro (l'R1 non ne ha uno) e titolo. */
-    private fun framed(title: String, body: View, trailing: View? = null, buddyHeader: Boolean = true): View = LinearLayout(this).apply {
+    private fun framed(title: String, body: View, trailing: View? = null, buddyHeader: Boolean = true, buddyOverflow: Boolean = false): View = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        clipChildren = false; clipToPadding = false   // il buddy della pagina non viene tagliato dal bordo del corpo: sta SOPRA la barra del titolo
+        // Solo le liste con il buddy fisso (listPage): il buddy sta SOPRA la barra del titolo. Le altre pagine tagliano il contenuto che scorre sotto la barra.
+        clipChildren = !buddyOverflow; clipToPadding = !buddyOverflow
         // Stessa altezza con o senza il buddy piccolo: il titolo sta alla stessa quota in tutti i sotto menu.
         val head = LinearLayout(this@MainActivity).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; minimumHeight = dpi(70f); setPadding(0, 0, 0, dpi(6f)) }
         head.addView(iconButton("back", Theme.accent, filled = false) { pop() })
@@ -3204,7 +3205,7 @@ class MainActivity : Activity() {
                 repeat(3) { up = up?.parent as? View; up?.findViewWithTag<CharacterView>("scene-buddy")?.let { cv -> BuddyCuriosity.start(cv, 8f) { visible && isCurrentSurface(body) && BuddyEntrancesIdle.ok() }; return@post } }
             }
         }
-        return Screen(page(framed(title, body)), onShow = ::render, onLeave = onLeave, buddyContext = context, onSuspend = onSuspend)
+        return Screen(page(framed(title, body, buddyOverflow = true)), onShow = ::render, onLeave = onLeave, buddyContext = context, onSuspend = onSuspend)
     }
 
     /** Due schede per riga (l'ultima, se dispari, a tutta larghezza). */
