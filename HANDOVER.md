@@ -1,3 +1,15 @@
+# R1 Agents — stato attuale (10 novembre 2026)
+
+**Versione 0.5.33 (code 40) pubblicata e installata sul Rabbit** (release GitHub v0.5.33, `update.json` su `main`). R1 Agents resta la schermata iniziale.
+- Firma: la release e' ancora firmata con la chiave debug di questo Mac; il passaggio al keystore dedicato (`../signing-private`, mai pubblicato) e' la fase 4 della review e richiede una reinstallazione pulita, solo con ok esplicito dell'utente.
+- Qualita': 130 test JVM, lint, 6 suite strumentate sul Rabbit (generale, development, functional, scenes, scene_edges, voice). `device-check.sh` trova Java da solo; `check.sh` compila solo la release: il QA va compilato con `assembleQa assembleQaAndroidTest` prima delle suite. `development` dura piu' di 3 minuti (usare timeout >= 330 s).
+- Prove visive solo nel pacchetto QA: `--ez qa_visible true` (pagine con campi segreti), `--ez qa_portrait true` / `--ez qa_landscape true` (orientamento della sola activity). `debug_screen`, `debug_req`, `debug_md` funzionano solo nelle build debuggabili; `tools/smoke.sh` e `tools/perf.py` usano `dev.r1agents.qa`.
+- Sotto menu: audit e checklist finale in `work/submenu-audit.md` (21 pagine, verticale e orizzontale, con dati, alla 0.5.33).
+- Piano di review in corso (fasi): 1 sicurezza (fatta, 0.5.31), design unificato (chip unico, interruttore e pillola accessibili: 0.5.32-0.5.33); da fare: 2 Hermes e motore, 3 interfaccia e leak, 4 processo e firma, 5 snellire MainActivity, 6 accessibilita' restante, 7 integrazioni. Dettagli in ROADMAP.md.
+
+---
+## Storico (note precedenti)
+
 # R1 Agents — ripartenza essenziale (aggiornato 8 novembre 2026, notte)
 
 **Versione 0.5.0 (code 7) installata sul Rabbit** (`adb install -r`, dati conservati). Novità: **launcher agente-centrico** (obiettivo dell'utente; sostituisce il vincolo precedente «mai launcher», ora volontario e reversibile).

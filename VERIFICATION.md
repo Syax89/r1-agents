@@ -1,3 +1,14 @@
+# Prove — stato alla 0.5.33 (10 novembre 2026)
+
+- 130 test JVM e lint: PASS (`tools/check.sh`).
+- Sul Rabbit, QA compilato dal sorgente corrente: generale, development, functional, scenes, scene_edges, voice: PASS (development fallisce a volte al primo giro sul controllo "agente che lavora", poi passa).
+- Sicurezza 0.5.31 provata dal vivo: l'app reale ignora `debug_screen` mandato da adb; il QA lo esegue; un `file://` condiviso viene rifiutato (controllo in functional).
+- Sotto menu: 21 pagine in verticale e orizzontale e con dati alla 0.5.33, attivita' e competenze reali dall'app vera (`work/submenu-audit.md`).
+- Non provati: rotella fisica, modello reale con chiave API, ramo ed eliminazione su Hermes reale.
+
+---
+## Storico
+
 # Prove e limiti — 8 novembre 2026
 
 La verifica completa è aperta. Sorgenti/candidato successivi all’APK installato: vedere HANDOVER.md. Implementato, automatico e provato dal vivo sono stati distinti.
