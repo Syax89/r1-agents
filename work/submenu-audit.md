@@ -107,7 +107,7 @@ Legenda: V = visto in screenshot dopo l ultima modifica; C = verificato solo leg
 | Nuova routine | V | V | - |
 | App | V | V | C (caricamento lista) |
 | Controlli | V | V | - |
-| Memoria | V | - | - |
+| Memoria | V | V (3 note, orizzontale: riga con "togli" come in note) | - |
 | Gestisci chat | V | V (1) | - |
 | Spazio agente | V | V | - |
 | Editor agente | V | V | - |
@@ -116,3 +116,5 @@ Legenda: V = visto in screenshot dopo l ultima modifica; C = verificato solo leg
 | Nuova attivita Hermes | V | V | C |
 
 Non verificati: gli errori fuori da attivita e competenze (provocarli richiederebbe un server o una rete guasta), "memoria" con note, la lista app con molti dati dopo l'ultima modifica.
+
+Aggiornamento: "memoria con note" verificata (screenshot work/pass4/mem3.png, telefono in orizzontale 640x480). Restano non verificati solo gli errori fuori da attivita/competenze e l errore del controllo aggiornamenti: servono una rete o un server guasti, quindi un intervento sulle impostazioni del telefono che non faccio senza il tuo ok.
