@@ -208,3 +208,33 @@ Con questa passata ogni sotto menu e verificato in orizzontale (pass9) e in vert
 ## Unificazione dei componenti (0.5.32)
 - Chip: prima 7 copie con padding diversi (8/10/13 dp) e altezze diverse; ora un solo `chipView()` + `chipPaint()` (48 dp, raggio 14, accento) in traduttore, aspetto, opacita foto, giorni (sveglie/routine/attivita), agente (routine/attivita). Verificato in verticale: work/pass11/chips.png.
 - Interruttori: tolto `toggle()` (non usato); restano due stili con ruoli diversi: `SwitchView` per gli elementi di lista (sveglie, routine, attivita, competenze) e la spunta di `row(check)` per le impostazioni. `SwitchView` ora e un interruttore anche per TalkBack/rotella (ruolo, stato acceso/spento).
+
+## CHECKLIST FINALE alla 0.5.33 (versione pubblicata e installata) - verticale (work/final_v) e orizzontale (work/final_h)
+Ottenute senza toccare le impostazioni del telefono: `--ez qa_portrait true` / `--ez qa_landscape true` bloccano solo l activity del pacchetto QA.
+
+| # | Pagina | Verticale 0.5.33 | Orizzontale 0.5.33 | Stato visto |
+|---|---|---|---|---|
+| 1 | Impostazioni | OK | OK | dati (fornitore configurato) |
+| 2 | Fornitore | OK | OK | dati (custom) |
+| 3 | Aspetto | OK | OK | dati (scelte attive) |
+| 4 | Sicurezza | OK | OK | dati |
+| 5 | Azioni agente | OK | OK | dati (1 voce) |
+| 6 | Informazioni | OK | OK | dati (0.5.33) |
+| 7 | Strumenti | OK | OK | dati (contatori) |
+| 8 | Traduttore | OK | OK | vuoto |
+| 9 | Note | OK | OK | dati (12 note) |
+| 10 | Sveglie | OK | OK | vuoto |
+| 11 | Nuova sveglia | OK | OK | editor |
+| 12 | Timer | OK | OK | editor |
+| 13 | Routine | OK | OK | vuoto |
+| 14 | Nuova routine | OK | OK | editor |
+| 15 | App | OK | OK | dati (decine di app) |
+| 16 | Memoria | OK | OK | vuoto |
+| 17 | Gestisci chat | OK | OK | vuoto |
+| 18 | Spazio agente | OK | OK | dati |
+| 19 | Editor agente | OK | OK | editor |
+| 20 | Attivita Hermes | OK | OK | errore + riprova (QA senza server) |
+| 21 | Competenze | OK | OK | errore + riprova (QA senza server) |
+
+Criteri controllati in ogni foto: titolo alla stessa quota, indietro (arancione pieno = stato di fuoco da tasti), buddy a destra o grande nelle pagine hub, paragrafi intro/hint, chip unico a 48 dp, righe e card uniformi, pulsanti primari in accento, errori classificati.
+Gli altri stati sono stati visti nei giri precedenti dopo le modifiche che li riguardavano: sveglie/routine/memoria con dati (pass8, 0.5.30), attivita e competenze con dati reali nell app vera (pass8/real.png, 0.5.30), errori di traduttore, aggiornamenti, fornitore Hermes e salvataggio attivita (0.5.27-0.5.29). Da allora quelle pagine hanno cambiato solo i chip (verificati in pass11) e nulla nel layout delle righe.

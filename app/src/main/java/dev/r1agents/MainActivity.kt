@@ -321,6 +321,7 @@ class MainActivity : Activity() {
         i.getStringExtra("nous_client_id")?.let { nous.clientId = it }
         // Solo prove visive su build debuggabili: `--ez qa_portrait true` blocca la SOLA activity in verticale (non cambia le impostazioni del telefono).
         if (i.getBooleanExtra("qa_portrait", false)) requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        if (i.getBooleanExtra("qa_landscape", false)) requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         // Solo prove visive su build debuggabili (mai sul pacchetto dell'utente): `--es look_mode light|dark` cambia il tema di questa installazione.
         i.getStringExtra("look_mode")?.takeIf { it == "light" || it == "dark" && prefs.getString("look_mode", "dark") != it || it == "light" }?.let { mode ->
             if (prefs.getString("look_mode", "dark") != mode) { prefs.edit().putString("look_mode", mode).apply(); i.removeExtra("look_mode"); window.decorView.post { recreate() } }
