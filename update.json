@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 44,
-  "versionName": "0.5.37",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.37/r1agents-release-signed.apk",
-  "sha256": "8b9e68e6fef2660c727500b82b6c4d7550afbe9ca1f14d28210572d9a9c4edf5",
-  "sizeBytes": 1370439,
-  "notes": "0.5.37 (code 44): bozza e allegati non inviati restano quando Hermes aggiorna una chat appena aperta; spostare un agente, eliminare una chat e salvare un messaggio avvengono tutti insieme o per niente; un solo client di rete condiviso per voce, aggiornamenti, Hermes e pagine web; il prompt iniziale di kiwi e il messaggio sui file rifiutati seguono la lingua dell app; home, chat e standby in file separati."
+  "versionCode": 45,
+  "versionName": "0.5.38",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.38/r1agents-release-signed.apk",
+  "sha256": "87670c1c4e8317a838f3a631385563a142362523deb46d75185039412905976d",
+  "sizeBytes": 1374535,
+  "notes": "0.5.38 (code 45): menu ridisegnati: le voci vicine stanno in un unica scheda con divisori sottili (sicurezza, informazioni, app per sezione), una freccia indica cosa si apre, le icone stanno su un fondo tenue nel colore dell app, i titoli di sezione sono più leggibili e la voce a fuoco con la rotella diventa una pillola dentro la scheda; la rotella non si ferma più sul buddy in alto."
 }

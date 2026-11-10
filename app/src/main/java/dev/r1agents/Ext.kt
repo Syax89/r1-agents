@@ -195,9 +195,21 @@ object Motion {
 }
 
 /** Una riga in forma di scheda (come le impostazioni): fondo scuro arrotondato, icona opzionale su un tondo colorato, e a fuoco si riempie a gelatina. `check` mette un segno a destra. */
+/**
+ * Una riga che sa stare in un gruppo: nelle pagine a lista le righe vicine diventano un'unica scheda con divisori sottili
+ * (`groupRows`), la freccia indica che si apre qualcosa e il fuoco è una pillola dentro la scheda.
+ */
+class GroupRow(ctx: Context) : LinearLayout(ctx) {
+    var grouped = false
+        set(v) { field = v; repaint() }
+    var repaint: () -> Unit = {}
+    /** Dove parte il divisore sotto la riga (inizio del testo, dopo l'icona). */
+    var dividerInset = 70f
+}
+
 fun Context.row(label: String, accent: Int, bold: Boolean = false, sub: String? = null, raw: Boolean = false, check: Boolean = false, icon: String? = null, onClick: () -> Unit): LinearLayout {
     val gap = dpi(8f); val r = dp(20f)
-    val l = LinearLayout(this).apply {
+    val l = GroupRow(this).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; isFocusable = true; isClickable = true; defaultFocusHighlightEnabled = false
         setPadding(dpi(14f), dpi(11f), dpi(14f), dpi(11f) + gap); minimumHeight = dpi(64f) + gap
         setOnClickListener { onClick() }
@@ -210,13 +222,26 @@ fun Context.row(label: String, accent: Int, bold: Boolean = false, sub: String? 
     val subView = sub?.let { s -> text(14f, 500, Theme.MUTED).keepCase().apply { text = s; maxLines = 1; ellipsize = TextUtils.TruncateAt.END; setPadding(0, dpi(2f), 0, 0) }.also { texts.addView(it) } }
     l.addView(texts, LinearLayout.LayoutParams(0, -2, 1f))
     if (check) l.addView(IconView(this, "check", accent, Theme.ON_ACCENT), LinearLayout.LayoutParams(dpi(24f), dpi(24f)).apply { marginStart = dpi(8f) })
+    // Freccia "si apre": solo nelle righe raggruppate delle pagine (non nelle scelte, non nelle azioni distruttive).
+    val navigates = !check && accent != Theme.BAD && accent != Theme.MUTED
+    val chevron = if (navigates) IconView(this, "chevron", Theme.SUBTLE, Theme.ON_ACCENT).also { it.visibility = View.GONE; l.addView(it, LinearLayout.LayoutParams(dpi(20f), dpi(20f)).apply { marginStart = dpi(8f) }) } else null
+    val glyph = if (accent == Theme.BAD) Theme.BAD else Theme.accent
     fun paint(on: Boolean) {
-        l.background = android.graphics.drawable.InsetDrawable(if (on) Jelly(accent, r) else roundRect(Theme.CARD, r), 0, 0, 0, gap)
-        l.setPadding(dpi(14f), dpi(11f), dpi(14f), dpi(11f) + gap)   // setBackground sostituisce il padding con quello del drawable (qui solo lo spazio sotto)
+        if (l.grouped) {
+            // Dentro la scheda del gruppo: fondo trasparente, a fuoco una pillola a gelatina con un piccolo margine.
+            l.background = if (on) android.graphics.drawable.InsetDrawable(Jelly(accent, dp(16f)), dpi(4f)) else null
+            l.setPadding(dpi(14f), dpi(11f), dpi(14f), dpi(11f)); l.minimumHeight = dpi(64f)
+        } else {
+            l.background = android.graphics.drawable.InsetDrawable(if (on) Jelly(accent, r) else roundRect(Theme.CARD, r), 0, 0, 0, gap)
+            l.setPadding(dpi(14f), dpi(11f), dpi(14f), dpi(11f) + gap)   // setBackground sostituisce il padding con quello del drawable (qui solo lo spazio sotto)
+            l.minimumHeight = dpi(64f) + gap
+        }
+        chevron?.visibility = if (l.grouped) View.VISIBLE else View.GONE
         title.setTextColor(if (on) Theme.ON_ACCENT else Theme.FG)
         subView?.setTextColor(if (on) Theme.withAlpha(Theme.ON_ACCENT, 0.7f) else Theme.MUTED)
-        chip?.background = roundRect(if (on) Theme.withAlpha(Theme.ON_ACCENT, 0.16f) else Theme.FOCUS, dp(15f))
+        chip?.background = roundRect(if (on) Theme.withAlpha(Theme.ON_ACCENT, 0.16f) else Theme.withAlpha(glyph, 0.14f), dp(15f))
     }
+    l.repaint = { paint(l.isFocused) }
     paint(false)
     l.setOnFocusChangeListener { _, f -> paint(f) }
     l.setOnTouchListener { v, e -> Motion.touch(v, e); false }   // al tocco solo un movimento lieve: niente riempimenti colorati
@@ -508,12 +533,12 @@ private fun cardPaint(l: android.view.View, accent: Int, radius: Float, chip: an
     l.background = if (on) Jelly(accent, radius) else roundRect(Theme.CARD, radius)
     title.setTextColor(if (on) Theme.ON_ACCENT else Theme.FG)
     sub?.setTextColor(if (on) Theme.withAlpha(Theme.ON_ACCENT, 0.72f) else Theme.MUTED)
-    chip?.background = roundRect(if (on) Theme.withAlpha(Theme.ON_ACCENT, 0.16f) else Theme.FOCUS, l.context.dp(16f))
+    chip?.background = roundRect(if (on) Theme.withAlpha(Theme.ON_ACCENT, 0.16f) else Theme.withAlpha(if (accent == Theme.BAD) Theme.BAD else Theme.accent, 0.14f), l.context.dp(16f))
 }
 
-/** Tondo delle icone dei menu: stesso stile ovunque (fondo neutro, icona nell'accento dell'app; rosso solo per le azioni distruttive), niente colori pastello. */
+/** Tondo delle icone dei menu: stesso stile ovunque (fondo tenue e icona nell'accento dell'app; rosso solo per le azioni distruttive), niente colori pastello. */
 private fun Context.chipOf(icon: String, accent: Int, size: Float): android.widget.FrameLayout = android.widget.FrameLayout(this).apply {
-    background = roundRect(Theme.FOCUS, dp(16f))
+    background = roundRect(Theme.withAlpha(if (accent == Theme.BAD) Theme.BAD else Theme.accent, 0.14f), dp(16f)) // fondo tenue nell'accento, non grigio
     addView(IconView(this@chipOf, icon, if (accent == Theme.BAD) Theme.BAD else Theme.accent, Theme.ON_ACCENT), android.widget.FrameLayout.LayoutParams(dpi(size * 0.5f), dpi(size * 0.5f), Gravity.CENTER))
 }
 
@@ -533,7 +558,7 @@ private fun android.view.View.cardInput(accent: Int, radius: Float, chip: androi
 /** Una riga grande per le impostazioni: icona su un tondo colorato, titolo, riga di aiuto e freccia; a fuoco si riempie a gelatina. */
 fun Context.bigRow(icon: String, title: String, sub: String?, accent: Int, onClick: () -> Unit): LinearLayout {
     val r = dp(22f)
-    val l = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; defaultFocusHighlightEnabled = false
+    val l = GroupRow(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; defaultFocusHighlightEnabled = false; dividerInset = 80f
         setPadding(dpi(14f), dpi(12f), dpi(14f), dpi(12f)); minimumHeight = dpi(78f); background = roundRect(Theme.CARD, r) }
     val chip = chipOf(icon, accent, 52f)
     val t = text(22f, 700).apply { text = title; maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
@@ -543,6 +568,13 @@ fun Context.bigRow(icon: String, title: String, sub: String?, accent: Int, onCli
     l.addView(texts, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dpi(14f); marginEnd = dpi(8f) })
     l.addView(IconView(this, "chevron", Theme.MUTED, Theme.ON_ACCENT), LinearLayout.LayoutParams(dpi(22f), dpi(22f)))
     l.cardInput(accent, r, chip, t, s, onClick)
+    // In un gruppo: fondo della scheda comune, a fuoco la pillola a gelatina con un piccolo margine.
+    fun paint(on: Boolean) {
+        cardPaint(l, accent, r, chip, t, s, on)
+        if (l.grouped) l.background = if (on) android.graphics.drawable.InsetDrawable(Jelly(accent, dp(18f)), dpi(4f)) else null
+    }
+    l.setOnFocusChangeListener { _, f -> paint(f) }
+    l.repaint = { paint(l.isFocused) }
     return l
 }
 
@@ -681,4 +713,29 @@ class SwitchView(ctx: Context, on: Boolean, private val accent: Int, private val
         paint.color = if (checked) Theme.ON_ACCENT else Theme.FG
         c.drawCircle(cx - travel + 2 * travel * pos, cy, r + context.dp(1.5f) * (1f - Math.abs(pos - 0.5f) * 2f).coerceIn(0f, 1f), paint)
     }
+}
+
+/**
+ * Unisce le righe consecutive (`GroupRow`) di una colonna in un'unica scheda arrotondata con divisori sottili, come le
+ * impostazioni di un telefono: meno riquadri sparsi, gruppi leggibili a colpo d'occhio. Una riga sola resta una scheda a sé.
+ */
+fun Context.groupRows(col: LinearLayout) {
+    val kids = (0 until col.childCount).map { col.getChildAt(it) }
+    var run = ArrayList<GroupRow>()
+    fun flush() {
+        if (run.isEmpty()) return
+        val first = col.indexOfChild(run.first())
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundRect(Theme.CARD, dp(20f)); clipToOutline = true
+            showDividers = LinearLayout.SHOW_DIVIDER_MIDDLE
+            // Il divisore parte dopo l'icona, come nelle liste di sistema.
+            dividerDrawable = android.graphics.drawable.InsetDrawable(android.graphics.drawable.GradientDrawable().apply { setColor(Theme.withAlpha(Theme.FG, 0.08f)); setSize(1, maxOf(1, dpi(0.6f))) }, dpi(run.first().dividerInset), 0, dpi(14f), 0)
+        }
+        run.forEach { r -> col.removeView(r); r.grouped = true; card.addView(r, LinearLayout.LayoutParams(-1, -2)) }
+        col.addView(card, first, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dpi(8f) })
+        run = ArrayList()
+    }
+    for (v in kids) { if (v is GroupRow && v.visibility == View.VISIBLE) run.add(v) else flush() }
+    flush()
 }

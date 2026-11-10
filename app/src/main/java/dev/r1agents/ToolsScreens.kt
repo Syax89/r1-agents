@@ -165,9 +165,12 @@ internal fun MainActivity.appsScreen(): Screen {
         col.addView(holder)
         fun appRow(a: AppEntry): View = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
-            background = roundRect(Theme.CARD, dp(20f)); setPadding(dpi(12f), dpi(8f), dpi(12f), dpi(8f)); minimumHeight = dpi(60f)
+            setPadding(dpi(16f), dpi(8f), dpi(14f), dpi(8f)); minimumHeight = dpi(60f)
             addView(android.widget.ImageView(this@appsScreen).apply { setImageDrawable(a.icon); contentDescription = a.label }, LinearLayout.LayoutParams(dpi(40f), dpi(40f)))
-            addView(text(20f, 600).keepCase().apply { text = a.label; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dpi(14f) })
+            val name = text(20f, 600).keepCase().apply { text = a.label; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
+            addView(name, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dpi(14f) })
+            // Dentro la scheda della sezione: a fuoco (rotella) la stessa pillola a gelatina delle altre liste.
+            setOnFocusChangeListener { _, f -> background = if (f) android.graphics.drawable.InsetDrawable(Jelly(Theme.accent, dp(16f)), dpi(4f)) else null; name.setTextColor(if (f) Theme.ON_ACCENT else Theme.FG) }
             setOnClickListener { launchApp(a) }
             setOnTouchListener { v, e -> Motion.touch(v, e); false }
             setOnLongClickListener {
@@ -189,10 +192,20 @@ internal fun MainActivity.appsScreen(): Screen {
             val q = input.text.toString().trim().lowercase()
             val favs = favoriteApps()
             val shown = if (q.isEmpty()) apps else apps.filter { it.label.lowercase().contains(q) }
-            fun add(a: AppEntry) = holder.addView(appRow(a), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+            // Ogni sezione (recenti, preferite, tutte) è un'unica scheda con divisori sottili, come le altre liste.
+            var card: LinearLayout? = null
+            fun add(a: AppEntry) {
+                val c = card ?: LinearLayout(this@appsScreen).apply {
+                    orientation = LinearLayout.VERTICAL; background = roundRect(Theme.CARD, dp(20f)); clipToOutline = true
+                    showDividers = LinearLayout.SHOW_DIVIDER_MIDDLE
+                    dividerDrawable = android.graphics.drawable.InsetDrawable(android.graphics.drawable.GradientDrawable().apply { setColor(Theme.withAlpha(Theme.FG, 0.08f)); setSize(1, maxOf(1, dpi(0.6f))) }, dpi(70f), 0, dpi(14f), 0)
+                }.also { card = it; holder.addView(it, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) }) }
+                c.addView(appRow(a), LinearLayout.LayoutParams(-1, -2))
+            }
+            fun section(t: String) { card = null; holder.addView(label(t)) }
             val recents = if (q.isEmpty()) recentApps().filter { it !in favs }.mapNotNull { p -> apps.firstOrNull { it.pkg == p } } else emptyList()
-            if (recents.isNotEmpty()) { holder.addView(label(UiText.text(this@appsScreen, R.string.ui_950486e052))); recents.forEach { add(it) } }
-            if (q.isEmpty() && favs.isNotEmpty()) { holder.addView(label(UiText.text(this@appsScreen, R.string.ui_b207efeb7b))); apps.filter { it.pkg in favs }.forEach { add(it) }; holder.addView(label(UiText.text(this@appsScreen, R.string.ui_9fa3124899))) }
+            if (recents.isNotEmpty()) { section(UiText.text(this@appsScreen, R.string.ui_950486e052)); recents.forEach { add(it) } }
+            if (q.isEmpty() && favs.isNotEmpty()) { section(UiText.text(this@appsScreen, R.string.ui_b207efeb7b)); apps.filter { it.pkg in favs }.forEach { add(it) }; section(UiText.text(this@appsScreen, R.string.ui_9fa3124899)) }
             // Le righe si creano a gruppi (la prima schermata subito, il resto un fotogramma dopo l'altro): con decine di app il costo
             // di creare tutte le view insieme faceva saltare i fotogrammi all'apertura e nelle prime scorse.
             val token = ++fillToken

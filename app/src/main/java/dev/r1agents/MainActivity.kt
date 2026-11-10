@@ -476,6 +476,8 @@ class MainActivity : Activity() {
             // Ogni terzo tocco ravvicinato: nascondino (sparisce in un modo, ricompare in un altro).
             if (row != null && taps >= 3) { taps = 0; if (!BuddyEntrances.hideAndSeek(row)) cv.react("giggle") } else cv.react("giggle")
         }
+        // Si tocca, ma la rotella non si ferma sul buddy (decorativo): prima prendeva il fuoco con un riquadro grigio di sistema.
+        cv.isFocusable = false; cv.defaultFocusHighlightEnabled = false
         return cv
     }
     /** Il buddy grande a meta' pagina: il suo corpo occupa circa la meta' del riquadro, quindi il riquadro sporge sopra e sotto la riga (senza ritagli). */
@@ -1856,6 +1858,7 @@ class MainActivity : Activity() {
             rendered = true
             col.removeAllViews()
             build(col)
+            groupRows(col) // righe vicine in un'unica scheda con divisori
             pinned.removeAllViews()
             (0 until col.childCount).map { col.getChildAt(it) }.firstOrNull { it.tag == "scene-companion-row" }?.let { row ->
                 val height = row.layoutParams.height; col.removeView(row); pinned.addView(row, FrameLayout.LayoutParams(-1, height))

@@ -18,8 +18,9 @@ internal fun Context.groupTitle(t: String) = text(18f, 800, Theme.FG).apply { te
 internal fun Context.intro(t: String) = text(15f, 500, Theme.MUTED).keepCase().apply { text = t; setPadding(dpi(4f), dpi(2f), dpi(4f), dpi(12f)) }
 /** Nota piccola sotto un controllo. */
 internal fun Context.hint(t: String) = text(13f, 500, Theme.MUTED).keepCase().apply { text = t; setPadding(dpi(4f), dpi(6f), dpi(4f), dpi(2f)) }
-internal fun Context.label(t: String) = text(15f, 600, Theme.MUTED).apply { text = t; tag = "label"; setPadding(dpi(10f), dpi(16f), 0, dpi(6f)) }
-internal fun Context.section(t: String) = text(15f, 600, Theme.MUTED).apply { text = t; setPadding(dpi(10f), dpi(16f), 0, dpi(6f)) }
+internal fun Context.label(t: String) = text(14f, 700, Theme.MUTED).apply { text = t; tag = "label"; letterSpacing = 0.04f; setPadding(dpi(14f), dpi(18f), 0, dpi(8f)) }
+// Titoli di sezione: un filo più marcati e spaziati, allineati al testo delle schede.
+internal fun Context.section(t: String) = text(14f, 700, Theme.MUTED).apply { text = t; letterSpacing = 0.04f; setPadding(dpi(14f), dpi(18f), 0, dpi(8f)) }
 /** Il chip di scelta usato in tutte le pagine: stesso testo, stessi spazi (bersaglio di 48 dp), stessi colori selezionato/no. */
 internal fun Context.chipView(label: String, size: Float = 15f) = text(size, 700).apply {
     text = label; setPadding(dpi(14f), dpi(13f), dpi(14f), dpi(13f)); minHeight = dpi(48f); gravity = Gravity.CENTER_VERTICAL; isClickable = true; isFocusable = true
