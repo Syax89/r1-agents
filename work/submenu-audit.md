@@ -48,3 +48,8 @@ Metodo: per ciascuno, screenshot (`work/submenus/<nome>.png`, QA 480x640) + lett
 - Aspetto: i titoli dei gruppi non sono piu arancioni (l'arancione resta per cio che si tocca): 18 sp bianchi.
 - Pagine verificate con screenshot: impostazioni, sicurezza, azioni agente, informazioni, strumenti, traduttore, note, sveglie, nuova sveglia, timer, routine, nuova routine, app, controlli, memoria, gestisci chat, spazio, editor agente, aspetto.
 - Pagine con FLAG_SECURE (fornitore) e Hermes (attivita, competenze, nuova attivita): controllate dal codice (stessi helper, `hint()` al posto dei testi a 12-14 sp).
+
+### Terzo giro (le due schermate non viste prima)
+- Nuova attivita Hermes (app reale, senza salvare): intestazione, etichette, campi, selettore ora, giorni e `hint()` come "nuova routine": gia coerente.
+- Fornitore (FLAG_SECURE, struttura letta con uiautomator): titolo alla stessa quota (y 63-101), etichette e campi uguali alle altre pagine; unica differenza: il pulsante "salva" era verde fisso, mentre salva/avvia/aggiungi nelle altre pagine usano l'accento. Uniformati a `toolAccent` anche "importa", la conferma in Aspetto/voce e il collegamento Hermes (4 pulsanti).
+- Restano verdi per scelta solo i pulsanti di approvazione nelle richieste (consenti) e l'interruttore "on".

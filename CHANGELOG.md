@@ -67,3 +67,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.22 (code 29): causa trovata dei buddy doppi sovrapposti: scorrendo in fretta il carosello restavano nel livello delle funzioni colonne di gesti interrotti (con il loro buddy e oggetto), visibili dietro quella giusta. Ora a ogni cambio si tiene solo la colonna in uscita e un controllo periodico toglie i residui; verificato con un fuzz di interazioni (prima fino a 5 buddy visibili, ora al massimo 3 con la ruota e il nuovo agente).
 
 0.5.23 (code 30): sotto menu unificati: titolo alla stessa quota in tutte le pagine (altezza minima dell intestazione), spazio agente con indietro-titolo-buddy come gli altri, paragrafi introduttivi e note con dimensioni e spazi uguali (intro/hint), titoli dei gruppi in Aspetto non piu arancioni. Checklist in work/submenu-audit.md.
+
+0.5.24 (code 31): pulsanti primari uniformi: salva fornitore, importa, collegamento Hermes e conferma voce usano l accento come salva/avvia/aggiungi (prima verde fisso).

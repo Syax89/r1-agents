@@ -2713,7 +2713,7 @@ class MainActivity : Activity() {
     private fun confirmImport(json: String, sum: Backup.Summary) {
         overlay("import", UiText.text(this@MainActivity, R.string.ui_7c032d1cfb), { closeOverlay("import") }) { col, close ->
             col.addView(intro(UiText.text(this@MainActivity, R.string.ui_242765df7c, UiText.owned(this@MainActivity, sum.toString()))))
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_17b0bf8e19), Theme.colorOf("green")) { close(); doImport(json, false) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
+            col.addView(button(UiText.text(this@MainActivity, R.string.ui_17b0bf8e19), toolAccent) { close(); doImport(json, false) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
             col.addView(hint(UiText.text(this@MainActivity, R.string.ui_688ccaab33)))
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_01885652ec), Theme.BAD, filled = false) { close(); doImport(json, true) }, LinearLayout.LayoutParams(-1, -2))
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_9cb9b85e99), Theme.MUTED, primary = false) { close() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(4f) })
@@ -2965,7 +2965,7 @@ class MainActivity : Activity() {
             col.addView(key, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
             col.addView(model, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
             col.addView(lang, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_41a6b92e3b), Theme.colorOf("green")) {
+            col.addView(button(UiText.text(this@MainActivity, R.string.ui_41a6b92e3b), toolAccent) {
                 prefs.edit().putSecret("groq_key", key.text.toString().trim()).putString("groq_model", model.text.toString().trim().ifEmpty { "whisper-large-v3-turbo" }).putString("groq_lang", lang.text.toString().trim()).apply()
                 st.setTextColor(Theme.MUTED); st.text = UiText.text(this@MainActivity, R.string.ui_369c3bf02a)
                 Io.run { val r = GroqStt.test(this@MainActivity, key.text.toString().trim()); runOnUiThread { st.text = UiText.owned(this@MainActivity, r); st.setTextColor(if (r.startsWith("OK")) Theme.colorOf("green") else Theme.BAD) } }
@@ -4230,7 +4230,7 @@ class MainActivity : Activity() {
                 col.addView(label(UiText.text(this@MainActivity, R.string.ui_e074fcb38e))); col.addView(addr)
                 col.addView(label(UiText.text(this@MainActivity, R.string.ui_ee4b96bfac))); col.addView(usr)
                 col.addView(pwd, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-                col.addView(button(UiText.text(this@MainActivity, R.string.ui_3b9b4c05a8), Theme.colorOf("green")) {
+                col.addView(button(UiText.text(this@MainActivity, R.string.ui_3b9b4c05a8), toolAccent) {
                     val pairing = runCatching { Pairing.create(addr.text.toString(), usr.text.toString()) }
                     pairing.onFailure { status.text = UiText.message(this@MainActivity, it.message); status.setTextColor(Theme.BAD) }
                     pairing.onSuccess { config ->
@@ -4265,7 +4265,7 @@ class MainActivity : Activity() {
 
             col.addView(label(UiText.text(this@MainActivity, R.string.ui_6bec3945e2))); col.addView(model)
             if (cur.id == "hermes") col.addView(hint(UiText.text(this@MainActivity, R.string.ui_1d8ca53d81)))
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_3517056179), Theme.colorOf("green")) {
+            col.addView(button(UiText.text(this@MainActivity, R.string.ui_3517056179), toolAccent) {
                 settings.set(cur, key.text.toString(), base.text.toString(), model.text.toString()); pop()
             }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
         }
