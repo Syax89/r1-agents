@@ -95,11 +95,18 @@ class Db private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "agents.db", 
     }
 
     /** Sposta l'agente prima (-1) o dopo (+1) rispetto agli altri agenti visibili (`visible`, nell'ordine della home). */
-    fun move(id: Long, dir: Int, visible: List<Long>) {
+    /** Più scritture insieme o nessuna: un'interruzione a metà lasciava dati incoerenti (chat senza messaggi, posizioni doppie). */
+    private inline fun <T> inTx(block: () -> T): T {
+        val sql = writableDatabase
+        sql.beginTransaction()
+        try { return block().also { sql.setTransactionSuccessful() } } finally { sql.endTransaction() }
+    }
+
+    fun move(id: Long, dir: Int, visible: List<Long>) = inTx {
         val i = visible.indexOf(id); val j = i + dir
-        if (i < 0 || j !in visible.indices) return
+        if (i < 0 || j !in visible.indices) return@inTx
         val pos = readableDatabase.rawQuery("SELECT id,pos FROM agents", null).use { c -> buildMap { while (c.moveToNext()) put(c.getLong(0), c.getInt(1)) } }
-        val a = pos[id] ?: return; val b = pos[visible[j]] ?: return
+        val a = pos[id] ?: return@inTx; val b = pos[visible[j]] ?: return@inTx
         writableDatabase.execSQL("UPDATE agents SET pos=? WHERE id=?", arrayOf(b, id)); writableDatabase.execSQL("UPDATE agents SET pos=? WHERE id=?", arrayOf(a, visible[j]))
         if (a == b) { val ids = agents().map { it.id }.toMutableList(); ids.remove(id); ids.add(ids.indexOf(visible[j]).let { if (dir > 0) it + 1 else it }, id); ids.forEachIndexed { p, x -> writableDatabase.execSQL("UPDATE agents SET pos=? WHERE id=?", arrayOf(p, x)) } }
     }
@@ -130,7 +137,7 @@ class Db private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "agents.db", 
 
     fun title(chatId: Long, title: String) { writableDatabase.execSQL("UPDATE chats SET title=? WHERE id=?", arrayOf(title, chatId)) }
 
-    fun deleteChat(chatId: Long) {
+    fun deleteChat(chatId: Long) = inTx {
         writableDatabase.delete("messages", "chat_id=?", arrayOf(chatId.toString()))
         writableDatabase.delete("chats", "id=?", arrayOf(chatId.toString()))
     }
@@ -147,7 +154,7 @@ class Db private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "agents.db", 
         return readableDatabase.rawQuery(sql, args).use { c -> buildList { while (c.moveToNext()) add(Triple(c.getLong(0), c.getString(1), c.getString(2))) } }.asReversed()
     }
 
-    fun add(agentId: Long, chatId: Long, role: String, content: String) {
+    fun add(agentId: Long, chatId: Long, role: String, content: String) = inTx {
         writableDatabase.insertOrThrow("messages", null, ContentValues().apply { put("agent_id", agentId); put("chat_id", chatId); put("role", role); put("content", content) })
         val userText = role == "user" && content.startsWith("[{\"type\":\"text\"")
         writableDatabase.execSQL("UPDATE chats SET updated=?, ucount=ucount+? WHERE id=?", arrayOf(System.currentTimeMillis(), if (userText) 1 else 0, chatId))

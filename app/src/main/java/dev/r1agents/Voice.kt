@@ -101,7 +101,7 @@ class GroqStt(private val act: Context, private val key: String, private val mod
     private var startedAt = 0L
     override var startFailed = false
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
-    private val http = okhttp3.OkHttpClient.Builder().connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS).readTimeout(40, java.util.concurrent.TimeUnit.SECONDS).build()
+    private val http = Net.base.newBuilder().connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS).readTimeout(40, java.util.concurrent.TimeUnit.SECONDS).build()
     private val tick = object : Runnable {
         override fun run() {
             val now = System.currentTimeMillis(); val s = (now - startedAt) / 1000
@@ -191,7 +191,7 @@ class GroqStt(private val act: Context, private val key: String, private val mod
     companion object {
         /** Prova la chiave: elenco dei modelli. Ritorna un messaggio. */
         fun test(ctx: Context, key: String): String = try {
-            val c = okhttp3.OkHttpClient().newCall(okhttp3.Request.Builder().url("https://api.groq.com/openai/v1/models").header("Authorization", "Bearer $key").build()).execute()
+            val c = Net.base.newCall(okhttp3.Request.Builder().url("https://api.groq.com/openai/v1/models").header("Authorization", "Bearer $key").build()).execute()
             c.use { if (it.isSuccessful) UiText.text(ctx, R.string.ui_91864135d3) else if (it.code == 401) UiText.text(ctx, R.string.ui_7613169a51) else UiText.text(ctx, R.string.ui_9457120454, it.code) }
         } catch (e: Exception) { UiText.text(ctx, R.string.ui_bfc309c98a, UiText.message(ctx, e.message)) }
     }

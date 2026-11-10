@@ -699,6 +699,8 @@ internal object UiCatalog {
         UiEntry(R.string.ui_570d5b3ff8, "scorri di lato per fotocamera, app e strumenti · tieni premuto l'agente per il suo spazio · rotella premuta a lungo: torna all'agente"),
         UiEntry(R.string.ui_7726650957, "indirizzo non valido: controlla le impostazioni"),
         UiEntry(R.string.ui_62db8301e1, "stato Hermes"),
+        UiEntry(R.string.ui_8e646d7747, "File non accettato."),
+        UiEntry(R.string.ui_8c29b079b8, "Sei kiwi, un assistente amichevole e conciso. Rispondi nella lingua dell'utente."),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

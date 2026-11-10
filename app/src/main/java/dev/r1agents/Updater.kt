@@ -49,7 +49,7 @@ object Updater {
 
     fun isNewer(manifest: UpdateManifest, installedCode: Long) = manifest.versionCode > installedCode
 
-    private fun client() = OkHttpClient.Builder().followSslRedirects(false).connectTimeout(10, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).build()
+    private fun client() = Net.base.newBuilder().followSslRedirects(false).connectTimeout(10, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).build()
 
     /** Scarica e valida il manifest (solo https, massimo 64 KB). */
     fun fetchManifest(ctx: Context, url: String, allowLoopbackHttp: Boolean = false): UpdateManifest {

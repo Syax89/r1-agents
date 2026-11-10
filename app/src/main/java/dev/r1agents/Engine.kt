@@ -424,7 +424,7 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
      */
     private fun fetch(start: String): String {
         var url = start
-        val client = okhttp3.OkHttpClient.Builder().followRedirects(false).followSslRedirects(false)
+        val client = Net.base.newBuilder().followRedirects(false).followSslRedirects(false)
             .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS).readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
             .dns(object : okhttp3.Dns {
                 override fun lookup(hostname: String): List<InetAddress> {

@@ -218,7 +218,7 @@ class MainActivity : Activity() {
         window.statusBarColor = Theme.BG; window.navigationBarColor = Theme.BG
         if (Theme.light) window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
         if (!pinEnabled()) applyIntent(intent)
-        if (db.agents().none { it.profile.isEmpty() }) db.save(Agent(0, "kiwi", "Sei kiwi, un assistente amichevole e conciso. Rispondi nella lingua dell'utente.", "", "blob", "green"))
+        if (db.agents().none { it.profile.isEmpty() }) db.save(Agent(0, "kiwi", UiText.text(this@MainActivity, R.string.ui_8c29b079b8), "", "blob", "green")) // prompt nella lingua dell'app
         push(root())
         if (prefs.getString("reopen", null) == "look") { prefs.edit().remove("reopen").apply(); if (stack.size == 1 && prefs.getString("start", "home") == "glance") push(home()); push(settingsScreen()); push(lookScreen()) }
         Sched.channels(this); Sched.all(this, db)

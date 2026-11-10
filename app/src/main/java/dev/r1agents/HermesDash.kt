@@ -81,7 +81,7 @@ class HermesDash(private val p: SharedPreferences) {
         override fun loadForRequest(url: HttpUrl) = store[url.host].orEmpty().filter { it.expiresAt > System.currentTimeMillis() }
         fun clear() = store.clear()
     }
-    private val http = OkHttpClient.Builder().cookieJar(jar).pingInterval(20, TimeUnit.SECONDS)
+    private val http = Net.base.newBuilder().cookieJar(jar).pingInterval(20, TimeUnit.SECONDS)
         .connectTimeout(8, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).build()
 
     var url: String
