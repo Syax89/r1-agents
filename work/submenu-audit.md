@@ -9,29 +9,29 @@ Metodo: per ciascuno, screenshot (`work/submenus/<nome>.png`, QA 480x640) + lett
 ## Elenco (check uno alla volta)
 | # | Schermata | debug_screen | Funzione | Stato |
 |---|-----------|--------------|----------|-------|
-| 1 | Impostazioni | settings | settingsScreen | [x] |
-| 2 | Fornitore | dash | providerScreen | [x] |
-| 3 | Aspetto | look | lookScreen | [x] |
-| 4 | Sicurezza | security | securityScreen | [x] |
-| 5 | Registro azioni | actionlog | actionLogScreen | [x] |
-| 6 | Info / aggiornamenti | about | aboutScreen | [x] |
-| 7 | Strumenti | tools | tools | [x] |
-| 8 | Traduttore | translator | translator | [x] |
-| 9 | Note | notes | notesScreen | [x] |
-| 10 | Sveglie | alarms | alarmsScreen | [x] |
-| 11 | Nuova sveglia | alarm_new | alarmEditor | [x] |
-| 12 | Timer | timers | timersScreen | [x] |
-| 13 | Routine (locali) | routines | localRoutinesScreen | [x] |
-| 14 | Nuova routine | routine_new | routineEditor | [x] |
-| 15 | Attivita Hermes | jobs | hermesJobsScreen | [x] |
-| 16 | Nuova attivita Hermes | (da jobs) | hermesJobEditor | [x] |
-| 17 | Competenze | skills | skillsScreen | [x] |
-| 18 | App | apps | appsScreen | [x] |
-| 19 | Controlli | controls | controlsScreen | [x] |
-| 20 | Memoria agente | memory | memoryScreen | [x] |
-| 21 | Gestione chat | manage | manageChats | [x] |
-| 22 | Spazio agente | space | space | [x] |
-| 23 | Editor agente | agent_new | editor | [x] |
+| 1 | Impostazioni | settings | settingsScreen | vedi matrice |
+| 2 | Fornitore | dash | providerScreen | vedi matrice |
+| 3 | Aspetto | look | lookScreen | vedi matrice |
+| 4 | Sicurezza | security | securityScreen | vedi matrice |
+| 5 | Registro azioni | actionlog | actionLogScreen | vedi matrice |
+| 6 | Info / aggiornamenti | about | aboutScreen | vedi matrice |
+| 7 | Strumenti | tools | tools | vedi matrice |
+| 8 | Traduttore | translator | translator | vedi matrice |
+| 9 | Note | notes | notesScreen | vedi matrice |
+| 10 | Sveglie | alarms | alarmsScreen | vedi matrice |
+| 11 | Nuova sveglia | alarm_new | alarmEditor | vedi matrice |
+| 12 | Timer | timers | timersScreen | vedi matrice |
+| 13 | Routine (locali) | routines | localRoutinesScreen | vedi matrice |
+| 14 | Nuova routine | routine_new | routineEditor | vedi matrice |
+| 15 | Attivita Hermes | jobs | hermesJobsScreen | vedi matrice |
+| 16 | Nuova attivita Hermes | (da jobs) | hermesJobEditor | vedi matrice |
+| 17 | Competenze | skills | skillsScreen | vedi matrice |
+| 18 | App | apps | appsScreen | vedi matrice |
+| 19 | Controlli | controls | controlsScreen | vedi matrice |
+| 20 | Memoria agente | memory | memoryScreen | vedi matrice |
+| 21 | Gestione chat | manage | manageChats | vedi matrice |
+| 22 | Spazio agente | space | space | vedi matrice |
+| 23 | Editor agente | agent_new | editor | vedi matrice |
 
 ## Note per schermata
 
@@ -86,3 +86,33 @@ Metodo: per ciascuno, screenshot (`work/submenus/<nome>.png`, QA 480x640) + lett
 ### Quinto giro: sveglie e routine con dati, stato di errore Hermes
 - Sveglie con 3 elementi e routine con 2 (QA): righe con orario grande/titolo, sottotitolo e interruttore uguali alle righe delle attivita Hermes: OK.
 - Errore Hermes: TROVATO UN DIFETTO REALE. Se il caricamento falliva subito (server non raggiungibile), il risultato arrivava prima che la pagina fosse in finestra e veniva scartato: restava "leggo da Hermes..." per sempre. Corretto con `whenAttached()` (attivita e competenze); ora si vede il messaggio ("non riesco a raggiungere il server: controlla rete e indirizzo") e il pulsante "riprova" in accento (aggiunto anche alle competenze). Verificato con screenshot nel QA.
+
+## Matrice finale (cosa e stato davvero verificato, pagina per pagina)
+Legenda: V = visto in screenshot dopo l ultima modifica; C = verificato solo leggendo il codice; - = non verificato.
+
+| Pagina | Vuoto | Con dati | Errore / caricamento |
+|---|---|---|---|
+| Impostazioni | V | V | C |
+| Fornitore (custom / Hermes) | V | V | C (esito del "prova" non provocato) |
+| Aspetto | V | V | - |
+| Sicurezza | V | V | - |
+| Azioni agente / registro | V (nessuna azione) | V (5 voci) | - |
+| Informazioni | V | V | C (errore aggiornamenti: provato un solo tentativo, saltato per la rotazione del telefono) |
+| Strumenti | V | V | - |
+| Traduttore | V | V (campo/tasti) | C |
+| Note | V | V (24) | - |
+| Sveglie | V | V (3) | - |
+| Nuova sveglia / timer | V | V | - |
+| Routine locali | V | V (2) | - |
+| Nuova routine | V | V | - |
+| App | V | V | C (caricamento lista) |
+| Controlli | V | V | - |
+| Memoria | V | - | - |
+| Gestisci chat | V | V (1) | - |
+| Spazio agente | V | V | - |
+| Editor agente | V | V | - |
+| Attivita Hermes | V | V (app reale) | V (errore + riprova, QA) |
+| Competenze | V | V (app reale) | V (errore + riprova, QA) |
+| Nuova attivita Hermes | V | V | C |
+
+Non verificati: gli errori fuori da attivita e competenze (provocarli richiederebbe un server o una rete guasta), "memoria" con note, la lista app con molti dati dopo l'ultima modifica.
