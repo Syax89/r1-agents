@@ -70,7 +70,25 @@ open class R1ScrollView(context: Context) : ScrollView(context), Choreographer.F
         if (moving) Choreographer.getInstance().postFrameCallback(this)
     }
     private fun stopWheel() { moving = false; previousFrame = 0L; Choreographer.getInstance().removeFrameCallback(this) }
-    override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) { super.onScrollChanged(l, t, oldl, oldt); buddyFx.onScrolled(t) }
+    // Inclinazione 3D: scorrendo veloce le schede dei gruppi si piegano appena nel verso del movimento e una molla le
+    // rimette dritte con un piccolo rimbalzo. Lavora solo mentre si scorre.
+    private val tilt = dev.r1os.host.ui.Spring { v ->
+        val col = getChildAt(0) as? android.view.ViewGroup ?: return@Spring
+        val cam = 12000f * resources.displayMetrics.density
+        // Anche le schede dentro un contenitore (lista delle app, attività di Hermes): un livello sotto.
+        for (i in 0 until col.childCount) when (val c = col.getChildAt(i)) {
+            is GroupCard -> { c.cameraDistance = cam; c.rotationX = v }
+            is android.view.ViewGroup -> for (j in 0 until c.childCount) (c.getChildAt(j) as? GroupCard)?.let { it.cameraDistance = cam; it.rotationX = v }
+        }
+    }
+    override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+        super.onScrollChanged(l, t, oldl, oldt); buddyFx.onScrolled(t)
+        val dy = (t - oldt).toFloat()
+        if (dy != 0f && !Motion.reduced(context)) {
+            val to = (dy * 0.18f).coerceIn(-6f, 6f)
+            tilt.snapTo(tilt.value + (to - tilt.value) * 0.5f); tilt.animateTo(0f, 160f, 0.5f)
+        }
+    }
     override fun onDetachedFromWindow() { stopWheel(); super.onDetachedFromWindow() }
 }
 

@@ -212,7 +212,7 @@ fun Context.row(label: String, accent: Int, bold: Boolean = false, sub: String? 
     val l = GroupRow(this).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; isFocusable = true; isClickable = true; defaultFocusHighlightEnabled = false
         setPadding(dpi(14f), dpi(11f), dpi(14f), dpi(11f) + gap); minimumHeight = dpi(64f) + gap
-        setOnClickListener { onClick() }
+        setOnClickListener { v -> (v.parent as? GroupCard)?.splash(v); onClick() }
     }
     val chip = icon?.let { chipOf(it, accent, 44f) }
     chip?.let { l.addView(it, LinearLayout.LayoutParams(dpi(44f), dpi(44f)).apply { marginEnd = dpi(12f) }) }
@@ -248,7 +248,7 @@ fun Context.row(label: String, accent: Int, bold: Boolean = false, sub: String? 
     l.setOnTouchListener { v, e ->
         Motion.touch(v, e)
         // Nel gruppo, col dito: la goccia compare sotto la voce premuta e svanisce poco dopo il rilascio.
-        if (l.grouped) (l.parent as? GroupCard)?.let { when (e.action) { android.view.MotionEvent.ACTION_DOWN -> it.focusTo(l); android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> it.blur(l, 220L) } }
+        if (l.grouped) (l.parent as? GroupCard)?.let { when (e.action) { android.view.MotionEvent.ACTION_DOWN -> it.press(l); android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> it.blur(l, 220L) } }
         false
     }
     return l
@@ -558,7 +558,7 @@ private fun Context.chipOf(icon: String, accent: Int, size: Float): android.widg
 }
 
 private fun android.view.View.cardInput(accent: Int, radius: Float, chip: android.view.View?, title: android.widget.TextView, sub: android.widget.TextView?, onClick: () -> Unit) {
-    isFocusable = true; isClickable = true; setOnClickListener { onClick() }
+    isFocusable = true; isClickable = true; setOnClickListener { v -> (v.parent as? GroupCard)?.splash(v); onClick() }
     setOnFocusChangeListener { _, f -> cardPaint(this, accent, radius, chip, title, sub, f) }
     setOnTouchListener { v, e ->
         // Al tocco niente riempimento colorato: la scheda si avvalla appena (Motion.touch) e l'icona si alza di un soffio.
@@ -566,7 +566,7 @@ private fun android.view.View.cardInput(accent: Int, radius: Float, chip: androi
             if (e.action == android.view.MotionEvent.ACTION_DOWN) chip.animate().cancel().also { chip.animate().scaleX(1.04f).scaleY(1.04f).setDuration(Motion.FAST).setInterpolator(Theme.EASE_OUT).start() }
             else if (e.action == android.view.MotionEvent.ACTION_UP || e.action == android.view.MotionEvent.ACTION_CANCEL) chip.animate().scaleX(1f).scaleY(1f).setDuration(Motion.SLOW).setInterpolator(Theme.EASE_OUT).start()
         }
-        if (this is GroupRow && grouped) (parent as? GroupCard)?.let { when (e.action) { android.view.MotionEvent.ACTION_DOWN -> it.focusTo(this); android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> it.blur(this, 220L) } }
+        if (this is GroupRow && grouped) (parent as? GroupCard)?.let { when (e.action) { android.view.MotionEvent.ACTION_DOWN -> it.press(this); android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> it.blur(this, 220L) } }
         Motion.touch(v, e); false
     }
 }
@@ -755,7 +755,36 @@ class GroupCard(ctx: Context) : LinearLayout(ctx) {
     private val sBot = dev.r1os.host.ui.Spring { bot = it; invalidate() }
     private val sAlpha = dev.r1os.host.ui.Spring { alphaK = it.coerceIn(0f, 1f); invalidate() }
     private var target: View? = null
+    /** Il titolo della sezione sopra la scheda: prende l'accento finché la goccia è qui dentro. */
+    var header: android.widget.TextView? = null
+    private var headerAnim: android.animation.ValueAnimator? = null
+    private val ring = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { style = android.graphics.Paint.Style.STROKE }
+    private val edge = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { style = android.graphics.Paint.Style.STROKE }
+    private var splashK = -1f   // 0..1 mentre l'onda si allarga, -1 a riposo
+    private var splashAnim: android.animation.ValueAnimator? = null
     init { setWillNotDraw(false) }
+
+    private fun tintHeader(on: Boolean) {
+        val h = header ?: return
+        val from = h.currentTextColor; val to = if (on) Theme.accent else Theme.MUTED
+        if (from == to) return
+        headerAnim?.cancel()
+        if (Motion.reduced(context)) { h.setTextColor(to); return }
+        headerAnim = android.animation.ValueAnimator.ofArgb(from, to).apply { duration = 260; addUpdateListener { h.setTextColor(it.animatedValue as Int) }; start() }
+    }
+
+    /** Clic su una voce: la goccia si gonfia e ne parte un'onda, un anello di luce che si allarga e svanisce. */
+    fun splash(v: View) {
+        if (Motion.reduced(context)) return
+        if (target !== v || alphaK < 0.5f) focusTo(v)
+        splashAnim?.cancel()
+        splashAnim = android.animation.ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 420; interpolator = android.view.animation.DecelerateInterpolator(1.6f)
+            addUpdateListener { splashK = it.animatedValue as Float; invalidate() }
+            addListener(object : android.animation.AnimatorListenerAdapter() { override fun onAnimationEnd(a: android.animation.Animator) { splashK = -1f; invalidate() } })
+            start()
+        }
+    }
 
     fun focusTo(v: View) {
         if (v.height == 0) { post { if (v.isFocused || v.isPressed) focusTo(v) }; return }
@@ -770,9 +799,12 @@ class GroupCard(ctx: Context) : LinearLayout(ctx) {
         else { sTop.animateTo(t, 950f, 0.8f); sBot.animateTo(b, 240f, 0.74f) }                    // su: davanti il bordo alto
         sAlpha.animateTo(1f, 700f, 1f)
         target = v
+        tintHeader(true)
     }
+    /** Dito appoggiato: la goccia arriva solo se la voce resta premuta un istante (uno scorrimento non la fa lampeggiare). */
+    fun press(v: View) { postDelayed({ if (v.isPressed) focusTo(v) }, 90L) }
     fun blur(v: View, delay: Long = 0L) {
-        postDelayed({ if (target === v && !v.isFocused && !v.isPressed) { target = null; sAlpha.animateTo(0f, 420f, 1f) } }, delay)
+        postDelayed({ if (target === v && !v.isFocused && !v.isPressed) { target = null; sAlpha.animateTo(0f, 420f, 1f); tintHeader(false) } }, delay)
     }
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
@@ -786,8 +818,23 @@ class GroupCard(ctx: Context) : LinearLayout(ctx) {
             val stretch = (h / rowH - 1f).coerceIn(0f, 1.2f)
             val side = inset + stretch * context.dp(7f)   // allungata = più sottile, come una goccia
             val r = minOf(context.dp(16f), (h - 2 * inset) / 2f).coerceAtLeast(0f)
-            paint.color = Theme.accent; paint.alpha = (alphaK * 255).toInt()
-            c.drawRoundRect(side, top + inset, width - side, bot - inset, r, r, paint)
+            // Bordo luminoso: il contorno della scheda si accende all'altezza della goccia e sfuma verso l'alto e il basso.
+            val mid = (top + bot) / 2f; val reach = h * 1.6f
+            edge.strokeWidth = context.dp(1.5f)
+            edge.shader = android.graphics.LinearGradient(0f, mid - reach, 0f, mid + reach,
+                intArrayOf(android.graphics.Color.TRANSPARENT, Theme.withAlpha(Theme.accent, 0.85f * alphaK), android.graphics.Color.TRANSPARENT), null, android.graphics.Shader.TileMode.CLAMP)
+            val cr = context.dp(20f); val e = edge.strokeWidth / 2f
+            c.drawRoundRect(e, e, width - e, height - e, cr, cr, edge)
+            paint.color = Theme.accent
+            // Clic: la goccia si gonfia un attimo.
+            val swell = if (splashK >= 0f) (1f - splashK) * context.dp(3f) else 0f
+            paint.alpha = (alphaK * 255).toInt()
+            c.drawRoundRect(side - swell, top + inset - swell, width - side + swell, bot - inset + swell, r + swell, r + swell, paint)
+            if (splashK >= 0f) {
+                val grow = splashK * context.dp(18f)
+                ring.color = Theme.accent; ring.alpha = ((1f - splashK) * 200).toInt(); ring.strokeWidth = context.dp(2f) * (1f - splashK) + 0.5f
+                c.drawRoundRect(side - grow, top + inset - grow, width - side + grow, bot - inset + grow, r + grow, r + grow, ring)
+            }
         }
         super.dispatchDraw(c)
     }
@@ -795,7 +842,7 @@ class GroupCard(ctx: Context) : LinearLayout(ctx) {
 
 /** Col dito, dentro una scheda di gruppo: la goccia compare sotto la voce premuta e svanisce poco dopo il rilascio. */
 fun liquidTouch(v: View, e: android.view.MotionEvent) {
-    (v.parent as? GroupCard)?.let { when (e.action) { android.view.MotionEvent.ACTION_DOWN -> it.focusTo(v); android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> it.blur(v, 220L) } }
+    (v.parent as? GroupCard)?.let { when (e.action) { android.view.MotionEvent.ACTION_DOWN -> it.press(v); android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> it.blur(v, 220L) } }
 }
 
 /**
@@ -839,6 +886,8 @@ fun Context.groupRows(col: LinearLayout) {
         val first = col.indexOfChild(run.first())
         // Il divisore parte dopo l'icona, come nelle liste di sistema.
         val card = groupCard((run.first() as? GroupRow)?.dividerInset ?: 14f)
+        // Il titolo di sezione subito sopra (se c'è) si accende quando la goccia entra in questa scheda.
+        card.header = (col.getChildAt(first - 1) as? android.widget.TextView)?.takeIf { it.tag == "label" || it.tag == "section" }
         run.forEach { r ->
             col.removeView(r)
             if (r is GroupRow) r.grouped = true

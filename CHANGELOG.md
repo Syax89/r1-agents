@@ -103,3 +103,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.40 (code 47): anche la pagina dell agente, il fornitore, la memoria e la gestione delle chat usano le liste raggruppate con freccia e pillola a fuoco; nel fornitore le due voci in alto hanno la stessa misura.
 
 0.5.41 (code 48): pillola liquida nei menu: con la rotella una goccia di colore scivola da una voce all altra, si allunga nel verso del movimento e si ricompatta, e compare anche sotto il dito; all apertura di una pagina le voci si dispiegano a fisarmonica una dopo l altra; l icona della voce a fuoco fa un piccolo salto elastico. Tutto si anima solo quando cambia qualcosa.
+
+0.5.42 (code 49): al clic la goccia si gonfia e ne parte un onda di luce; il bordo della scheda si illumina all altezza della goccia e la segue; il titolo della sezione si accende quando la goccia entra nella sua scheda; scorrendo veloce le schede si inclinano appena in 3D e tornano dritte con un rimbalzo; col dito la goccia compare solo se la voce resta premuta, non durante gli scorrimenti.

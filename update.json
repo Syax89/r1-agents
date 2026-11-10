@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 48,
-  "versionName": "0.5.41",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.41/r1agents-release-signed.apk",
-  "sha256": "6b061b8caaf7ace5036db6c665bf3821c884837fade4ba7b740790c3aa12315b",
+  "versionCode": 49,
+  "versionName": "0.5.42",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.42/r1agents-release-signed.apk",
+  "sha256": "bbd08d74c860e3cc278c953c0a0f79d9f9d56f9d89330276835757c19719de10",
   "sizeBytes": 1378631,
-  "notes": "0.5.41 (code 48): pillola liquida nei menu: con la rotella una goccia di colore scivola da una voce all altra, si allunga nel verso del movimento e si ricompatta, e compare anche sotto il dito; all apertura di una pagina le voci si dispiegano a fisarmonica una dopo l altra; l icona della voce a fuoco fa un piccolo salto elastico. Tutto si anima solo quando cambia qualcosa."
+  "notes": "0.5.42 (code 49): al clic la goccia si gonfia e ne parte un onda di luce; il bordo della scheda si illumina all altezza della goccia e la segue; il titolo della sezione si accende quando la goccia entra nella sua scheda; scorrendo veloce le schede si inclinano appena in 3D e tornano dritte con un rimbalzo; col dito la goccia compare solo se la voce resta premuta, non durante gli scorrimenti."
 }
