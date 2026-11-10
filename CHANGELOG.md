@@ -69,3 +69,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.23 (code 30): sotto menu unificati: titolo alla stessa quota in tutte le pagine (altezza minima dell intestazione), spazio agente con indietro-titolo-buddy come gli altri, paragrafi introduttivi e note con dimensioni e spazi uguali (intro/hint), titoli dei gruppi in Aspetto non piu arancioni. Checklist in work/submenu-audit.md.
 
 0.5.24 (code 31): pulsanti primari uniformi: salva fornitore, importa, collegamento Hermes e conferma voce usano l accento come salva/avvia/aggiungi (prima verde fisso).
+
+0.5.25 (code 32): controlli: la riga di stato usa lo stesso stile dei paragrafi introduttivi; solo nel pacchetto QA, --ez qa_visible true permette gli screenshot delle pagine con campi segreti per le verifiche visive.

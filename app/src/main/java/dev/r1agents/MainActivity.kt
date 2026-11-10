@@ -92,6 +92,8 @@ class MainActivity : Activity() {
         }
     }
     private fun showPinGate() = showPinGate(false)
+    /** Solo nel pacchetto QA e su richiesta (`--ez qa_visible true`): permette gli screenshot delle pagine con campi segreti per le verifiche visive. Mai sul pacchetto dell'utente. */
+    private val qaVisible get() = packageName.endsWith(".qa") && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 && intent?.getBooleanExtra("qa_visible", false) == true
     private fun showPinGate(animate: Boolean) {
         if (!pinEnabled() || pinUnlocked || pinGate != null) return
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
@@ -1319,7 +1321,7 @@ class MainActivity : Activity() {
             transformationMethod = android.text.method.PasswordTransformationMethod.getInstance(); importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
             // Finché un campo segreto è sullo schermo, niente screenshot né anteprima nei recenti (anche senza PIN).
             addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-                override fun onViewAttachedToWindow(v: View) { window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
+                override fun onViewAttachedToWindow(v: View) { if (!qaVisible) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
                 override fun onViewDetachedFromWindow(v: View) { if (!pinEnabled()) window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
             })
         }
@@ -3423,7 +3425,7 @@ class MainActivity : Activity() {
             snack(UiText.text(this@MainActivity, R.string.ui_f2c6915e4c))
         }
         companionRow(112f)?.let { col.addView(it, LinearLayout.LayoutParams(-1, dpi(112f))) }
-        col.addView(text(15f, 600, Theme.MUTED).keepCase().apply { text = batteryLine() + " · " + UiText.text(this@MainActivity, R.string.ui_ac647b8dc0, freeSpace()) }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dpi(8f) })
+        col.addView(intro(batteryLine() + " · " + UiText.text(this@MainActivity, R.string.ui_ac647b8dc0, freeSpace())))
         if (DeviceActions.hasFlash) col.addView(bigRow("spark", UiText.text(this@MainActivity, R.string.ui_4d897fa9ab), if (torchOn) UiText.text(this@MainActivity, R.string.ui_a7623e2fdf) else UiText.text(this@MainActivity, R.string.ui_533deb16e2), Theme.colorOf("amber")) {
             torchOn = !torchOn; if (!runDeviceAction(DeviceActions.Action("torcia", if (torchOn) "on" else "off"), log = false)) torchOn = !torchOn
             cue(if (torchOn) "surprised" else "relief", force = true); stack.lastOrNull()?.onShow?.invoke()

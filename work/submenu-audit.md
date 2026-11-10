@@ -53,3 +53,27 @@ Metodo: per ciascuno, screenshot (`work/submenus/<nome>.png`, QA 480x640) + lett
 - Nuova attivita Hermes (app reale, senza salvare): intestazione, etichette, campi, selettore ora, giorni e `hint()` come "nuova routine": gia coerente.
 - Fornitore (FLAG_SECURE, struttura letta con uiautomator): titolo alla stessa quota (y 63-101), etichette e campi uguali alle altre pagine; unica differenza: il pulsante "salva" era verde fisso, mentre salva/avvia/aggiungi nelle altre pagine usano l'accento. Uniformati a `toolAccent` anche "importa", la conferma in Aspetto/voce e il collegamento Hermes (4 pulsanti).
 - Restano verdi per scelta solo i pulsanti di approvazione nelle richieste (consenti) e l'interruttore "on".
+
+### Terzo giro: rilettura di TUTTE le pagine dopo la 0.5.24 (screenshot QA in work/pass3, pagine con campi segreti incluse grazie a `--ez qa_visible true`, solo pacchetto QA)
+| Pagina | Esito |
+|---|---|
+| Impostazioni | OK: intestazione a y=82, buddy grande sotto, tessere e righe uguali |
+| Fornitore (custom) | OK: etichette/campi uguali, "salva" ora arancione (accento) |
+| Fornitore (Hermes) | OK: "collega con QR" come riga standard, campi e puntini, pulsante in accento |
+| Aspetto | OK: titoli dei gruppi bianchi 18 sp, schede e chip uniformi |
+| Sicurezza | OK: paragrafo `intro()` con 12 dp prima delle righe |
+| Azioni agente / registro | OK: stato vuoto centrato come sveglie e routine |
+| Informazioni | OK: titolo a y=82; buddy grande; testi 15 sp |
+| Strumenti | OK: tessere 2x2, titolo e buddy a destra |
+| Traduttore | OK: scheda lingue, campo, pulsanti principale/secondario come note |
+| Note | OK: stessa coppia di pulsanti; card nota uguali alle altre card |
+| Sveglie / nuova sveglia | OK: stato vuoto e riga "nuova", selettore e chip giorni |
+| Timer | OK: selettore, preset, pulsante "avvia" in accento |
+| Routine / nuova routine | OK: stesso schema di sveglie, etichette e campi |
+| App | OK: buddy grande, ricerca, righe con icona |
+| Controlli | corretto: la riga di stato batteria/spazio non aveva i 4 dp di rientro ne i 12 dp sotto: ora `intro()` |
+| Memoria | OK (pulsante "aggiungi" col colore dell'agente, per regola di dominio) |
+| Gestisci chat | OK: stato vuoto "nessuna chat" |
+| Spazio agente | OK: indietro, titolo+descrizione, buddy a destra |
+| Editor agente | OK: pulsante "salva" in accento |
+| Attivita / competenze / nuova attivita Hermes | OK (app reale): intestazione, righe, campo di ricerca e selettore come gli altri |
