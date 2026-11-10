@@ -18,21 +18,21 @@ import org.json.JSONArray
 
 /** Contenuto condiviso da un'altra app: testo e allegati già copiati nella cartella privata. */
 /** La schermata prima del cambio di aspetto, per la dissolvenza dopo la ricostruzione. */
-private var lookSnapshot: android.graphics.Bitmap? = null
+internal var lookSnapshot: android.graphics.Bitmap? = null
 
 class Share(val text: String, val files: List<Attachment>, val voiceDraft: Boolean = false)
 
 class MainActivity : Activity() {
-    private lateinit var db: Db
-    private lateinit var settings: Settings
-    private val localTurns = java.util.concurrent.ConcurrentHashMap.newKeySet<Engine>()
-    private fun localEngine() = Engine(db, Settings(prefs, settings.provider.id), nous, dash).also { localTurns.add(it) }
-    private fun cancelLocalTurns() { localTurns.forEach { it.cancel() }; localTurns.clear() }
-    private lateinit var nous: NousAuth
-    private lateinit var dash: HermesDash
-    private lateinit var hermesRuntime: HermesRuntime
-    private lateinit var root: FrameLayout
-    private class Screen(val view: View, val keys: ((KeyEvent) -> Boolean)? = null, val onLeave: (() -> Unit)? = null, val onShow: (() -> Unit)? = null, val isChat: Boolean = false,
+    internal lateinit var db: Db
+    internal lateinit var settings: Settings
+    internal val localTurns = java.util.concurrent.ConcurrentHashMap.newKeySet<Engine>()
+    internal fun localEngine() = Engine(db, Settings(prefs, settings.provider.id), nous, dash).also { localTurns.add(it) }
+    internal fun cancelLocalTurns() { localTurns.forEach { it.cancel() }; localTurns.clear() }
+    internal lateinit var nous: NousAuth
+    internal lateinit var dash: HermesDash
+    internal lateinit var hermesRuntime: HermesRuntime
+    internal lateinit var root: FrameLayout
+    internal class Screen(val view: View, val keys: ((KeyEvent) -> Boolean)? = null, val onLeave: (() -> Unit)? = null, val onShow: (() -> Unit)? = null, val isChat: Boolean = false,
                          val scope: Scope = Scope(), val onResume: (() -> Unit)? = null, val chatKey: Long? = null, val buddyContext: BuddySceneContext = BuddySceneContext.READ, val isVoice: Boolean = false, val onSuspend: (() -> Unit)? = null, val leaveGuard: (() -> Boolean)? = null,
                          /** La home: riceve anche il rilascio del tasto centrale (click = esegui, tenuto = torna all'agente) e gestisce Indietro nel carosello. */
                          val isHome: Boolean = false) {
@@ -43,33 +43,33 @@ class MainActivity : Activity() {
         var origin: android.graphics.RectF? = null
         var heroOrigin: Hero? = null
     }
-    private val neutralBuddy by lazy { Agent(-99, "buddy", "", "", "orb", "orange") }
-    private val stack = ArrayList<Screen>()
-    private var homeIndex = 0
-    private var onVoice: ((String) -> Unit)? = null
-    private var cancelActiveMic: (() -> Unit)? = null
-    private var lastProfileSync = 0L
-    private var pttHandler: ((KeyEvent) -> Boolean)? = null
-    private lateinit var prefs: android.content.SharedPreferences
-    private var tts: android.speech.tts.TextToSpeech? = null
-    private var ttsReady = false
-    private var deferredPinIntent: Intent? = null
-    private var pinGate: View? = null
-    private var pinUnlocked = false
-    private fun pinEnabled() = prefs.getString("app_pin_hash", "").orEmpty().isNotEmpty()
+    internal val neutralBuddy by lazy { Agent(-99, "buddy", "", "", "orb", "orange") }
+    internal val stack = ArrayList<Screen>()
+    internal var homeIndex = 0
+    internal var onVoice: ((String) -> Unit)? = null
+    internal var cancelActiveMic: (() -> Unit)? = null
+    internal var lastProfileSync = 0L
+    internal var pttHandler: ((KeyEvent) -> Boolean)? = null
+    internal lateinit var prefs: android.content.SharedPreferences
+    internal var tts: android.speech.tts.TextToSpeech? = null
+    internal var ttsReady = false
+    internal var deferredPinIntent: Intent? = null
+    internal var pinGate: View? = null
+    internal var pinUnlocked = false
+    internal fun pinEnabled() = prefs.getString("app_pin_hash", "").orEmpty().isNotEmpty()
     // Il PIN protegge le chat (alcune o tutte), non l'app: la home e le altre pagine restano sempre libere.
-    private fun lockedChats(): Set<String> = prefs.getStringSet("locked_chats", emptySet()) ?: emptySet()
-    private fun chatLocked(id: Long?) = id != null && pinEnabled() && (prefs.getBoolean("lock_all_chats", false) || id.toString() in lockedChats())
-    private fun gateWanted() = chatLocked(stack.lastOrNull()?.chatKey)
-    private fun setChatLocked(id: Long, on: Boolean) { prefs.edit().putStringSet("locked_chats", lockedChats().toMutableSet().also { if (on) it.add(id.toString()) else it.remove(id.toString()) }).apply() }
+    internal fun lockedChats(): Set<String> = prefs.getStringSet("locked_chats", emptySet()) ?: emptySet()
+    internal fun chatLocked(id: Long?) = id != null && pinEnabled() && (prefs.getBoolean("lock_all_chats", false) || id.toString() in lockedChats())
+    internal fun gateWanted() = chatLocked(stack.lastOrNull()?.chatKey)
+    internal fun setChatLocked(id: Long, on: Boolean) { prefs.edit().putStringSet("locked_chats", lockedChats().toMutableSet().also { if (on) it.add(id.toString()) else it.remove(id.toString()) }).apply() }
     /** Esce da una chat bloccata senza il PIN: toglie il gate e torna indietro. */
-    private fun leaveLockedChat() {
+    internal fun leaveLockedChat() {
         pinGate?.let { root.removeView(it) }; pinGate = null; pinUnlocked = false; deferredPinIntent = null; updateSecure()
         cancelModalBuddyFlight(); clearCarriedBuddy(); hideKeyboard()
         if (stack.size > 1) pop()
     }
-    private fun idleMs(): Long = prefs.getString("idle_after", "1").let { if (it == "never") 0L else (it?.toLongOrNull() ?: 1L) * 60_000L }
-    private fun pinPrompt(title: String, confirm: (String) -> Unit) {
+    @JvmName("idleMs") internal fun idleMs(): Long = prefs.getString("idle_after", "1").let { if (it == "never") 0L else (it?.toLongOrNull() ?: 1L) * 60_000L }
+    internal fun pinPrompt(title: String, confirm: (String) -> Unit) {
         val id = "pin-setup"
         overlay(id, title, { closeOverlay(id) }, context = BuddySceneContext.SECURITY) { col, close ->
             val entry = field(UiText.text(this@MainActivity, R.string.ui_89eb8f4b8b), "").apply {
@@ -81,7 +81,7 @@ class MainActivity : Activity() {
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_9cb9b85e99), Theme.MUTED, primary = false) { entry.setText(""); close() })
         }
     }
-    private fun pinSetup() {
+    internal fun pinSetup() {
         pinPrompt(UiText.text(this@MainActivity, R.string.ui_857ef10d0f)) { first ->
             pinPrompt(UiText.text(this@MainActivity, R.string.ui_e829f8e940)) { second ->
                 if (first != second) snack(UiText.text(this@MainActivity, R.string.ui_8bbb3165d5), long = true)
@@ -93,17 +93,17 @@ class MainActivity : Activity() {
             }
         }
     }
-    private fun showPinGate() = showPinGate(false)
+    @JvmName("showPinGate") internal fun showPinGate() = showPinGate(false)
     /** Campi segreti a schermo (chiavi, password): finché ce n'è uno, niente screenshot. Prima un campo staccato toglieva la protezione anche con un altro ancora visibile. */
-    private var secretFields = 0
+    internal var secretFields = 0
     /** Unico punto che decide FLAG_SECURE: gate del PIN, chat bloccata in cima o campo segreto a schermo. */
-    private fun updateSecure() {
+    internal fun updateSecure() {
         val on = pinGate != null || chatLocked(stack.lastOrNull()?.chatKey) || (secretFields > 0 && !qaVisible)
         if (on) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
     }
     /** Solo nel pacchetto QA e su richiesta (`--ez qa_visible true`): permette gli screenshot delle pagine con campi segreti per le verifiche visive. Mai sul pacchetto dell'utente. */
-    private val qaVisible get() = packageName.endsWith(".qa") && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 && intent?.getBooleanExtra("qa_visible", false) == true
-    private fun showPinGate(animate: Boolean) {
+    internal val qaVisible get() = packageName.endsWith(".qa") && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 && intent?.getBooleanExtra("qa_visible", false) == true
+    @JvmName("showPinGate") internal fun showPinGate(animate: Boolean) {
         if (!pinEnabled() || pinUnlocked || pinGate != null) return
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) // subito, prima che il gate sia costruito
         if (animate) carryMovingBuddy()
@@ -159,7 +159,7 @@ class MainActivity : Activity() {
             if (pinGate === gate && gate.isAttachedToWindow && source.width > 0) modalFlight(under, gate, source, gateBuddy, 0f) { }.animateTo(1f)
         }
     }
-    private fun securityScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_9729d2de44), context = BuddySceneContext.SECURITY) { col ->
+    internal fun securityScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_9729d2de44), context = BuddySceneContext.SECURITY) { col ->
         col.addView(intro(UiText.text(this@MainActivity, R.string.ui_d683ad2559)))
         col.post { // occhi attenti: scansione sinistra, destra, poi dritto
             cue(null, -24f, 0f, force = true)
@@ -234,7 +234,7 @@ class MainActivity : Activity() {
     override fun onNewIntent(i: Intent) { super.onNewIntent(i); if (i.hasCategory(Intent.CATEGORY_HOME) && isDefaultLauncher()) goHome(); if (gateWanted() && !pinUnlocked) { deferredPinIntent = Intent(i); showPinGate() } else { applyIntent(i); handle(i) }; pinGate?.bringToFront() }
 
     /** Aperture dalle notifiche: suoneria (sveglia/timer) o risposta di una routine. */
-    private fun handle(i: Intent?) {
+    internal fun handle(i: Intent?) {
         i ?: return
         if (gateWanted() && !pinUnlocked) { deferredPinIntent = Intent(i); showPinGate(); return }
         i.data?.takeIf { it.scheme == "r1agents" && it.host == "connect" }?.let { uri ->
@@ -325,7 +325,7 @@ class MainActivity : Activity() {
     }
 
     /** Configurazione da adb (utile sull'R1, senza tastiera): `am start -n dev.r1agents/.MainActivity --es api_key ... [--es provider hermes] [--es model ...]`. */
-    private fun applyIntent(i: Intent?) {
+    internal fun applyIntent(i: Intent?) {
         // Extra di provisioning solo nelle build debuggabili: un’altra app non deve deviare le chiavi API verso un proprio endpoint.
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE == 0) return
         i ?: return
@@ -345,16 +345,16 @@ class MainActivity : Activity() {
 
     // ---- sfondi (look.rs di r1os: plain, tint, gradient, mesh, photo) ---------------------------
 
-    private val palettes = linkedMapOf(
+    internal val palettes = linkedMapOf(
         "sunset" to listOf("#ff8a3d", "#f06aa8", "#6b4cff"), "lagoon" to listOf("#2fc4a8", "#3cc8e0", "#4e6bff"), "aurora" to listOf("#3ddc84", "#8b8cf8", "#1d4ed8"),
         "peach" to listOf("#ffb38a", "#ff6f91", "#ffc75f"), "dusk" to listOf("#4ea1ff", "#b07cf6", "#f06aa8"), "forest" to listOf("#a3d65c", "#2f8f5b", "#f5b83d"),
         "berry" to listOf("#b07cf6", "#f2555a", "#ff8a3d"), "ink" to listOf("#3a4a6b", "#7a5c99", "#1f2a44"))
-    private var bgPick = "glance"
+    internal var bgPick = "glance"
 
-    private fun softPalette(name: String?): List<Int> =
+    internal fun softPalette(name: String?): List<Int> =
         (palettes[name] ?: palettes.getValue("sunset")).map { Theme.mix(Theme.BG, Color.parseColor(it), if (Theme.light) 0.4f else 0.55f) }
 
-    private fun bgDrawable(screen: String): android.graphics.drawable.Drawable {
+    internal fun bgDrawable(screen: String): android.graphics.drawable.Drawable {
         val cols = softPalette(prefs.getString("bgp_$screen", "sunset"))
         return when (prefs.getString("bg_$screen", "plain")) {
             "tint" -> android.graphics.drawable.ColorDrawable(Theme.mix(Theme.BG, Theme.accent, 0.16f))
@@ -367,7 +367,7 @@ class MainActivity : Activity() {
     }
 
     /** Foto scelta: ridotta a 720 px sul lato lungo e salvata in JPEG (qualità 80), per non pesare sul dispositivo. */
-    private fun savePhoto(uri: android.net.Uri, screen: String) {
+    internal fun savePhoto(uri: android.net.Uri, screen: String) {
         val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
         contentResolver.openInputStream(uri)?.use { android.graphics.BitmapFactory.decodeStream(it, null, bounds) }
         var sample = 1; while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= 720) sample *= 2
@@ -380,13 +380,13 @@ class MainActivity : Activity() {
 
     // ---- finestre sopra tutto: richieste di Hermes (approvazioni, chiarimenti), menu comandi, testo libero ---------
 
-    private val overlays = LinkedHashMap<String, View>()
-    private val overlayBack = HashMap<String, () -> Unit>()
+    internal val overlays = LinkedHashMap<String, View>()
+    internal val overlayBack = HashMap<String, () -> Unit>()
 
-    private val sheetClosers = HashMap<String, () -> Unit>()
-    private val overlayRotations = HashMap<String, () -> Unit>()
+    internal val sheetClosers = HashMap<String, () -> Unit>()
+    internal val overlayRotations = HashMap<String, () -> Unit>()
 
-    private fun closeOverlay(id: String) {
+    @JvmName("closeOverlay") internal fun closeOverlay(id: String) {
         if (id.startsWith("req-") && ::hermesRuntime.isInitialized) hermesRuntime.dismissRequest(id.removePrefix("req-"))
         sheetClosers.remove(id)?.let { it(); return }
         val returning = modalBuddyFlight?.takeIf { it.isActive && modalSurface === overlays[id] }
@@ -410,7 +410,7 @@ class MainActivity : Activity() {
     }
 
     /** Una finestra a tutto schermo con titolo e contenuto scorrevole. `back` è ciò che fa il tasto indietro (nega, salta, chiudi). */
-    private fun overlay(id: String, title: String, back: () -> Unit, context: BuddySceneContext? = null, build: (LinearLayout, () -> Unit) -> Unit) {
+    internal fun overlay(id: String, title: String, back: () -> Unit, context: BuddySceneContext? = null, build: (LinearLayout, () -> Unit) -> Unit) {
         if (overlays.containsKey(id)) return
         if (pinGate == null) carryMovingBuddy()
         val under = currentBuddyPage()
@@ -444,7 +444,7 @@ class MainActivity : Activity() {
     // ---- fogli (bottom sheet): un solo componente per menu, scelte e testo libero (vedi DESIGN.md §4) ---------
 
     /** Una voce di un foglio: icona, titolo, aiuto, spunta se selezionata, rosso se distruttiva, sezione opzionale. */
-    private class SheetItem(val label: String, val sub: String? = null, val icon: String? = null, val accent: Int = Theme.accent, val selected: Boolean = false,
+    internal class SheetItem(val label: String, val sub: String? = null, val icon: String? = null, val accent: Int = Theme.accent, val selected: Boolean = false,
                             val danger: Boolean = false, val section: String? = null, val action: () -> Unit)
 
     /**
@@ -452,16 +452,16 @@ class MainActivity : Activity() {
      * sfondo, con il pulsante o con indietro. `then` esegue un'azione quando il foglio e' sparito (cosi' non scatta sopra un foglio che se ne va).
      */
     // ---- buddy compagno: sempre in primo piano nei menu; guarda l'elemento toccato o a fuoco (rotella) e saltella quando lo scegli ----
-    private var companionAgent: Agent? = null
-    private var focusWatch = false
-    private fun attend(cv: CharacterView, v: View) {
+    internal var companionAgent: Agent? = null
+    internal var focusWatch = false
+    internal fun attend(cv: CharacterView, v: View) {
         if (!cv.isAttachedToWindow || !v.isAttachedToWindow || v === cv) return
         val a = IntArray(2); cv.getLocationInWindow(a); val b = IntArray(2); v.getLocationInWindow(b)
         val dx = ((b[0] + v.width / 2f) - (a[0] + cv.width / 2f)) / (root.width.coerceAtLeast(1) / 2f)
         val dy = ((b[1] + v.height / 2f) - (a[1] + cv.height / 2f)) / (root.height.coerceAtLeast(1) / 2f)
         cv.lookAt((dx * 30f).coerceIn(-26f, 26f), (dy * 22f).coerceIn(-14f, 18f), hold = 1400)
     }
-    private fun companion(size: Float, agent: Agent? = companionAgent ?: visibleAgents().firstOrNull() ?: db.agents().firstOrNull()): CharacterView? {
+    internal fun companion(size: Float, agent: Agent? = companionAgent ?: visibleAgents().firstOrNull() ?: db.agents().firstOrNull()): CharacterView? {
         val a = agent ?: neutralBuddy
         val cv = CharacterView(this, dpi(size)).also { it.show(a); it.tag = "scene-buddy" }
         Motion.onAttention = { v -> attend(cv, v) }
@@ -477,14 +477,14 @@ class MainActivity : Activity() {
         return cv
     }
     /** Il buddy grande a meta' pagina: il suo corpo occupa circa la meta' del riquadro, quindi il riquadro sporge sopra e sotto la riga (senza ritagli). */
-    private fun companionRow(size: Float = 140f): View? = companion(size)?.let { cv ->
+    internal fun companionRow(size: Float = 140f): View? = companion(size)?.let { cv ->
         FrameLayout(this).apply { tag = "scene-companion-row"; clipChildren = false; clipToPadding = false; addView(cv, FrameLayout.LayoutParams(dpi(size), dpi(size), Gravity.CENTER))
             // Ogni tanto fa capolino da solo, ma mai nel pacchetto QA, mentre sprofonda nello scroll, offeso o in volo.
             if (!packageName.endsWith(".qa")) BuddyEntrances.scheduleIdlePeeks(this) { visible && cv.scaleX > .99f && cv.alpha > .99f && !BuddyMood.sulking() && buddyFlight?.isActive != true && modalBuddyFlight?.isActive != true }
         }
     }
 
-    private fun sheetPanel(title: String, subtitle: String? = null, searchHint: String? = null, peek: Agent? = null, build: (col: LinearLayout, close: () -> Unit, then: (() -> Unit) -> Unit) -> Unit) {
+    internal fun sheetPanel(title: String, subtitle: String? = null, searchHint: String? = null, peek: Agent? = null, build: (col: LinearLayout, close: () -> Unit, then: (() -> Unit) -> Unit) -> Unit) {
         val id = "sheet-" + System.nanoTime()
         carryMovingBuddy()
         val under = currentBuddyPage()
@@ -642,7 +642,7 @@ class MainActivity : Activity() {
     }
 
     /** Un foglio di scelte: icona, aiuto, spunta, sezioni, voci distruttive in fondo in rosso; ricerca sopra le 8 voci. */
-    private fun sheetOf(title: String, items: List<SheetItem>, subtitle: String? = null, search: Boolean = items.size > 12) {
+    internal fun sheetOf(title: String, items: List<SheetItem>, subtitle: String? = null, search: Boolean = items.size > 12) {
         sheetPanel(title, subtitle, if (search) UiText.text(this, R.string.ui_2060f21a0f) else null) { col, _, then ->
             var lastSection: String? = null; var dangerStarted = false
             items.sortedBy { if (it.danger) 1 else 0 }.forEach { it ->
@@ -654,10 +654,10 @@ class MainActivity : Activity() {
     }
 
     /** Compatibilita': un elenco di (voce, azione) con icone opzionali e voci distruttive opzionali. */
-    private fun sheet(title: String, rows: List<Pair<String, () -> Unit>>, icons: Map<String, String> = emptyMap(), danger: Set<String> = emptySet()) =
+    internal fun sheet(title: String, rows: List<Pair<String, () -> Unit>>, icons: Map<String, String> = emptyMap(), danger: Set<String> = emptySet()) =
         sheetOf(title, rows.map { (label, act) -> SheetItem(label, icon = icons[label], danger = label in danger, action = act) })
 
-    private fun askText(title: String, hint: String, onOk: (String) -> Unit) {
+    internal fun askText(title: String, hint: String, onOk: (String) -> Unit) {
         sheetPanel(title) { col, close, then ->
             val f = field(hint, "").apply { imeOptions = EditorInfo.IME_ACTION_DONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI }
             col.addView(f, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(4f) })
@@ -669,7 +669,7 @@ class MainActivity : Activity() {
     }
 
     /** Una domanda di Hermes: consenti o nega un comando (`approval`), oppure una o più domande dell'agente (`clarify`). */
-    private fun showRequest(r: HermesDash.SrvRequest) {
+    @JvmName("showRequest") internal fun showRequest(r: HermesDash.SrvRequest) {
         voiceConversation?.pauseForDialog()
         val id = "req-" + r.id
         root.postDelayed({ cue("surprised", force = true) }, Motion.SLOW * 2) // chiede attenzione
@@ -725,7 +725,7 @@ class MainActivity : Activity() {
     // ---- Hermes: agenti = profili, chat = sessioni, cronologia letta da Hermes -----------------------
 
     /** Le notifiche si chiedono nel momento in cui servono (primo messaggio, sveglia, timer) e una volta sola: non all'apertura, davanti a una home vuota. */
-    private fun askNotificationsOnce() {
+    internal fun askNotificationsOnce() {
         if (android.os.Build.VERSION.SDK_INT < 33 || prefs.getBoolean("asked_notifications", false)) return
         if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) return
         prefs.edit().putBoolean("asked_notifications", true).apply()
@@ -734,14 +734,14 @@ class MainActivity : Activity() {
 
     // ---- messaggi brevi nello stile dell'app (al posto dei Toast di sistema) -----------------------
 
-    private var snackView: TextView? = null
-    private val snackHide = Runnable {
+    internal var snackView: TextView? = null
+    internal val snackHide = Runnable {
         val v = snackView ?: return@Runnable
         v.animate().alpha(0f).translationY(dp(18f)).setDuration(Motion.BASE).withEndAction { root.removeView(v); if (snackView === v) snackView = null }.start()
     }
     /** Un messaggio breve in basso: pillola chiara sul tema scuro (e scura sul chiaro), con ingresso a molla; sparisce da sola. */
     /** Errore in parole semplici: causa nota se riconosciuta, altrimenti il messaggio originale. */
-    private fun errorText(e: Throwable): String = when (ErrorKind.of(e)) {
+    internal fun errorText(e: Throwable): String = when (ErrorKind.of(e)) {
         ErrorKind.KEY -> UiText.text(this, R.string.ui_6503aaa0d4)
         ErrorKind.NETWORK -> UiText.text(this, R.string.ui_db32442bd0)
         ErrorKind.TIMEOUT -> UiText.text(this, R.string.ui_423e5043b2)
@@ -751,13 +751,13 @@ class MainActivity : Activity() {
         ErrorKind.OTHER -> UiText.message(this, e.message) ?: UiText.text(this, R.string.ui_00ea95d6d1)
     }
 
-    private fun copyText(t: String) {
+    internal fun copyText(t: String) {
         (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("codice", t))
         snack(UiText.text(this, R.string.ui_b6ec5021d5))
     }
 
     /** Esegue [f] quando la vista e' in finestra: un risultato (o un errore) che arriva prima dell'ingresso della pagina non va perso. */
-    private fun whenAttached(v: View, f: () -> Unit) {
+    internal fun whenAttached(v: View, f: () -> Unit) {
         if (v.isAttachedToWindow) { f(); return }
         v.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
             override fun onViewAttachedToWindow(x: View) { v.removeOnAttachStateChangeListener(this); f() }
@@ -765,16 +765,16 @@ class MainActivity : Activity() {
         })
     }
 
-    private var armedKey: String? = null
-    private var armedAt = 0L
+    internal var armedKey: String? = null
+    internal var armedAt = 0L
     /** Azione distruttiva: il primo tocco avvisa, il secondo entro 4 secondi la esegue. */
-    private fun confirmTap(key: String, act: () -> Unit) {
+    internal fun confirmTap(key: String, act: () -> Unit) {
         val now = android.os.SystemClock.uptimeMillis()
         if (armedKey == key && now - armedAt < 4000) { armedKey = null; act() }
         else { armedKey = key; armedAt = now; snack(UiText.text(this, R.string.ui_af2b0de88b)) }
     }
 
-    private fun snack(message: String?, long: Boolean = false) {
+    internal fun snack(message: String?, long: Boolean = false) {
         val text = message?.takeIf { it.isNotBlank() } ?: return
         root.post {
             root.removeCallbacks(snackHide); snackView?.let { root.removeView(it) }
@@ -790,11 +790,11 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun hermesMode() = settings.provider.id == "dashboard"
-    private fun visibleAgents(): List<Agent> = db.agents().filter { if (hermesMode()) it.profile.isNotEmpty() else it.profile.isEmpty() }
+    internal fun hermesMode() = settings.provider.id == "dashboard"
+    internal fun visibleAgents(): List<Agent> = db.agents().filter { if (hermesMode()) it.profile.isNotEmpty() else it.profile.isEmpty() }
 
     /** Legge i profili da Hermes e li rispecchia come agenti (l'aspetto resta locale e dipende dal nome). */
-    private fun syncProfiles(scope: Scope, error: (String) -> Unit, done: () -> Unit) {
+    internal fun syncProfiles(scope: Scope, error: (String) -> Unit, done: () -> Unit) {
         Io.run {
             try {
                 val forms = CharacterView.FORMS; val colors = Theme.COLORS.keys.toList()
@@ -810,12 +810,12 @@ class MainActivity : Activity() {
     }
 
     /** Legge le sessioni di un profilo e le rispecchia come chat (bloccante: da un thread). */
-    private fun syncSessions(a: Agent) {
+    internal fun syncSessions(a: Agent) {
         for (s in dash.sessions(a.profile)) db.upsertChat(a.id, s.id, s.title.ifBlank { s.preview }.replace('\n', ' ').take(60).ifBlank { "chat" }, s.startedAt, s.count)
         sessionSyncAt[a.id] = System.currentTimeMillis()
     }
 
-    private fun loadingScreen(a: Agent, t: String): Screen {
+    internal fun loadingScreen(a: Agent, t: String): Screen {
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
         val loadingBuddy = CharacterView(this, dpi(92f)).also { it.show(a, "thinking") }
         col.addView(loadingBuddy)
@@ -824,7 +824,7 @@ class MainActivity : Activity() {
         return Screen(page(col), buddyContext = BuddySceneContext.LIVE)
     }
 
-    private fun replaceTop(s: Screen) {
+    @JvmName("replaceTop") internal fun replaceTop(s: Screen) {
         carryMovingBuddy(); cancelBuddyFlight()
         val visibleSource = visibleSceneScreen()
         val old = stack.removeAt(stack.size - 1)
@@ -856,7 +856,7 @@ class MainActivity : Activity() {
     }
 
     /** Apre una chat; se è di Hermes ne legge prima la cronologia dal dashboard. */
-    private fun openChat(a: Agent, chatId: Long, say: String? = null, share: Share? = null) {
+    internal fun openChat(a: Agent, chatId: Long, say: String? = null, share: Share? = null) {
         if (hermesRuntime.active(chatId) != null) { push(chat(a, chatId, say, share)); return }
         val hsid = db.hsid(chatId)
         if (!(hermesMode() && a.profile.isNotEmpty() && hsid.isNotEmpty())) { push(chat(a, chatId, say, share)); return }
@@ -897,13 +897,13 @@ class MainActivity : Activity() {
     }
 
     /** Impronta del contenuto locale di una chat (ultimi messaggi): serve a capire se la rilettura da Hermes ha cambiato qualcosa. */
-    private fun chatSignature(chatId: Long): String = db.messagesPage(chatId, 3, null).joinToString("|") { it.second + it.third.hashCode() }
-    private val sessionSyncAt = HashMap<Long, Long>()
+    internal fun chatSignature(chatId: Long): String = db.messagesPage(chatId, 3, null).joinToString("|") { it.second + it.third.hashCode() }
+    internal val sessionSyncAt = HashMap<Long, Long>()
     /** Aperture in corso (id chat, o -id agente): un doppio tocco apriva due chat una sopra l'altra. */
-    private val opening = HashSet<Long>()
+    internal val opening = HashSet<Long>()
 
     /** L'ultima chat dell'agente (per gli agenti di Hermes: dopo aver riletto le sessioni). */
-    private fun openLatest(a: Agent, say: String? = null, share: Share? = null) {
+    internal fun openLatest(a: Agent, say: String? = null, share: Share? = null) {
         if (!(hermesMode() && a.profile.isNotEmpty())) { push(chat(a, db.lastChat(a.id) ?: db.newChat(a.id), say, share)); return }
         // Sessioni lette da poco: si apre subito l'ultima chat nota e l'elenco si aggiorna in secondo piano.
         val known = db.lastChat(a.id)
@@ -927,7 +927,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun removeChat(agent: Agent, id: Long, done: () -> Unit = {}) {
+    internal fun removeChat(agent: Agent, id: Long, done: () -> Unit = {}) {
         if (hermesRuntime.active(id) != null) { snack(UiText.text(this@MainActivity, R.string.ui_8bd1630032), long = true); return }
         val hs = db.hsid(id)
         if (hs.isEmpty() || agent.profile.isEmpty()) { dash.forget(id); db.deleteChat(id); done(); return }
@@ -939,16 +939,16 @@ class MainActivity : Activity() {
     }
 
     /** La prima schermata: Glance (orologio) o la home, come scelto in Aspetto. */
-    private var rootProvider = ""
-    private fun root(): Screen { rootProvider = settings.provider.id; return rootScreen() }
-    private fun rootScreen(): Screen = if (prefs.getString("start", "home") == "glance") glance() else home()
+    internal var rootProvider = ""
+    internal fun root(): Screen { rootProvider = settings.provider.id; return rootScreen() }
+    internal fun rootScreen(): Screen = if (prefs.getString("start", "home") == "glance") glance() else home()
 
     // ---- navigazione ----------------------------------------------------------------------------
 
-    private fun detach(v: View) { v.animate().cancel(); v.setLayerType(View.LAYER_TYPE_NONE, null); (v.parent as? ViewGroup)?.removeView(v); v.alpha = 1f; v.translationX = 0f; v.translationY = 0f; v.scaleX = 1f; v.scaleY = 1f }
+    internal fun detach(v: View) { v.animate().cancel(); v.setLayerType(View.LAYER_TYPE_NONE, null); (v.parent as? ViewGroup)?.removeView(v); v.alpha = 1f; v.translationX = 0f; v.translationY = 0f; v.scaleX = 1f; v.scaleY = 1f }
 
     /** Avanti: la nuova schermata entra da destra mentre la vecchia scivola un poco a sinistra e sfuma. */
-    private fun applySceneContext(screen: Screen?, force: Boolean = false) {
+    internal fun applySceneContext(screen: Screen?, force: Boolean = false) {
         if (screen == null || screen.isChat || screen.buddyContext == BuddySceneContext.LIVE) return
         val buddy = sceneAvatar(screen.view, companionAgent?.id) ?: return
         if (!force && screen.posedBuddy === buddy) return
@@ -963,61 +963,61 @@ class MainActivity : Activity() {
             }
         }.also { buddy.postDelayed(it, 1800L) }
     }
-    private fun cancelPendingEntry(screen: Screen?) {
+    internal fun cancelPendingEntry(screen: Screen?) {
         screen?.pendingEntry?.let { if (screen.view.viewTreeObserver.isAlive) screen.view.viewTreeObserver.removeOnPreDrawListener(it) }
         screen?.pendingEntry = null
     }
-    private fun visibleSceneScreen(): Screen? = stack.asReversed().firstOrNull { it.view.parent === root && it.view.alpha > .01f } ?: stack.lastOrNull()
-    private fun showScreen(screen: Screen) { screen.onShow?.invoke(); applySceneContext(screen, true) }
+    internal fun visibleSceneScreen(): Screen? = stack.asReversed().firstOrNull { it.view.parent === root && it.view.alpha > .01f } ?: stack.lastOrNull()
+    @JvmName("showScreen") internal fun showScreen(screen: Screen) { screen.onShow?.invoke(); applySceneContext(screen, true) }
 
-    private fun runtimeVisibility() {
+    @JvmName("runtimeVisibility") internal fun runtimeVisibility() {
         applySceneContext(stack.lastOrNull())
         updateSecure()
         if (::hermesRuntime.isInitialized) { hermesRuntime.foreground = visible; hermesRuntime.visibleChat = if (visible) { if (voiceConversation != null) voiceConversation?.visibleChatId else stack.lastOrNull()?.chatKey } else null }
     }
     /** Quanto arretra la pagina sotto (parallasse) e quanto si scurisce mentre quella nuova scorre sopra. */
-    private val parallax = 0.28f
-    private val dimmed = 0.5f
-    private fun pageWidth() = root.width.toFloat().takeIf { it > 0f } ?: dp(320f)
+    internal val parallax = 0.28f
+    internal val dimmed = 0.5f
+    internal fun pageWidth() = root.width.toFloat().takeIf { it > 0f } ?: dp(320f)
 
     // ---- trasformazione condivisa: l'avatar della home vola nell'intestazione della chat (la pagina si dissolve, non scorre) ----
-    private class Hero(val cx: Float, val cy: Float, val size: Int, val agent: Agent)
-    private var hero: Hero? = null
+    internal class Hero(val cx: Float, val cy: Float, val size: Int, val agent: Agent)
+    internal var hero: Hero? = null
 
-    private fun findAvatar(v: View, size: Int): CharacterView? {
+    internal fun findAvatar(v: View, size: Int): CharacterView? {
         if (v is CharacterView && v.width == size) return v
         if (v is ViewGroup) for (i in 0 until v.childCount) findAvatar(v.getChildAt(i), size)?.let { return it }
         return null
     }
 
-    private var carriedBuddy: CharacterView? = null
-    private var modalSurface: View? = null
-    private var modalBuddyFlight: BuddyFlight? = null
-    private var modalCarryCleanup: (() -> Unit)? = null
-    private var modalSourceBuddy: CharacterView? = null
-    private val heldBuddies = LinkedHashSet<CharacterView>()
+    internal var carriedBuddy: CharacterView? = null
+    internal var modalSurface: View? = null
+    internal var modalBuddyFlight: BuddyFlight? = null
+    internal var modalCarryCleanup: (() -> Unit)? = null
+    internal var modalSourceBuddy: CharacterView? = null
+    internal val heldBuddies = LinkedHashSet<CharacterView>()
 
-    private fun holdBuddy(view: CharacterView) { heldBuddies.add(view); view.alpha = 0f; view.visibility = View.INVISIBLE; view.setActive(false) }
+    internal fun holdBuddy(view: CharacterView) { heldBuddies.add(view); view.alpha = 0f; view.visibility = View.INVISIBLE; view.setActive(false) }
     /**
      * Rete di sicurezza contro i buddy doppi: a riposo (nessun volo, nessuna scheda aperta, nessuna entrata in attesa) un clone
      * "buddy-flight"/"buddy-carry" rimasto in root, o un carriedBuddy che nessuno ha rilasciato, e' un fantasma. Si toglie solo se
      * lo stesso stato si ripete per due controlli di fila, per non toccare un passaggio di mano legittimo.
      */
-    private var laneKick: android.view.ViewTreeObserver.OnPreDrawListener? = null
-    private var laneKickHost: View? = null
-    private fun cancelLaneKick() {
+    internal var laneKick: android.view.ViewTreeObserver.OnPreDrawListener? = null
+    internal var laneKickHost: View? = null
+    internal fun cancelLaneKick() {
         val k = laneKick; val h = laneKickHost
         if (k != null && h != null && h.viewTreeObserver.isAlive) h.viewTreeObserver.removeOnPreDrawListener(k)
         laneKick = null; laneKickHost = null
     }
-    private var orphanTicks = 0
-    private val buddyReaper = object : Runnable {
+    internal var orphanTicks = 0
+    internal val buddyReaper = object : Runnable {
         override fun run() {
             reapOrphanBuddies()
             if (visible) root.postDelayed(this, 1200L)
         }
     }
-    private fun reapOrphanBuddies() {
+    internal fun reapOrphanBuddies() {
         val resting = overlays.isEmpty() && buddyFlight?.isActive != true && modalBuddyFlight?.isActive != true && stack.lastOrNull()?.pendingEntry == null && pttView == null
         val ghosts = ArrayList<View>()
         for (i in 0 until root.childCount) {
@@ -1030,18 +1030,18 @@ class MainActivity : Activity() {
         ghosts.forEach { heldBuddies.remove(it); root.removeView(it) }
         if (carriedBuddy != null) clearCarriedBuddy() else if (heldBuddies.isNotEmpty()) restoreBuddies()
     }
-    private fun restoreBuddies() {
+    internal fun restoreBuddies() {
         if (overlays.isNotEmpty()) return   // sotto una scheda aperta i buddy restano nascosti: li riaccende la chiusura
         val current = currentBuddyPage()?.let { sceneAvatar(it, companionAgent?.id) }
         heldBuddies.forEach { it.visibility = View.VISIBLE; it.alpha = 1f; it.setActive(visible && it === current) }; heldBuddies.clear()
         current?.let { cv -> cv.setActive(visible); Motion.onAttention = { view -> attend(cv, view) } }
     }
-    private fun clearCarriedBuddy(restore: Boolean = true) {
+    internal fun clearCarriedBuddy(restore: Boolean = true) {
         carriedBuddy?.let { heldBuddies.remove(it); root.removeView(it) }; carriedBuddy = null
         if (restore) restoreBuddies()
     }
     /** Un nuovo gesto prende il personaggio dove si trova, senza farlo tornare per un frame all'anchor. */
-    private fun carryMovingBuddy() {
+    internal fun carryMovingBuddy() {
         val flight = modalBuddyFlight?.takeIf { it.isActive } ?: buddyFlight?.takeIf { it.isActive } ?: return
         val modal = flight === modalBuddyFlight
         clearCarriedBuddy(restore = false)
@@ -1062,14 +1062,14 @@ class MainActivity : Activity() {
         carriedBuddy = actor; actor.alpha = 1f; actor.bringToFront(); pinGate?.bringToFront()
         cleanup?.invoke()
     }
-    private fun currentBuddyPage(): View? = overlays.values.lastOrNull() ?: pttView ?: stack.lastOrNull()?.view
+    internal fun currentBuddyPage(): View? = overlays.values.lastOrNull() ?: pttView ?: stack.lastOrNull()?.view
 
-    private var lastCueAt = 0L
+    internal var lastCueAt = 0L
     /**
      * Un gesto del buddy della pagina corrente legato a un evento: prima guarda dove serve (`dx`,`dy`), poi reagisce (`kind`).
      * Rispetta animazioni ridotte, broncio, voli in corso e intero/visibile; al massimo uno ogni 2×SLOW (salvo `force`).
      */
-    private fun cue(kind: String?, dx: Float = 0f, dy: Float = 0f, force: Boolean = false) {
+    internal fun cue(kind: String?, dx: Float = 0f, dy: Float = 0f, force: Boolean = false) {
         if (Motion.reduced(this) || BuddyMood.sulking() || buddyFlight?.isActive == true || modalBuddyFlight?.isActive == true || !visible) return
         val now = android.os.SystemClock.uptimeMillis()
         if (!force && now - lastCueAt < Motion.SLOW * 2) return
@@ -1079,7 +1079,7 @@ class MainActivity : Activity() {
         if (dx != 0f || dy != 0f) cv.lookAt(dx, dy, hold = Motion.SLOW)
         kind?.let { cv.react(it) }
     }
-    private fun carryBuddy(anchor: CharacterView, flight: BuddyFlight? = null) {
+    internal fun carryBuddy(anchor: CharacterView, flight: BuddyFlight? = null) {
         clearCarriedBuddy(restore = false)
         val actor = if (flight?.isActive == true) flight.takeActor().also { flight.leftHidden.forEach(::holdBuddy) } else {
             val matrix = android.graphics.Matrix(); anchor.transformMatrixToGlobal(matrix); root.transformMatrixToLocal(matrix)
@@ -1095,7 +1095,7 @@ class MainActivity : Activity() {
         }
         holdBuddy(anchor); carriedBuddy = actor; actor.alpha = 1f; actor.bringToFront(); pinGate?.bringToFront()
     }
-    private fun cancelModalBuddyFlight(restoreSource: Boolean = true) {
+    internal fun cancelModalBuddyFlight(restoreSource: Boolean = true) {
         val flight = modalBuddyFlight
         val cleanup = modalCarryCleanup
         val source = modalSourceBuddy
@@ -1105,7 +1105,7 @@ class MainActivity : Activity() {
         if (restore) source?.let { heldBuddies.remove(it) }
         cleanup?.invoke()
     }
-    private fun modalFlight(under: View, surface: View, source: CharacterView, target: CharacterView, initial: Float, onCarry: (() -> Unit)? = null, done: () -> Unit): BuddyFlight {
+    internal fun modalFlight(under: View, surface: View, source: CharacterView, target: CharacterView, initial: Float, onCarry: (() -> Unit)? = null, done: () -> Unit): BuddyFlight {
         cancelModalBuddyFlight(restoreSource = false)
         holdBuddy(source)
         val flight = BuddyFlight(root, under, surface, source, target, initial, fadePages = false,
@@ -1122,18 +1122,18 @@ class MainActivity : Activity() {
         modalBuddyFlight = flight; modalCarryCleanup = onCarry; modalSourceBuddy = source; modalSurface = surface; pinGate?.bringToFront(); if (surface === pinGate) flight.bringActorToFront(); return flight
     }
 
-    private var buddyFlight: BuddyFlight? = null
-    private var flightChat: Screen? = null
-    private var flightHome: Screen? = null
+    internal var buddyFlight: BuddyFlight? = null
+    internal var flightChat: Screen? = null
+    internal var flightHome: Screen? = null
 
-    private fun cancelBuddyFlight() {
+    internal fun cancelBuddyFlight() {
         buddyFlight?.dispose(); buddyFlight = null
         flightHome?.let { if (stack.lastOrNull() !== it) detach(it.view) }
         flightChat?.let { if (it !in stack) detach(it.view) }
         flightHome = null; flightChat = null
     }
 
-    private fun sceneAvatar(view: View, agentId: Long? = null): CharacterView? {
+    @JvmName("sceneAvatar") internal fun sceneAvatar(view: View, agentId: Long? = null): CharacterView? {
         view.findViewWithTag<CharacterView>("scene-buddy")?.let { return it }
         if (view.tag == "home-screen") {
             // Su una pagina del carosello (fotocamera, app, strumenti…) il buddy che si vede è quello della pagina, non quello della rotella nascosto sotto: i voli devono partire e arrivare lì.
@@ -1147,7 +1147,7 @@ class MainActivity : Activity() {
         return first(view)
     }
 
-    private fun prepareBuddyFlight(chat: Screen, home: Screen, initial: Float): BuddyFlight? {
+    internal fun prepareBuddyFlight(chat: Screen, home: Screen, initial: Float): BuddyFlight? {
         if (flightChat === chat && flightHome === home) return buddyFlight
         cancelBuddyFlight()
         modalBuddyFlight?.takeIf { it.isActive && carriedBuddy == null }?.let { cancelModalBuddyFlight(restoreSource = false) }   // un solo clone in volo
@@ -1178,10 +1178,10 @@ class MainActivity : Activity() {
         return flight
     }
 
-    private fun isDescendant(parent: View, child: View): Boolean { var p: android.view.ViewParent? = child.parent; while (p != null) { if (p === parent) return true; p = p.parent }; return false }
+    internal fun isDescendant(parent: View, child: View): Boolean { var p: android.view.ViewParent? = child.parent; while (p != null) { if (p === parent) return true; p = p.parent }; return false }
 
     /** Il rettangolo (nel root) dell'elemento appena toccato, se appartiene alla schermata in cima e il tocco e' recente: la nuova pagina nasce da li'. */
-    private fun tapOrigin(): android.graphics.RectF? {
+    internal fun tapOrigin(): android.graphics.RectF? {
         val v = Motion.lastTap?.get() ?: return null
         val top = stack.lastOrNull()?.view ?: return null
         if (android.os.SystemClock.uptimeMillis() - Motion.lastTapAt > 900 || !v.isAttachedToWindow || v.width == 0 || !isDescendant(top, v)) return null
@@ -1190,10 +1190,10 @@ class MainActivity : Activity() {
     }
 
     /** Scala (uniforme: il testo non si deforma) con cui una pagina intera si riduce per coincidere con l'elemento da cui nasce. */
-    private fun originScale(o: android.graphics.RectF) = (o.width() / pageWidth()).coerceIn(0.35f, 0.96f)
+    internal fun originScale(o: android.graphics.RectF) = (o.width() / pageWidth()).coerceIn(0.35f, 0.96f)
 
     /** Avanti: la nuova pagina (opaca) scorre da destra; quella sotto arretra del 28% e si scurisce. Interrompibile: riparte dai valori correnti. */
-    private fun push(s: Screen, fade: Boolean = false) {
+    @JvmName("push") internal fun push(s: Screen, fade: Boolean = false) {
         if (stack.lastOrNull()?.isVoice == true && !s.isVoice) { replaceTop(s); return }
         carryMovingBuddy()
         cancelBuddyFlight()
@@ -1258,7 +1258,7 @@ class MainActivity : Activity() {
     }
 
     /** Indietro: la pagina sotto torna al suo posto mentre quella in cima esce a destra (se il gesto e' partito dal bordo, riprende da dove l'ha lasciata il dito). */
-    private fun pop(fromDrag: Boolean = false) {
+    internal fun pop(fromDrag: Boolean = false) {
         if (stack.size <= 1) return
         hideKeyboard()
         val s = stack.removeAt(stack.size - 1); cancelPendingEntry(s); s.scope.alive = false
@@ -1313,9 +1313,9 @@ class MainActivity : Activity() {
     }
 
     /** Tasto laterale: una pressione tenuta = parla finché tieni; doppia pressione = parla senza tenere, si ferma alla pressione successiva. */
-    private var pttLatched = false
-    private var pttIgnoreUp = false
-    private var pttLastUp = 0L
+    internal var pttLatched = false
+    internal var pttIgnoreUp = false
+    internal var pttLastUp = 0L
     override fun dispatchKeyEvent(e: KeyEvent): Boolean {
         if (pinGate != null) return super.dispatchKeyEvent(e)
         Dim.poke()
@@ -1351,15 +1351,15 @@ class MainActivity : Activity() {
         return super.dispatchKeyEvent(e)
     }
 
-    private fun page(content: View, pad: Int = 14) = FrameLayout(this).apply {
+    internal fun page(content: View, pad: Int = 14) = FrameLayout(this).apply {
         clipChildren = false; clipToPadding = false
         defaultFocusHighlightEnabled = false
         setBackgroundColor(Theme.BG); setPadding(dpi(pad.toFloat()), dpi(10f), dpi(pad.toFloat()), dpi(8f)); addView(content, -1, -1)
     }
 
-    private fun pill(label: String, accent: Int, onClick: () -> Unit): TextView = button(label, accent, small = true, onClick = onClick)
+    internal fun pill(label: String, accent: Int, onClick: () -> Unit): TextView = button(label, accent, small = true, onClick = onClick)
 
-    private fun field(hint: String, value: String, multi: Boolean = false, secret: Boolean = false) = EditText(this).apply {
+    @JvmName("field") internal fun field(hint: String, value: String, multi: Boolean = false, secret: Boolean = false) = EditText(this).apply {
         setText(value); setHint(hint); setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 17f)
         typeface = Theme.font(500); setTextColor(Theme.FG); setHintTextColor(Theme.MUTED)
         background = roundRect(Theme.FOCUS, dp(14f)); setPadding(dpi(14f), dpi(12f), dpi(14f), dpi(12f)); minHeight = dpi(50f)
@@ -1377,22 +1377,22 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun hideKeyboard() { (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).hideSoftInputFromWindow(window.decorView.windowToken, 0) }
+    internal fun hideKeyboard() { (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).hideSoftInputFromWindow(window.decorView.windowToken, 0) }
 
 
     // ---- home: un agente alla volta, la rotella li gira -----------------------------------------
 
     /** Una pagina del carosello della home: nome, ruolo e personaggio (o il cerchio "nuovo"). */
-    private class HomeSlide(val v: LinearLayout, val body: View, val avatar: CharacterView?) {
+    internal class HomeSlide(val v: LinearLayout, val body: View, val avatar: CharacterView?) {
         val sq = dev.r1os.host.ui.Spring { x -> body.pivotX = body.width / 2f; body.pivotY = body.height.toFloat(); body.scaleY = 1f - x; body.scaleX = 1f + x * 0.5f }
         fun land() { sq.snapTo(0.07f); sq.animateTo(0f, 320f, 0.4f) }
     }
 
     /** In home, dentro una funzione del carosello Indietro (o il tasto della rotella) torna all'agente. */
-    private var homeLaneBack: (() -> Boolean)? = null
-    private var welcomeChecked = false
+    internal var homeLaneBack: (() -> Boolean)? = null
+    internal var welcomeChecked = false
     /** Primo avvio: una sola volta, se non c'è ancora un fornitore configurato, propone da dove cominciare. */
-    private fun maybeWelcome() {
+    internal fun maybeWelcome() {
         if (welcomeChecked) return
         welcomeChecked = true
         if ((packageName.endsWith(".qa") && !intent.getBooleanExtra("qa_welcome", false)) || prefs.getBoolean("welcomed", false)) return
@@ -1405,7 +1405,7 @@ class MainActivity : Activity() {
             UiText.text(this, R.string.ui_bc159b0503) to {}))
     }
 
-    private fun home(): Screen {
+    internal fun home(): Screen {
         val scope = Scope()
         window.decorView.postDelayed({ if (scope.alive) maybeWelcome() }, 1200)
         var stopHomeState: (() -> Unit)? = null
@@ -1863,7 +1863,7 @@ class MainActivity : Activity() {
     // ---- chat -----------------------------------------------------------------------------------
 
     /** Scelta del modello di una chat Hermes: prima il fornitore, poi il modello (da `model.options`). */
-    private fun pickModel(agent: Agent, chatId: Long, say: (String) -> Unit) {
+    internal fun pickModel(agent: Agent, chatId: Long, say: (String) -> Unit) {
         snack(UiText.text(this@MainActivity, R.string.ui_ead8aeac15))
         Io.run {
             val rows = try { dash.models(agent.profile) } catch (e: Exception) { runOnUiThread { snack(errorText(e), long = true) }; return@run }
@@ -1885,7 +1885,7 @@ class MainActivity : Activity() {
     }
 
     // Una scheda dell'agente (show_card): barra del colore a sinistra, titolo e testo in markdown su fondo scuro.
-    private fun cardView(agent: Agent, c: org.json.JSONObject): View {
+    internal fun cardView(agent: Agent, c: org.json.JSONObject): View {
         val col = Theme.colorOf(c.optString("color").ifBlank { agent.color })
         val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dpi(14f), dpi(12f), dpi(14f), dpi(14f)) }
         body.addView(text(20f, 800).keepCase().apply { text = c.optString("title"); letterSpacing = -0.01f })
@@ -1897,7 +1897,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun chat(agent: Agent, chatId: Long, say: String? = null, share: Share? = null, observeHsid: String? = null): Screen {
+    internal fun chat(agent: Agent, chatId: Long, say: String? = null, share: Share? = null, observeHsid: String? = null): Screen {
         val chatScope = Scope()
         var engine: Engine? = null
         var stopTaskWatch: (() -> Unit)? = null
@@ -2417,23 +2417,23 @@ class MainActivity : Activity() {
     }
 
     /** Il microfono scelto in Aspetto e voce: Groq Whisper (se c'è la chiave) o il riconoscimento del dispositivo. */
-    private var qaMicrophone: (((String) -> Unit, (String) -> Unit, (String?) -> Unit) -> Mic)? = null
-    private fun newMic(onStatus: (String) -> Unit, onFinal: (String) -> Unit, onEnd: (String?) -> Unit): Mic {
+    internal var qaMicrophone: (((String) -> Unit, (String) -> Unit, (String?) -> Unit) -> Mic)? = null
+    internal fun newMic(onStatus: (String) -> Unit, onFinal: (String) -> Unit, onEnd: (String?) -> Unit): Mic {
         if (packageName.endsWith(".qa") && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) qaMicrophone?.let { return it(onStatus, onFinal, onEnd) }
         return Mics.create(this, prefs, onStatus, onFinal, onEnd)
     }
 
     // ---- pannello vocale (VoiceOverlay di r1os, semplificato): tieni premuto il pulsante e parla -----
 
-    private var pttView: FrameLayout? = null
-    private var voiceConversation: VoiceConversation? = null
+    internal var pttView: FrameLayout? = null
+    internal var voiceConversation: VoiceConversation? = null
 
-    private var closingVoice = false
-    private var homeVoiceGesture = false
-    private var drainingHomeVoiceTouch = false
-    private var homeVoiceStartY = 0f
+    internal var closingVoice = false
+    internal var homeVoiceGesture = false
+    internal var drainingHomeVoiceTouch = false
+    internal var homeVoiceStartY = 0f
 
-    private fun pttStart() {
+    internal fun pttStart() {
         voiceConversation?.let { it.startListening(); return }
         val agent = visibleAgents().getOrNull(homeIndex) ?: return
         val mode = VoiceConversation(this, agent, hermesMode(), resolveChat = {
@@ -2443,7 +2443,7 @@ class MainActivity : Activity() {
         presentVoice(mode)
     }
 
-    private fun presentVoice(mode: VoiceConversation) {
+    @JvmName("presentVoice") internal fun presentVoice(mode: VoiceConversation) {
         voiceConversation = mode; pttView = mode
         val screen = Screen(mode, buddyContext = BuddySceneContext.LIVE, isVoice = true, onLeave = {
             mode.dispose(); homeVoiceGesture = false
@@ -2453,9 +2453,9 @@ class MainActivity : Activity() {
         runtimeVisibility(); mode.startListening()
     }
 
-    private fun pttStop() { voiceConversation?.release() }
+    internal fun pttStop() { voiceConversation?.release() }
 
-    private fun pttClose(immediate: Boolean = false) {
+    internal fun pttClose(immediate: Boolean = false) {
         val mode = pttView ?: return
         if (closingVoice) return
         closingVoice = true; drainingHomeVoiceTouch = true
@@ -2479,11 +2479,11 @@ class MainActivity : Activity() {
         } finally { drainingHomeVoiceTouch = false; closingVoice = false }
     }
 
-    private fun holdToTalk(v: View, mic: Mic, onStart: () -> Unit = {}) {
+    internal fun holdToTalk(v: View, mic: Mic, onStart: () -> Unit = {}) {
         v.setOnTouchListener { _, e -> when (e.action) { android.view.MotionEvent.ACTION_DOWN -> { onStart(); mic.start() }; android.view.MotionEvent.ACTION_UP -> mic.stop(); android.view.MotionEvent.ACTION_CANCEL -> mic.cancel() }; true }
     }
 
-    private fun speak(t: String) {
+    internal fun speak(t: String) {
         val say = { tts?.speak(t, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, "r1") }
         if (tts == null) tts = android.speech.tts.TextToSpeech(this) { s -> if (s == android.speech.tts.TextToSpeech.SUCCESS) { ttsReady = true; tts?.language = AppLanguage.locale(this@MainActivity); say() } }
         else if (ttsReady) say()
@@ -2495,12 +2495,12 @@ class MainActivity : Activity() {
         tts?.shutdown(); super.onDestroy()
     }
     /** Schermata dell'app in primo piano: con l'app in secondo piano o lo schermo spento i tick (orologio, widget) saltano il lavoro. */
-    @Volatile private var visible = true
-    private fun characters(v: View, f: (CharacterView) -> Unit) { if (v is CharacterView) f(v) else if (v is ViewGroup) for (i in 0 until v.childCount) characters(v.getChildAt(i), f) }
+    @Volatile internal var visible = true
+    internal fun characters(v: View, f: (CharacterView) -> Unit) { if (v is CharacterView) f(v) else if (v is ViewGroup) for (i in 0 until v.childCount) characters(v.getChildAt(i), f) }
     // ---- scossa: scuotendo il dispositivo i buddy si confondono (giro su se' stessi con la faccia stordita) ----------
-    private var shakeListener: android.hardware.SensorEventListener? = null
-    private var lastShake = 0L
-    private fun startShake() {
+    internal var shakeListener: android.hardware.SensorEventListener? = null
+    internal var lastShake = 0L
+    internal fun startShake() {
         if (shakeListener != null) return
         val sm = getSystemService(SENSOR_SERVICE) as? android.hardware.SensorManager ?: return
         val acc = sm.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER) ?: return
@@ -2518,8 +2518,8 @@ class MainActivity : Activity() {
         }
         shakeListener = l; sm.registerListener(l, acc, android.hardware.SensorManager.SENSOR_DELAY_GAME)
     }
-    private fun stopShake() { shakeListener?.let { (getSystemService(SENSOR_SERVICE) as? android.hardware.SensorManager)?.unregisterListener(it) }; shakeListener = null }
-    private fun onShake() = runOnUiThread { root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS); characters(root) { it.react("spin") } }
+    internal fun stopShake() { shakeListener?.let { (getSystemService(SENSOR_SERVICE) as? android.hardware.SensorManager)?.unregisterListener(it) }; shakeListener = null }
+    internal fun onShake() = runOnUiThread { root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS); characters(root) { it.react("spin") } }
 
     override fun onStart() { super.onStart(); watchPackages(true) }
     override fun onStop() { watchPackages(false); super.onStop() }
@@ -2530,24 +2530,24 @@ class MainActivity : Activity() {
         if (hermesMode()) hermesRuntime.ensureRecoveryService()
          if (::prefs.isInitialized && gateWanted()) showPinGate(); Dim.on(this); characters(root) { it.setActive(true) }; heldBuddies.forEach { it.setActive(false) }; stack.lastOrNull()?.onResume?.invoke() }
     override fun onPause() { root.removeCallbacks(buddyReaper); stopShake(); stack.forEach { it.onSuspend?.invoke() }; pttClose(immediate = true); cancelBuddyFlight(); cancelModalBuddyFlight(restoreSource = overlays.isEmpty()); clearCarriedBuddy(restore = overlays.isEmpty()); if (::prefs.isInitialized && gateWanted()) { cancelActiveMic?.invoke(); tts?.stop(); pinUnlocked = false; showPinGate() }; visible = false; runtimeVisibility(); hermesRuntime.requestListener = null; hermesRuntime.requestCancelListener = null; characters(root) { it.setActive(false) }; Dim.off(); super.onPause() }
-    private val KEYCODE_NAV_NEXT = 261   // KEYCODE_NAVIGATE_NEXT
-    private val KEYCODE_NAV_PREV = 260   // KEYCODE_NAVIGATE_PREVIOUS
+    internal val KEYCODE_NAV_NEXT = 261   // KEYCODE_NAVIGATE_NEXT
+    internal val KEYCODE_NAV_PREV = 260   // KEYCODE_NAVIGATE_PREVIOUS
 
-    private fun inputSurface(): View? = pinGate ?: overlays.values.lastOrNull() ?: pttView ?: stack.lastOrNull()?.view
+    internal fun inputSurface(): View? = pinGate ?: overlays.values.lastOrNull() ?: pttView ?: stack.lastOrNull()?.view
 
-    private fun isCurrentSurface(view: View): Boolean {
+    internal fun isCurrentSurface(view: View): Boolean {
         val surface = inputSurface()
         var node: View? = view
         while (node != null) { if (node === surface) return true; node = node.parent as? View }
         return false
     }
 
-    private fun firstScroll(): ScrollView? {
+    internal fun firstScroll(): ScrollView? {
         fun find(v: View): ScrollView? = if (!v.isShown) null else if (v is ScrollView) v else if (v is ViewGroup) (0 until v.childCount).firstNotNullOfOrNull { find(v.getChildAt(it)) } else null
         return inputSurface()?.let { find(it) }
     }
 
-    private fun moveFocus(dir: Int) {
+    internal fun moveFocus(dir: Int) {
         val surface = inputSurface() ?: return
         val choices = ArrayList<View>(); surface.addFocusables(choices, dir, View.FOCUSABLES_ALL)
         val valid = choices.filter { it.isShown && it.isEnabled && it !== surface }
@@ -2572,9 +2572,9 @@ class MainActivity : Activity() {
         root.requestLayout()
     }
 
-    private var wheelSurface: R1ScrollView? = null
-    private var wheelLastX = 0f
-    private var wheelLastY = 0f
+    internal var wheelSurface: R1ScrollView? = null
+    internal var wheelLastX = 0f
+    internal var wheelLastY = 0f
 
     override fun dispatchGenericMotionEvent(event: android.view.MotionEvent): Boolean {
         if (event.actionMasked == android.view.MotionEvent.ACTION_SCROLL) {
@@ -2585,14 +2585,14 @@ class MainActivity : Activity() {
         return super.dispatchGenericMotionEvent(event)
     }
 
-    private var edgeX = -1f
-    private var edgeY = 0f
-    private var backDrag = false
-    private var backDragDistance = 0f
-    private var heroDragStart = 1f
-    private var backVt: android.view.VelocityTracker? = null
+    internal var edgeX = -1f
+    internal var edgeY = 0f
+    internal var backDrag = false
+    internal var backDragDistance = 0f
+    internal var heroDragStart = 1f
+    internal var backVt: android.view.VelocityTracker? = null
 
-    private fun beginBackDrag(ev: android.view.MotionEvent) {
+    internal fun beginBackDrag(ev: android.view.MotionEvent) {
         // I figli ricevono un ANNULLA una volta sola: da qui in poi il gesto e' della pagina.
         val cancel = android.view.MotionEvent.obtain(ev); cancel.action = android.view.MotionEvent.ACTION_CANCEL; super.dispatchTouchEvent(cancel); cancel.recycle()
         val screen = stack.last(); val previous = stack[stack.size - 2]
@@ -2610,14 +2610,14 @@ class MainActivity : Activity() {
     }
 
     /** La pagina segue il dito dal bordo sinistro; sotto, quella precedente avanza e si illumina. */
-    private fun updateBackDrag(dx: Float) {
+    internal fun updateBackDrag(dx: Float) {
         val w = pageWidth(); val p = (dx / w).coerceIn(0f, 1f)
         if (buddyFlight != null && flightChat === stack.last()) { backDragDistance = dx; buddyFlight?.seek(heroDragStart * (1f - p)); return }
         stack.last().view.translationX = dx.coerceIn(0f, w)
         stack[stack.size - 2].view.let { it.translationX = -w * parallax * (1f - p); it.alpha = dimmed + (1f - dimmed) * p }
     }
 
-    private fun endBackDrag() {
+    internal fun endBackDrag() {
         val vt = backVt; vt?.computeCurrentVelocity(1000)
         val vx = vt?.xVelocity ?: 0f
         val top = stack.last().view; val under = stack[stack.size - 2].view; val w = pageWidth()
@@ -2753,10 +2753,10 @@ class MainActivity : Activity() {
 
     // ---- dati: esporta e importa (Backup.kt) ---------------------------------------------------------------
 
-    private var exportJson: String? = null
-    private var exportSummary: Backup.Summary? = null
+    internal var exportJson: String? = null
+    internal var exportSummary: Backup.Summary? = null
 
-    private fun startExport() {
+    internal fun startExport() {
         Io.run {
             try {
                 val (json, sum) = Backup.export(db, prefs); exportJson = json; exportSummary = sum
@@ -2766,12 +2766,12 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun startImport() {
+    internal fun startImport() {
         @Suppress("DEPRECATION") startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), 12)
     }
 
     /** Mostra cosa contiene il file e chiede come importarlo: aggiungere ai dati attuali o sostituirli. */
-    private fun confirmImport(json: String, sum: Backup.Summary) {
+    internal fun confirmImport(json: String, sum: Backup.Summary) {
         overlay("import", UiText.text(this@MainActivity, R.string.ui_7c032d1cfb), { closeOverlay("import") }) { col, close ->
             col.addView(intro(UiText.text(this@MainActivity, R.string.ui_242765df7c, UiText.owned(this@MainActivity, sum.toString()))))
             col.addView(button(UiText.text(this@MainActivity, R.string.ui_17b0bf8e19), toolAccent) { close(); doImport(json, false) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
@@ -2781,7 +2781,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun doImport(json: String, replace: Boolean) {
+    internal fun doImport(json: String, replace: Boolean) {
         Io.run {
             try {
                 val sum = Backup.import(this, db, prefs, json, replace)
@@ -2792,13 +2792,13 @@ class MainActivity : Activity() {
 
     // ---- allegati: foto, immagini, file, e "Condividi" da altre app -----------------------------------------
 
-    private var attachHook: ((Attachment) -> Unit)? = null
-    private var photoFile: java.io.File? = null
+    internal var attachHook: ((Attachment) -> Unit)? = null
+    internal var photoFile: java.io.File? = null
     override fun onSaveInstanceState(out: Bundle) { super.onSaveInstanceState(out); photoFile?.let { out.putString("photo_file", it.path) } }
-    private var photoAttachTarget: ((Attachment) -> Unit)? = null
-    private var fileAttachTarget: ((Attachment) -> Unit)? = null
+    internal var photoAttachTarget: ((Attachment) -> Unit)? = null
+    internal var fileAttachTarget: ((Attachment) -> Unit)? = null
 
-    private fun pickPhoto(requestCode: Int = 9) {
+    internal fun pickPhoto(requestCode: Int = 9) {
         val f = java.io.File(java.io.File(cacheDir, "photos").also { it.mkdirs() }, "foto-${System.currentTimeMillis()}.jpg")
         photoFile = f
         if (requestCode == 9) photoAttachTarget = attachHook
@@ -2811,14 +2811,14 @@ class MainActivity : Activity() {
         @Suppress("DEPRECATION") startActivityForResult(i, requestCode)
     }
 
-    private fun pickFile(imagesOnly: Boolean) {
+    internal fun pickFile(imagesOnly: Boolean) {
         fileAttachTarget = attachHook
         @Suppress("DEPRECATION") startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(if (imagesOnly) "image/*" else "*/*"), 10)
     }
 
     /** "Condividi › R1 Agents" da un'altra app: testo, link, immagini, PDF. Si sceglie l'agente e la chat si apre con tutto pronto da inviare. */
     @Suppress("DEPRECATION")
-    private fun handleShare(i: Intent) {
+    internal fun handleShare(i: Intent) {
         val text = listOfNotNull(i.getStringExtra(Intent.EXTRA_SUBJECT), i.getStringExtra(Intent.EXTRA_TEXT)).joinToString("\n")
         val uris = ArrayList<Uri>()
         (i.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))?.let { uris.add(it) }
@@ -2841,204 +2841,12 @@ class MainActivity : Activity() {
 
     // ---- traduttore ---------------------------------------------------------------------------
 
-    private val trLangs get() = AppLanguage.wrap(this).resources.getStringArray(R.array.translation_language_names).toList()
-    private var trResult = ""
-
-    private fun translator(): Screen {
-        val input = field(UiText.text(this@MainActivity, R.string.ui_ccb44386f7), "", multi = true).apply { minLines = 2 }
-        val result = text(22f, 500).keepCase().apply { text = trResult; setPadding(dpi(14f), dpi(12f), dpi(14f), dpi(12f)); background = roundRect(Theme.CARD, dp(22f)); visibility = if (trResult.isEmpty()) View.GONE else View.VISIBLE }
-        val status = text(14f, 600, Theme.MUTED).keepCase()
-        var running = false
-        val translationScope = Scope()
-        var translationEngine: Engine? = null
-        fun target() = UiText.translationLanguage(this@MainActivity, prefs.getString("tr_lang", "en").orEmpty())
-        fun run(t: String) {
-            if (running || t.isBlank()) return
-            running = true; status.setTextColor(Theme.MUTED); status.text = UiText.text(this@MainActivity, R.string.ui_2a5a02c2b8); result.visibility = View.VISIBLE; result.text = ""; trResult = ""; cue(null, -14f, 10f, force = true)
-            val turnEngine = localEngine(); translationEngine = turnEngine
-            val language = target()
-            Io.run {
-                val sb = StringBuilder()
-                try {
-                    val ag = Agent(-1, UiText.text(this@MainActivity, R.string.ui_1a8a49ab36), "Sei un traduttore. Traduci il testo dell'utente in ${language}. Rispondi solo con la traduzione, senza commenti né virgolette.")
-                    val chat = db.newChat(-1)
-                    try { turnEngine.turn(ag, chat, t) { d -> sb.append(d); runOnUiThread { if (translationScope.alive) { result.text = sb.toString(); cue(null, -18f + 36f * ((sb.length % 40) / 40f), 12f) } } } } finally { db.deleteChat(chat); localTurns.remove(turnEngine) }
-                    runOnUiThread { if (translationScope.alive) { trResult = sb.toString().trim(); status.text = ""; cue("nod", force = true) } }
-                } catch (e: Exception) { runOnUiThread { if (!translationScope.alive) return@runOnUiThread; cue("surprised", force = true); status.setTextColor(Theme.BAD); status.text = errorText(e); if (sb.isEmpty()) result.visibility = View.GONE } }
-                runOnUiThread { running = false }
-            }
-        }
-        var acceptsVoice = false
-        val mic = newMic({ if (acceptsVoice && translationScope.alive) { status.setTextColor(Theme.MUTED); status.text = it } }, { t -> if (acceptsVoice && translationScope.alive) { acceptsVoice = false; input.setText(t); status.text = ""; run(t) } }, { err -> if (acceptsVoice && translationScope.alive) { acceptsVoice = false; status.setTextColor(Theme.BAD); status.text = err.orEmpty() } })
-        val suspendVoice = { acceptsVoice = false; mic.cancel(); status.text = "" }
-        return listPage(UiText.text(this@MainActivity, R.string.ui_1a8a49ab36), onLeave = { translationScope.alive = false; translationEngine?.let { it.cancel(); localTurns.remove(it) }; suspendVoice(); tts?.stop() }, onSuspend = suspendVoice) { col ->
-            val langCard = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(14f), dpi(14f)) }
-            col.addView(langCard, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            langCard.addView(label(UiText.text(this@MainActivity, R.string.ui_7811d136c1)).apply { setPadding(dpi(2f), dpi(2f), 0, dpi(8f)) })
-            langCard.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@MainActivity).apply {
-                trLangs.forEach { l ->
-                    val on = l == target()
-                    addView(chipView(l).apply { chipPaint(this, on)
-                        setOnClickListener { prefs.edit().putString("tr_lang", UiText.translationCodeAt(trLangs.indexOf(l))).apply(); stack.last().onShow?.invoke() } }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
-                } }) })
-            (input.parent as? ViewGroup)?.removeView(input); (result.parent as? ViewGroup)?.removeView(result); (status.parent as? ViewGroup)?.removeView(status)
-            col.addView(input, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(10f) })
-            val talk = button(UiText.text(this@MainActivity, R.string.ui_1158299b45), toolAccent, filled = false) {}
-            holdToTalk(talk, mic) { acceptsVoice = true; status.setTextColor(Theme.MUTED); status.text = UiText.text(this@MainActivity, R.string.ui_77cfbcff1e) }
-            col.addView(pairRow(button(UiText.text(this@MainActivity, R.string.ui_111b8e65f9), toolAccent) { run(input.text.toString()) }, talk), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            col.addView(status, LinearLayout.LayoutParams(-1, -2).apply { leftMargin = dpi(4f) })
-            col.addView(result, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            col.addView(LinearLayout(this).apply {
-                addView(button(UiText.text(this@MainActivity, R.string.ui_18d1967ba7), toolAccent, primary = false, small = true) { if (trResult.isNotEmpty()) speak(trResult) }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(8f) })
-                addView(button(UiText.text(this@MainActivity, R.string.ui_ac53b3388a), toolAccent, primary = false, small = true) { if (trResult.isNotEmpty()) { (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("traduzione", trResult)); snack(UiText.text(this@MainActivity, R.string.ui_2eba76fd11)) } }, LinearLayout.LayoutParams(-2, -2))
-            }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dpi(4f) })
-        }
-    }
-
-    // ---- note -------------------------------------------------------------------------------------
-
-    private fun notesScreen(): Screen {
-        val input = field(UiText.text(this@MainActivity, R.string.ui_82392454fe), "", multi = true).apply { minLines = 2 }
-        val status = text(14f, 600, Theme.MUTED).keepCase()
-        val scope = Scope(); var acceptsVoice = false
-        val mic = newMic({ if (acceptsVoice && scope.alive) { status.setTextColor(Theme.MUTED); status.text = it } }, { t -> if (acceptsVoice && scope.alive) { acceptsVoice = false; input.setText((input.text.toString() + " " + t).trim()); status.text = "" } }, { err -> if (acceptsVoice && scope.alive) { acceptsVoice = false; status.setTextColor(Theme.BAD); status.text = err.orEmpty() } })
-        val suspendVoice = { acceptsVoice = false; mic.cancel(); status.text = "" }
-        return listPage(UiText.text(this@MainActivity, R.string.ui_c51048b732), context = BuddySceneContext.MEMORY, onLeave = { scope.alive = false; suspendVoice() }, onSuspend = suspendVoice) { col ->
-            (input.parent as? ViewGroup)?.removeView(input); (status.parent as? ViewGroup)?.removeView(status)
-            col.addView(input, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            val talk = button(UiText.text(this@MainActivity, R.string.ui_e4923b7b6f), toolAccent, filled = false) {}
-            holdToTalk(talk, mic) { acceptsVoice = true; status.setTextColor(Theme.MUTED); status.text = UiText.text(this@MainActivity, R.string.ui_77cfbcff1e) }
-            col.addView(pairRow(button(UiText.text(this@MainActivity, R.string.ui_6c15f34ba8), toolAccent) { val t = input.text.toString().trim(); if (t.isNotEmpty()) { db.addNote(t); cue("nod", 0f, 14f); input.setText(""); stack.last().onShow?.invoke() } }, talk), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            col.addView(status, LinearLayout.LayoutParams(-1, -2).apply { leftMargin = dpi(4f) })
-            val notes = db.notes()
-            if (notes.isEmpty()) col.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e48edacfc6), UiText.text(this@MainActivity, R.string.ui_9630587e64)))
-            notes.forEach { (id, t, ts) ->
-                val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(8f), dpi(10f)) ; isClickable = true; setOnClickListener { (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("nota", t)); it.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP); snack(UiText.text(this@MainActivity, R.string.ui_2eba76fd11)) }}
-                card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
-                    addView(text(17f, 500).keepCase().apply { text = t })
-                    addView(text(12f, 500, Theme.MUTED).apply { text = ago(ts) }) }, LinearLayout.LayoutParams(0, -2, 1f))
-                card.addView(button(UiText.text(this@MainActivity, R.string.ui_dcfbe248ac), Theme.BAD, small = true) { confirmTap("note$id") { Motion.dismiss(card) { cue(null, 0f, 8f); db.deleteNote(id); stack.last().onShow?.invoke() } } })
-                col.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            }
-        }
-    }
-
-    // ---- aspetto e voce (Settings › Look di r1os: modo, accento, font, schermata iniziale) -----------
-
-    private fun applyLook(key: String, value: String) { prefs.edit().putString(key, value).putString("reopen", "look").apply(); if (key == "app_language") { prefs.edit().remove("w_at").remove("w_text").apply(); Sched.channels(this); hermesRuntime.refreshChannels() }; lookSnapshot = runCatching { android.graphics.Bitmap.createBitmap(root.width, root.height, android.graphics.Bitmap.Config.ARGB_8888).also { root.draw(android.graphics.Canvas(it)) } }.getOrNull(); recreate(); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
-
-    private fun lookScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_20d6155d10), context = BuddySceneContext.CONFIGURE) { col ->
-        fun chips(options: List<Pair<String, String>>, current: String, key: String, font: Boolean = false): View {
-            val row = LinearLayout(this)
-            options.forEach { (id, label) ->
-                val on = id == current
-                row.addView(chipView(label).apply {
-                    chipPaint(this, on)
-                    if (font) typeface = Theme.fontOf(id, 700)
-                    setOnClickListener { if (!on) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "idle_after") { prefs.edit().putString("idle_after", id).apply(); stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) } }
-                }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
-            }
-            return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(row) }
-        }
-        col.addView(groupTitle(UiText.text(this@MainActivity, R.string.ui_147f3d4b53)))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_1909c29a8f)))
-        col.addView(chips(listOf("it" to "Italiano", "en" to "English"), AppLanguage.selected(this), "app_language"))
-        col.addView(hint(UiText.text(this@MainActivity, R.string.ui_7df11394ff)))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_b828c7599e))); col.addView(chips(listOf("dark" to UiText.text(this@MainActivity, R.string.ui_67d1d02f39), "light" to UiText.text(this@MainActivity, R.string.ui_e7e35d97b7)), prefs.getString("look_mode", "dark")!!, "look_mode"))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_bdbffaa426)))
-        col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@MainActivity).apply {
-            Theme.COLORS.forEach { (n, c) ->
-                val on = n == Theme.accentName
-                addView(View(this@MainActivity).apply {
-                    background = android.graphics.drawable.GradientDrawable().apply { setColor(c); cornerRadius = dp(20f); if (on) setStroke(dpi(3f), Theme.FG) }
-                    contentDescription = n; isSelected = on; isClickable = true; setOnClickListener { if (!on) applyLook("look_accent", n) } }, LinearLayout.LayoutParams(dpi(40f), dpi(40f)).apply { marginEnd = dpi(8f) })
-            } }) })
-        col.addView(groupTitle(UiText.text(this@MainActivity, R.string.ui_6742e04458)))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_449d113dca)))
-        col.addView(chips(listOf("normal" to UiText.text(this@MainActivity, R.string.ui_bae7591bb2), "flip" to UiText.text(this@MainActivity, R.string.ui_a9d1bc7eca)), if (r1WheelLandscapeFlip) "flip" else "normal", "wheel_flip"))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_2c24e821f5)))
-        col.addView(chips(listOf("1" to UiText.text(this@MainActivity, R.string.ui_3eb8a90885), "2" to UiText.text(this@MainActivity, R.string.ui_47742d68e8), "5" to UiText.text(this@MainActivity, R.string.ui_b45ebd80de), "10" to UiText.text(this@MainActivity, R.string.ui_4605ee7759), "never" to UiText.text(this@MainActivity, R.string.ui_ea4440bd94)), prefs.getString("idle_after", "1")!!, "idle_after"))
-        col.addView(groupTitle(UiText.text(this@MainActivity, R.string.ui_15a1464f73)))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_78cb0ec0e3)))
-        col.addView(chips(listOf("ask" to UiText.text(this@MainActivity, R.string.ui_3cd50c52c0), "auto" to UiText.text(this@MainActivity, R.string.ui_9e67d0a179), "off" to UiText.text(this@MainActivity, R.string.ui_22938aeb5f)), DeviceActions.mode, "dev_actions"))
-        col.addView(groupTitle(UiText.text(this@MainActivity, R.string.ui_e0f65ded6a)))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_1b496fbbd9)))
-        col.addView(chips((listOf("rubik") + Theme.FAMILIES.keys).map { it to it }, prefs.getString("look_font", "rubik")!!, "look_font", font = true))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_1456190f29))); col.addView(chips(listOf("glance" to UiText.text(this@MainActivity, R.string.ui_3d9a5cdfac), "home" to "home"), prefs.getString("start", "home")!!, "start"))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_18da3e53ab)))
-        col.addView(chips(listOf("glance" to UiText.text(this@MainActivity, R.string.ui_3d9a5cdfac), "home" to "home"), prefs.getString("bg_edit", "glance")!!, "bg_edit"))
-        val scr = prefs.getString("bg_edit", "glance")!!
-        col.addView(chips(listOf("plain" to UiText.text(this@MainActivity, R.string.ui_7ef76e6237), "tint" to UiText.text(this@MainActivity, R.string.ui_8e3547d8f5), "gradient" to UiText.text(this@MainActivity, R.string.ui_c59119b0bf), "mesh" to UiText.text(this@MainActivity, R.string.ui_5cf2b74e33), "photo" to UiText.text(this@MainActivity, R.string.ui_0eb57679c4)), prefs.getString("bg_$scr", "plain")!!, "bg_$scr"), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        if (prefs.getString("bg_$scr", "plain") in listOf("gradient", "mesh")) {
-            col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@MainActivity).apply {
-                palettes.keys.forEach { n ->
-                    val on = n == prefs.getString("bgp_$scr", "sunset")
-                    addView(View(this@MainActivity).apply {
-                        background = android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TL_BR, palettes.getValue(n).map { Color.parseColor(it) }.toIntArray()).apply { cornerRadius = dp(15f); if (on) setStroke(dpi(3f), Theme.FG) }
-                        isClickable = true; setOnClickListener { if (!on) applyLook("bgp_$scr", n) } }, LinearLayout.LayoutParams(dpi(40f), dpi(40f)).apply { marginEnd = dpi(8f); topMargin = dpi(4f) })
-                } }) })
-        }
-        if (prefs.getString("bg_$scr", "plain") == "photo") {
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_660ca97329), toolAccent, primary = false) { bgPick = scr; startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).setType("image/*"), 8) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
-            val cur = prefs.getFloat("bgd_$scr", 0.4f)
-            col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@MainActivity).apply {
-                listOf(0f, 0.25f, 0.4f, 0.6f, 0.75f).forEach { d ->
-                    val on = Math.abs(cur - d) < 0.01f
-                    addView(chipView(UiText.text(this@MainActivity, R.string.ui_e2344072da, (d * 100).toInt())).apply { chipPaint(this, on)
-                        setOnClickListener { prefs.edit().putFloat("bgd_$scr", d).putString("reopen", "look").apply(); recreate() } }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f); topMargin = dpi(6f) })
-                } }) })
-        }
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_1b435ea125)))
-        fun toggles(key: String, options: List<Pair<String, String>>, defaults: String): View {
-            val on = prefs.getString(key, defaults)!!.split(",").filter { it.isNotEmpty() }.toMutableSet()
-            return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@MainActivity).apply {
-                options.forEach { (id, lab) ->
-                    val sel = id in on
-                    addView(text(15f, 700).apply { text = lab; setPadding(dpi(14f), dpi(8f), dpi(14f), dpi(8f)); isClickable = true
-                        setTextColor(if (sel) Theme.ON_ACCENT else Theme.FG); background = roundRect(if (sel) toolAccent else Theme.FOCUS, dp(14f))
-                        setOnClickListener { if (sel) on.remove(id) else on.add(id); prefs.edit().putString(key, on.joinToString(",")).apply(); stack.last().onShow?.invoke() } }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
-                } }) }
-        }
-        col.addView(toggles("gshow", listOf("date" to UiText.text(this@MainActivity, R.string.ui_a17c9aaa61), "status" to UiText.text(this@MainActivity, R.string.ui_1a3700624b), "alarm" to UiText.text(this@MainActivity, R.string.ui_4b15f21af0)), "date,status,alarm"))
-        col.addView(label("widget"))
-        col.addView(toggles("gw", listOf("hermes" to "hermes", "meteo" to UiText.text(this@MainActivity, R.string.ui_4028f305d5), "timer" to "timer", "routine" to UiText.text(this@MainActivity, R.string.ui_149d78e63c), "nota" to UiText.text(this@MainActivity, R.string.ui_2b295425f3)), ""))
-        if ("meteo" in prefs.getString("gw", "")!!.split(",")) {
-            val city = field(UiText.text(this@MainActivity, R.string.ui_dbf977e9ce), prefs.getString("weather_city", "").orEmpty())
-            col.addView(city, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_1fa7ec8671), toolAccent, primary = false, small = true) { prefs.edit().putString("weather_city", city.text.toString().trim()).remove("w_at").apply() }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dpi(4f) })
-        }
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_de4a8ea6f8)))
-        col.addView(hint(UiText.text(this@MainActivity, R.string.ui_2245aa74cd)))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_3d9a5cdfac))); col.addView(chips(listOf("bold", "light", "condensed", "stacked", "serif", "mono", "words", "dial").map { it to it }, prefs.getString("clock", "bold")!!, "clock"))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_41b75bd493))); col.addView(chips(listOf("left" to UiText.text(this@MainActivity, R.string.ui_3b72eca895), "center" to UiText.text(this@MainActivity, R.string.ui_d6b2c56f12)), prefs.getString("clock_align", "left")!!, "clock_align"))
-        col.addView(label(getString(R.string.voice_read_chat))); col.addView(chips(listOf("off" to UiText.text(this@MainActivity, R.string.ui_8e6720c901), "on" to UiText.text(this@MainActivity, R.string.ui_5777f60da9)), if (prefs.getBoolean("tts", false)) "on" else "off", "tts"))
-        col.addView(label(getString(R.string.voice_read_fullscreen)))
-        col.addView(chips(listOf("off" to getString(R.string.voice_sound_off), "on" to getString(R.string.voice_sound_on)), if (prefs.getBoolean("voice_tts", true)) "on" else "off", "voice_tts"))
-        col.addView(hint(getString(if (SpeechSupport.hasEngine(this@MainActivity)) R.string.voice_read_fullscreen_hint else R.string.voice_engine_help)))
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_5393e82f8d))); col.addView(chips(listOf("device" to UiText.text(this@MainActivity, R.string.ui_843e6206e1), "groq" to "groq whisper"), prefs.getString("stt", "device")!!, "stt"))
-        if (prefs.getString("stt", "device") == "groq") {
-            val key = field(UiText.text(this@MainActivity, R.string.ui_6d3fd91ed0), prefs.secret("groq_key"), secret = true)
-            val model = field(UiText.text(this@MainActivity, R.string.ui_6bec3945e2), prefs.getString("groq_model", "whisper-large-v3-turbo").orEmpty())
-            val lang = field(UiText.text(this@MainActivity, R.string.ui_b5b1267dab), prefs.getString("groq_lang", AppLanguage.selected(this@MainActivity)).orEmpty())
-            val st = text(13f, 600, Theme.MUTED).keepCase().apply { setPadding(dpi(4f), dpi(6f), 0, 0) }
-            col.addView(key, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            col.addView(model, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
-            col.addView(lang, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_41a6b92e3b), toolAccent) {
-                prefs.edit().putSecret("groq_key", key.text.toString().trim()).putString("groq_model", model.text.toString().trim().ifEmpty { "whisper-large-v3-turbo" }).putString("groq_lang", lang.text.toString().trim()).apply()
-                st.setTextColor(Theme.MUTED); st.text = UiText.text(this@MainActivity, R.string.ui_369c3bf02a)
-                Io.run { val r = GroqStt.test(this@MainActivity, key.text.toString().trim()); runOnUiThread { st.text = UiText.owned(this@MainActivity, r); st.setTextColor(if (r.startsWith("OK")) Theme.colorOf("green") else Theme.BAD) } }
-            }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            col.addView(st)
-            col.addView(hint(UiText.text(this@MainActivity, R.string.ui_08e8413321)))
-        }
-        col.addView(hint(UiText.text(this@MainActivity, R.string.ui_c3c6e6b033)))
-        cardify(col)
-    }
+    internal val trLangs get() = AppLanguage.wrap(this).resources.getStringArray(R.array.translation_language_names).toList()
+    internal var trResult = ""
 
     // ---- glance: l'orologio (da Glance di r1os, in versione semplice) ---------------------------
 
-    private fun glance(): Screen {
+    @JvmName("glance") internal fun glance(): Screen {
         val agent = visibleAgents().getOrNull(homeIndex.coerceAtLeast(0)) ?: neutralBuddy
         val frame = FrameLayout(this)
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dpi(6f), dpi(12f), 0, 0) }
@@ -3165,55 +2973,13 @@ class MainActivity : Activity() {
 
     // ---- strumenti: sveglie, timer, routine ------------------------------------------------------
 
-    private val toolAccent get() = Theme.accent
+    internal val toolAccent get() = Theme.accent
 
-    /** Un valore da girare con − / + (ore, minuti): si chiude su se stesso ai bordi. Titolo, valore e tasti sono su colonne fisse, così più righe restano allineate. */
-    private fun stepper(title: String, get: () -> Int, set: (Int) -> Unit, min: Int, max: Int, steps: List<Int>, fmt: (Int) -> String = { "%02d".format(it) }): View {
-        val value = text(34f, 700).apply { text = fmt(get()); gravity = Gravity.CENTER; fontFeatureSettings = "tnum" }
-        val btns = LinearLayout(this).apply { gravity = Gravity.END or Gravity.CENTER_VERTICAL }
-        steps.forEach { s ->
-            btns.addView(button(if (s > 0) "+$s" else "−${-s}", toolAccent, small = true) {
-                val n = max - min + 1; val v = (((get() + s - min) % n) + n) % n + min; set(v)
-                value.text = fmt(v); value.animate().cancel(); value.scaleX = 1.12f; value.scaleY = 1.12f; value.animate().scaleX(1f).scaleY(1f).setDuration(Motion.BASE).setInterpolator(Theme.EASE_OUT).start()
-            }.apply { minWidth = dpi(50f) }, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dpi(6f) })
-        }
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-            if (title.isNotBlank()) addView(text(15f, 600, Theme.MUTED).apply { text = title }, LinearLayout.LayoutParams(dpi(64f), -2))
-            addView(value, LinearLayout.LayoutParams(dpi(64f), -2)); addView(btns, LinearLayout.LayoutParams(0, -2, 1f))
-        }
-    }
-
-    /** Ora e minuti in un'unica carta. */
-    private fun timeCard(hour: () -> Int, setH: (Int) -> Unit, minute: () -> Int, setM: (Int) -> Unit): View = LinearLayout(this).apply {
-        orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(6f), dpi(14f), dpi(6f))
-        addView(Drum(this@MainActivity, (0..23).map { "%02d".format(it) }, hour(), true) { cue(null, 0f, if (it % 2 == 0) 8f else -8f); setH(it) }, LinearLayout.LayoutParams(0, -2, 1f))
-        addView(text(34f, 700, Theme.MUTED).apply { text = ":"; gravity = Gravity.CENTER }, LinearLayout.LayoutParams(dpi(24f), -2))
-        addView(Drum(this@MainActivity, (0..59).map { "%02d".format(it) }, minute(), true) { cue(null, 0f, if (it % 2 == 0) 8f else -8f); setM(it) }, LinearLayout.LayoutParams(0, -2, 1f))
-    }
-
-    private fun daysChips(get: () -> Int, set: (Int) -> Unit): View {
-        val row = LinearLayout(this); val views = ArrayList<TextView>()
-        fun paint() = views.forEachIndexed { i, v -> chipPaint(v, get() and (1 shl i) != 0) }
-        AppLanguage.wrap(this@MainActivity).resources.getStringArray(R.array.weekdays_short).toList().forEachIndexed { i, d ->
-            val v = chipView(d, 14f).apply { setPadding(dpi(9f), dpi(13f), dpi(9f), dpi(13f)); setOnClickListener { set(get() xor (1 shl i)); paint() } }
-            views.add(v); row.addView(v, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(5f) })
-        }
-        paint(); daysRepaint = { paint() }
-        return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(row) }
-    }
-
-    /** "3h 12min", "45min", "2g 4h": quanto manca a un istante (g = giorni, d in inglese). */
-    private fun relativeIn(ms: Long): String {
-        val total = (ms / 60000).coerceAtLeast(0); val d = total / 1440; val h = (total % 1440) / 60; val m = total % 60
-        val dayUnit = if (AppLanguage.selected(this) == "en") "d" else "g"
-        return if (d > 0) "$d$dayUnit ${h}h" else if (h > 0) "${h}h ${m}min" else "${m}min"
-    }
-    private var daysRepaint: (() -> Unit)? = null
+    internal var daysRepaint: (() -> Unit)? = null
 
 
     /** Intestazione comune a ogni schermata: tasto indietro (l'R1 non ne ha uno) e titolo. */
-    private fun framed(title: String, body: View, trailing: View? = null, buddyHeader: Boolean = true, buddyOverflow: Boolean = false): View = LinearLayout(this).apply {
+    internal fun framed(title: String, body: View, trailing: View? = null, buddyHeader: Boolean = true, buddyOverflow: Boolean = false): View = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         // Solo le liste con il buddy fisso (listPage): il buddy sta SOPRA la barra del titolo. Le altre pagine tagliano il contenuto che scorre sotto la barra.
         clipChildren = !buddyOverflow; clipToPadding = !buddyOverflow
@@ -3226,7 +2992,7 @@ class MainActivity : Activity() {
         addView(head); addView(body, LinearLayout.LayoutParams(-1, 0, 1f))
     }
 
-    private fun listPage(title: String, onLeave: (() -> Unit)? = null, context: BuddySceneContext = BuddySceneContext.READ, onSuspend: (() -> Unit)? = null, build: (LinearLayout) -> Unit): Screen {
+    internal fun listPage(title: String, onLeave: (() -> Unit)? = null, context: BuddySceneContext = BuddySceneContext.READ, onSuspend: (() -> Unit)? = null, build: (LinearLayout) -> Unit): Screen {
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val scroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(col, -1, -2) }
         val pinned = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
@@ -3256,7 +3022,7 @@ class MainActivity : Activity() {
     }
 
     /** Due schede per riga (l'ultima, se dispari, a tutta larghezza). */
-    private fun grid(items: List<View>): LinearLayout = LinearLayout(this).apply {
+    internal fun grid(items: List<View>): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         var i = 0
         while (i < items.size) {
@@ -3270,12 +3036,12 @@ class MainActivity : Activity() {
     }
 
     /** Due pulsanti affiancati. */
-    private fun pairRow(a: View, b: View): View = LinearLayout(this).apply {
+    internal fun pairRow(a: View, b: View): View = LinearLayout(this).apply {
         addView(a, LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dpi(4f) })
         addView(b, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dpi(4f) })
     }
 
-    private fun menuSheet(agent: Agent?) {
+    internal fun menuSheet(agent: Agent?) {
         companionAgent = agent ?: companionAgent
         sheetPanel("menu", peek = agent) { col, _, then ->
             col.addView(grid(listOfNotNull(
@@ -3290,19 +3056,19 @@ class MainActivity : Activity() {
 
     // ---- launcher: cassetto delle app (l'app è selezionabile come schermata iniziale, ma non si imposta da sola) ----
 
-    private class AppEntry(val label: String, val pkg: String, val cls: String, val icon: android.graphics.drawable.Drawable)
+    internal class AppEntry(val label: String, val pkg: String, val cls: String, val icon: android.graphics.drawable.Drawable)
 
     /** Vero se questa app è la schermata iniziale scelta dall'utente nel sistema (ruolo HOME). */
-    private fun isDefaultLauncher(): Boolean = runCatching { getSystemService(android.app.role.RoleManager::class.java).isRoleHeld(android.app.role.RoleManager.ROLE_HOME) }.getOrDefault(false)
-    private fun favoriteApps(): Set<String> = prefs.getString("fav_apps", "").orEmpty().split(",").filter { it.isNotEmpty() }.toSet()
-    private fun loadApps(): List<AppEntry> {
+    internal fun isDefaultLauncher(): Boolean = runCatching { getSystemService(android.app.role.RoleManager::class.java).isRoleHeld(android.app.role.RoleManager.ROLE_HOME) }.getOrDefault(false)
+    internal fun favoriteApps(): Set<String> = prefs.getString("fav_apps", "").orEmpty().split(",").filter { it.isNotEmpty() }.toSet()
+    internal fun loadApps(): List<AppEntry> {
         val q = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         return packageManager.queryIntentActivities(q, 0).filter { it.activityInfo.packageName != packageName }
             .map { AppEntry(it.loadLabel(packageManager).toString(), it.activityInfo.packageName, it.activityInfo.name, it.loadIcon(packageManager)) }
             .distinctBy { it.pkg + "/" + it.cls }.sortedBy { it.label.lowercase() }
     }
     // ---- azioni del dispositivo: l'agente opera sul telefono (vedi DeviceActions) ----
-    private fun describeAction(a: DeviceActions.Action): String = when (a.kind) {
+    internal fun describeAction(a: DeviceActions.Action): String = when (a.kind) {
         "apri" -> UiText.text(this@MainActivity, R.string.ui_6ef46e17aa, a.arg)
         "timer" -> { val sec = DeviceActions.seconds(a.arg) ?: 0; UiText.text(this@MainActivity, R.string.ui_922c82d62c, (if (sec < 60) UiText.text(this@MainActivity, R.string.ui_e641f081b3, sec) else if (sec < 3600) UiText.text(this@MainActivity, R.string.ui_32b259a068, sec / 60) else UiText.text(this@MainActivity, R.string.ui_f31be6b4f3, sec / 3600))) }
         "sveglia" -> UiText.text(this@MainActivity, R.string.ui_a21efabed5, a.arg)
@@ -3311,8 +3077,8 @@ class MainActivity : Activity() {
         else -> UiText.text(this@MainActivity, R.string.ui_77027ea210, a.arg)
     }
     /** Esegue l'azione e, se viene da un agente, la scrive nel registro (pagina Sicurezza → azioni dell'agente). */
-    private fun runDeviceAction(a: DeviceActions.Action, log: Boolean = true): Boolean = execDeviceAction(a).also { if (log) ActionLog.record(prefs, a.kind, a.arg, it) }
-    private fun execDeviceAction(a: DeviceActions.Action): Boolean = runCatching {
+    internal fun runDeviceAction(a: DeviceActions.Action, log: Boolean = true): Boolean = execDeviceAction(a).also { if (log) ActionLog.record(prefs, a.kind, a.arg, it) }
+    internal fun execDeviceAction(a: DeviceActions.Action): Boolean = runCatching {
         when (a.kind) {
             "apri" -> {
                 val apps = appCache ?: loadApps().also { appCache = it }
@@ -3334,13 +3100,13 @@ class MainActivity : Activity() {
             else -> false
         }
     }.getOrDefault(false)
-    private fun reportAction(a: DeviceActions.Action) {
+    internal fun reportAction(a: DeviceActions.Action) {
         val ok = runDeviceAction(a)
         snack(if (ok) UiText.text(this@MainActivity, R.string.ui_dab426e957, describeAction(a)) else UiText.text(this@MainActivity, R.string.ui_606d15c3e0, describeAction(a)), long = !ok)
         cue(if (ok) "nod" else "surprised", force = true)
     }
     /** Modalità «automatiche»: le direttive di una risposta appena completata si eseguono una sola volta. */
-    private fun autoRunActions(text: String) {
+    @JvmName("autoRunActions") internal fun autoRunActions(text: String) {
         if (DeviceActions.mode != "auto") return
         val done = prefs.getStringSet("dev_done", emptySet())!!.toMutableSet()
         DeviceActions.parse(text).actions.forEach { a ->
@@ -3350,21 +3116,21 @@ class MainActivity : Activity() {
         prefs.edit().putStringSet("dev_done", done.toList().takeLast(60).toSet()).apply()
     }
 
-    private var appCacheValue: List<AppEntry>? = null
-    private var appCacheAt = 0L
+    internal var appCacheValue: List<AppEntry>? = null
+    internal var appCacheAt = 0L
     /** L'elenco delle app vale 60 s e si invalida da solo quando ne installi, aggiorni o togli una. */
-    private var appCache: List<AppEntry>?
+    internal var appCache: List<AppEntry>?
         get() = appCacheValue?.takeIf { android.os.SystemClock.uptimeMillis() - appCacheAt < 60_000L }
         set(v) { appCacheValue = v; appCacheAt = android.os.SystemClock.uptimeMillis() }
-    private val packageWatcher = object : android.content.BroadcastReceiver() { override fun onReceive(c: android.content.Context, i: Intent) { appCacheValue = null } }
-    private fun watchPackages(on: Boolean) {
+    internal val packageWatcher = object : android.content.BroadcastReceiver() { override fun onReceive(c: android.content.Context, i: Intent) { appCacheValue = null } }
+    internal fun watchPackages(on: Boolean) {
         if (on) registerReceiver(packageWatcher, android.content.IntentFilter().apply { addAction(Intent.ACTION_PACKAGE_ADDED); addAction(Intent.ACTION_PACKAGE_REMOVED); addAction(Intent.ACTION_PACKAGE_REPLACED); addDataScheme("package") })
         else runCatching { unregisterReceiver(packageWatcher) }
     }
-    private fun recentApps(): List<String> = prefs.getString("recent_apps", "").orEmpty().split(",").filter { it.isNotEmpty() }
-    private fun noteLaunched(pkg: String) { prefs.edit().putString("recent_apps", (listOf(pkg) + recentApps().filter { it != pkg }).take(5).joinToString(",")).apply() }
+    internal fun recentApps(): List<String> = prefs.getString("recent_apps", "").orEmpty().split(",").filter { it.isNotEmpty() }
+    internal fun noteLaunched(pkg: String) { prefs.edit().putString("recent_apps", (listOf(pkg) + recentApps().filter { it != pkg }).take(5).joinToString(",")).apply() }
     /** «apri calendario»: se il testo è un comando e un'app corrisponde in modo certo, la apre e non manda nulla all'agente. */
-    private fun tryOpenApp(t: String): Boolean {
+    internal fun tryOpenApp(t: String): Boolean {
         val c = t.trim()
         if (c.length > 60 || !Regex("^\\s*(apri|avvia|lancia|open|launch|start)\\s", RegexOption.IGNORE_CASE).containsMatchIn(c)) return false
         val apps = appCache ?: loadApps().also { appCache = it }
@@ -3372,20 +3138,20 @@ class MainActivity : Activity() {
         snack(UiText.text(this@MainActivity, R.string.ui_a0ea3faf55, apps[i].label)); launchApp(apps[i]); return true
     }
     /** Apre la fotocamera: l'app di scatto del sistema, o la prima app che si chiama così. */
-    private fun launchCamera() {
+    internal fun launchCamera() {
         try { startActivity(Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return } catch (e: Exception) {}
         val apps = appCache ?: loadApps().also { appCache = it }
         val cam = apps.firstOrNull { it.label.contains("camera", true) || it.label.contains("fotocamera", true) || it.pkg.contains("camera", true) }
         if (cam != null) launchApp(cam) else snack(UiText.text(this@MainActivity, R.string.ui_98a3cf7659))
     }
 
-    private fun launchApp(a: AppEntry) {
+    internal fun launchApp(a: AppEntry) {
         noteLaunched(a.pkg)
         try { startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setClassName(a.pkg, a.cls).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)) }
         catch (e: Exception) { snack(UiText.text(this@MainActivity, R.string.ui_f2c6915e4c)) }
     }
     /** Dopo il tasto home (quando siamo la schermata iniziale): chiude fogli e pagine e torna alla prima schermata, una alla volta. */
-    private fun goHome() {
+    @JvmName("goHome") internal fun goHome() {
         overlays.keys.toList().forEach { closeOverlay(it) }
         if (pttView != null) pttClose()
         val toClose = stack.drop(1).toList() // solo le pagine aperte adesso: una pagina aperta subito dopo non va chiusa
@@ -3393,419 +3159,16 @@ class MainActivity : Activity() {
         unwind()
     }
 
-    private fun appsScreen(): Screen {
-        var apps: List<AppEntry> = emptyList(); var loaded = false
-        val input = field(UiText.text(this@MainActivity, R.string.ui_7a0971edfc), "")
-        val agent = visibleAgents().getOrNull(homeIndex.coerceAtLeast(0)) ?: visibleAgents().firstOrNull()
-        lateinit var fill: () -> Unit
-        var fillToken = 0
-        input.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(t: CharSequence?, a: Int, b: Int, c: Int) {}
-            override fun onTextChanged(t: CharSequence?, a: Int, b: Int, c: Int) { fill() }
-            override fun afterTextChanged(t: android.text.Editable?) {}
-        })
-        return listPage(UiText.text(this@MainActivity, R.string.ui_7d1043473d), context = BuddySceneContext.CONFIGURE) { col ->
-            companionRow(112f)?.let { col.addView(it, LinearLayout.LayoutParams(-1, dpi(112f))) }
-            (input.parent as? ViewGroup)?.removeView(input)
-            col.addView(input, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(4f) })
-            val holder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-            col.addView(holder)
-            fun appRow(a: AppEntry): View = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
-                background = roundRect(Theme.CARD, dp(20f)); setPadding(dpi(12f), dpi(8f), dpi(12f), dpi(8f)); minimumHeight = dpi(60f)
-                addView(android.widget.ImageView(this@MainActivity).apply { setImageDrawable(a.icon); contentDescription = a.label }, LinearLayout.LayoutParams(dpi(40f), dpi(40f)))
-                addView(text(20f, 600).keepCase().apply { text = a.label; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dpi(14f) })
-                setOnClickListener { launchApp(a) }
-                setOnTouchListener { v, e -> Motion.touch(v, e); false }
-                setOnLongClickListener {
-                    performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
-                    val fav = a.pkg in favoriteApps()
-                    sheetOf(a.label, listOf(
-                        SheetItem(UiText.text(this@MainActivity, R.string.ui_6835df38c6), icon = "chevron") { launchApp(a) },
-                        SheetItem(if (fav) UiText.text(this@MainActivity, R.string.ui_d314ad0a4a) else UiText.text(this@MainActivity, R.string.ui_8e2d0510c8), icon = if (fav) "close" else "spark") {
-                            val now = favoriteApps().toMutableSet(); if (!now.add(a.pkg)) now.remove(a.pkg)
-                            prefs.edit().putString("fav_apps", now.joinToString(",")).apply(); fill()
-                        },
-                        SheetItem(UiText.text(this@MainActivity, R.string.ui_90bc562f40), icon = "info") { runCatching { startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + a.pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } },
-                        SheetItem(UiText.text(this@MainActivity, R.string.ui_aa9d8eccb4), icon = "close", danger = true) { runCatching { startActivity(Intent(Intent.ACTION_DELETE, android.net.Uri.parse("package:" + a.pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } },
-                    )); true
-                }
-            }
-            fill = {
-                holder.removeAllViews()
-                val q = input.text.toString().trim().lowercase()
-                val favs = favoriteApps()
-                val shown = if (q.isEmpty()) apps else apps.filter { it.label.lowercase().contains(q) }
-                fun add(a: AppEntry) = holder.addView(appRow(a), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-                val recents = if (q.isEmpty()) recentApps().filter { it !in favs }.mapNotNull { p -> apps.firstOrNull { it.pkg == p } } else emptyList()
-                if (recents.isNotEmpty()) { holder.addView(label(UiText.text(this@MainActivity, R.string.ui_950486e052))); recents.forEach { add(it) } }
-                if (q.isEmpty() && favs.isNotEmpty()) { holder.addView(label(UiText.text(this@MainActivity, R.string.ui_b207efeb7b))); apps.filter { it.pkg in favs }.forEach { add(it) }; holder.addView(label(UiText.text(this@MainActivity, R.string.ui_9fa3124899))) }
-                // Le righe si creano a gruppi (la prima schermata subito, il resto un fotogramma dopo l'altro): con decine di app il costo
-                // di creare tutte le view insieme faceva saltare i fotogrammi all'apertura e nelle prime scorse.
-                val token = ++fillToken
-                fun finish() {
-                    if (q.isNotEmpty() && agent != null) holder.addView(row(UiText.text(this@MainActivity, R.string.ui_c024fcc5f9, agent.name, input.text.toString().trim()), Theme.colorOf(agent.color), icon = "chat") {
-                        val id = db.lastChat(agent.id) ?: db.newChat(agent.id); openChat(agent, id, say = input.text.toString().trim())
-                    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
-                    if (loaded && shown.isEmpty() && q.isEmpty()) holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_9ba5c1d281), ""))
-                }
-                fun more(from: Int) {
-                    if (token != fillToken || !holder.isAttachedToWindow) return
-                    val end = minOf(from + 12, shown.size)
-                    for (k in from until end) add(shown[k])
-                    if (end < shown.size) holder.post { more(end) } else finish()
-                }
-                val first = minOf(8, shown.size)
-                for (k in 0 until first) add(shown[k])
-                Motion.stagger(holder, dp(8f), max = 7)
-                if (first < shown.size) holder.post { more(first) } else finish()
-            }
-            if (loaded) fill() else Io.run { val list = loadApps(); runOnUiThread { apps = list; loaded = true; if (holder.isAttachedToWindow) fill() } }
-        }
-    }
-    // ---- controlli Android: stato del dispositivo e scorciatoie di sistema, più domande pronte per l'agente ----
-    private fun batteryLine(): String {
-        val b = registerReceiver(null, android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        val lvl = b?.let { it.getIntExtra("level", -1) * 100 / maxOf(it.getIntExtra("scale", 100), 1) } ?: -1
-        val charging = (b?.getIntExtra("plugged", 0) ?: 0) != 0
-        return if (lvl < 0) "" else UiText.text(this@MainActivity, R.string.ui_6640d5daa3, lvl, if (charging) UiText.text(this@MainActivity, R.string.ui_74cd9507a1) else UiText.text(this@MainActivity, R.string.ui_82d34ed5bc))
-    }
-    private fun freeSpace(): String {
-        val st = android.os.StatFs(android.os.Environment.getDataDirectory().path)
-        val gb = st.availableBytes / 1_073_741_824.0
-        return "%.1f GB".format(gb)
-    }
-    private var torchOn = false
-    private fun controlsScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_4d538300d5), context = BuddySceneContext.CONFIGURE) { col ->
-        fun system(icon: String, title: String, sub: String?, vararg actions: String, accent: Int = Theme.accent) = bigRow(icon, title, sub, accent) {
-            for (a in actions) if (runCatching { startActivity(Intent(a).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess) return@bigRow
-            snack(UiText.text(this@MainActivity, R.string.ui_f2c6915e4c))
-        }
-        companionRow(112f)?.let { col.addView(it, LinearLayout.LayoutParams(-1, dpi(112f))) }
-        col.addView(intro(batteryLine() + " · " + UiText.text(this@MainActivity, R.string.ui_ac647b8dc0, freeSpace())))
-        if (DeviceActions.hasFlash) col.addView(bigRow("spark", UiText.text(this@MainActivity, R.string.ui_4d897fa9ab), if (torchOn) UiText.text(this@MainActivity, R.string.ui_a7623e2fdf) else UiText.text(this@MainActivity, R.string.ui_533deb16e2), Theme.colorOf("amber")) {
-            torchOn = !torchOn; if (!runDeviceAction(DeviceActions.Action("torcia", if (torchOn) "on" else "off"), log = false)) torchOn = !torchOn
-            cue(if (torchOn) "surprised" else "relief", force = true); stack.lastOrNull()?.onShow?.invoke()
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        for ((icon, t, acts) in listOf(
-            Triple("globe", UiText.text(this@MainActivity, R.string.ui_cc908be0bc), arrayOf(android.provider.Settings.Panel.ACTION_INTERNET_CONNECTIVITY, android.provider.Settings.ACTION_WIFI_SETTINGS)),
-            Triple("data", UiText.text(this@MainActivity, R.string.ui_9b0034aa24), arrayOf(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS)),
-            Triple("mic", UiText.text(this@MainActivity, R.string.ui_d387fc8d57), arrayOf(android.provider.Settings.Panel.ACTION_VOLUME, android.provider.Settings.ACTION_SOUND_SETTINGS)),
-            Triple("look", UiText.text(this@MainActivity, R.string.ui_aa486e4653), arrayOf(android.provider.Settings.ACTION_DISPLAY_SETTINGS)),
-            Triple("repeat", UiText.text(this@MainActivity, R.string.ui_78362540f0), arrayOf(android.provider.Settings.ACTION_AIRPLANE_MODE_SETTINGS)),
-            Triple("alarm", UiText.text(this@MainActivity, R.string.ui_d3acbe1a50), arrayOf(android.provider.Settings.ACTION_SOUND_SETTINGS)),
-        )) col.addView(system(icon, t, null, *acts), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        // L'agente a portata di mano: domande pronte.
-        val ag = visibleAgents().getOrNull(homeIndex.coerceAtLeast(0)) ?: visibleAgents().firstOrNull()
-        if (ag != null) {
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_b7671340f7)), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
-            for (q in listOf(UiText.text(this@MainActivity, R.string.ui_bd01a2994e), UiText.text(this@MainActivity, R.string.ui_a4c6e62a2b))) col.addView(row(q, Theme.colorOf(ag.color), icon = "chat") { val id = db.lastChat(ag.id) ?: db.newChat(ag.id); openChat(ag, id, say = q) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        }
-    }
-
-    private fun tools(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_6bceb5c35b), context = BuddySceneContext.CONFIGURE) { col ->
-        val al = db.alarms().filter { it.on }.minByOrNull { Sched.next(it.hour, it.minute, it.days) }
-        val t = db.timers().count { it.endAt > System.currentTimeMillis() }
-        val r = db.routines().count { it.on }
-        col.addView(grid(listOf(
-            tile("alarm", UiText.text(this@MainActivity, R.string.ui_70b85f50fe), al?.let { "${Sched.time(it.hour, it.minute)} · ${UiText.days(this@MainActivity, it.days)}" } ?: UiText.text(this@MainActivity, R.string.ui_a6bb6ebc6b), Theme.colorOf("amber")) { push(alarmsScreen()) },
-            tile("timer", "timer", if (t == 0) UiText.text(this@MainActivity, R.string.ui_cad10e601d) else UiText.text(this@MainActivity, R.string.ui_1a5f5b15a3, t), Theme.colorOf("blue")) { push(timersScreen()) },
-            tile("globe", UiText.text(this@MainActivity, R.string.ui_1a8a49ab36), UiText.text(this@MainActivity, R.string.ui_9383d2036e), Theme.colorOf("teal")) { push(translator()) },
-            tile("note", UiText.text(this@MainActivity, R.string.ui_c51048b732), UiText.text(this@MainActivity, R.string.ui_aeccaf118f, db.notes().size), Theme.colorOf("pink")) { push(notesScreen()) },
-            if (hermesMode()) tile("repeat", UiText.text(this@MainActivity, R.string.ui_86e6aa070e), UiText.text(this@MainActivity, R.string.ui_63f78e0d5f), Theme.colorOf("green")) { push(routinesScreen()) }
-            else tile("repeat", "routine", UiText.text(this@MainActivity, R.string.ui_4161247449, r, if (r == 1) UiText.text(this@MainActivity, R.string.ui_c03424c65e) else UiText.text(this@MainActivity, R.string.ui_1e6385e37a)), Theme.colorOf("green")) { push(routinesScreen()) },
-        )), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
-    }
-
-    // -- sveglie
-
-    private fun alarmsScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_70b85f50fe), context = BuddySceneContext.TIME) { col ->
-        db.alarms().forEach { a ->
-            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(8f), dpi(10f), dpi(8f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
-                setOnClickListener { push(alarmEditor(a)) } }
-            val timeV = text(34f, 700, Theme.FG).apply { text = Sched.time(a.hour, a.minute); alpha = if (a.on) 1f else 0.45f }
-            fun alarmLine() = (UiText.days(this@MainActivity, a.days) + (if (a.label.isNotBlank()) " · ${a.label}" else "") + (if (a.on) " · " + UiText.text(this@MainActivity, R.string.ui_0ad2d49935, relativeIn(Sched.next(a.hour, a.minute, a.days) - System.currentTimeMillis())) else ""))
-            val lineV = text(14f, 500, Theme.MUTED).apply { text = alarmLine(); maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
-            card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
-                addView(timeV)
-                addView(lineV) }, LinearLayout.LayoutParams(0, -2, 1f))
-            card.addView(SwitchView(this, a.on, Theme.colorOf("green")) { on ->
-                a.on = on; db.save(a); if (!on) Sched.cancel(this, Sched.KIND_ALARM, a.id); Sched.all(this, db)
-                cue(if (on) "yawn" else "relief", 0f, 6f)
-                timeV.animate().alpha(if (on) 1f else 0.45f).setDuration(Motion.BASE).start(); Motion.crossfade(lineV, alarmLine())   // cambia solo cio' che serve, senza ricostruire la lista
-            })
-            col.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        }
-        if (db.alarms().isEmpty()) col.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e76de1bbe6), UiText.text(this@MainActivity, R.string.ui_4b236bc373)))
-        col.addView(bigRow("plus", UiText.text(this@MainActivity, R.string.ui_0777f42593), null, Theme.colorOf("amber")) { push(alarmEditor(null)) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
-    }
-
-    private fun alarmEditor(existing: Alarm?): Screen {
-        val now = java.util.Calendar.getInstance()
-        val a = existing ?: Alarm(0, (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24, 0, 0, "", true)
-        val label = field(UiText.text(this@MainActivity, R.string.ui_a138cb1da6), a.label)
-        var previewView: TextView? = null
-        fun refreshPreview() { previewView?.text = UiText.text(this@MainActivity, R.string.ui_0b43b978c7, relativeIn(Sched.next(a.hour, a.minute, a.days) - System.currentTimeMillis())) }
-        return listPage(if (existing == null) UiText.text(this@MainActivity, R.string.ui_0777f42593) else UiText.text(this@MainActivity, R.string.ui_4b15f21af0), context = BuddySceneContext.TIME) { col ->
-            col.addView(timeCard({ a.hour }, { a.hour = it; refreshPreview() }, { a.minute }, { a.minute = it; refreshPreview() }), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            // "suona tra 3h 12min": si aggiorna mentre giri il tamburo o cambi i giorni.
-            col.addView(text(15f, 700, Theme.accent).apply { gravity = Gravity.CENTER; setPadding(0, dpi(8f), 0, 0); previewView = this }); refreshPreview()
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_aacd348c9b))); col.addView(daysChips({ a.days }, { a.days = it; refreshPreview() }))
-            // Giorni rapidi.
-            col.addView(LinearLayout(this).apply {
-                listOf(R.string.ui_ac87b5e012 to 31, R.string.ui_505eabdfb8 to 96, R.string.ui_bf2f34b0ac to 127).forEach { (r, bits) ->
-                    addView(button(UiText.text(this@MainActivity, r), toolAccent, small = true) { a.days = bits; daysRepaint?.invoke(); refreshPreview() }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f); topMargin = dpi(6f) })
-                }
-            })
-            col.addView(hint(UiText.text(this@MainActivity, R.string.ui_cfd2c18236)))
-            (label.parent as? ViewGroup)?.removeView(label)
-            col.addView(label, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_3517056179), toolAccent) { askNotificationsOnce(); a.label = label.text.toString().trim(); a.on = true; db.save(a); Sched.all(this, db); pop() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
-            if (existing != null) col.addView(button(UiText.text(this@MainActivity, R.string.ui_4a28ceb2d8), Theme.BAD, filled = false) { db.deleteAlarm(a.id); Sched.cancel(this, Sched.KIND_ALARM, a.id); pop() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        }
-    }
-
-    // -- timer
-
-    private fun timersScreen(): Screen {
-        var picked = 5
-        return listPage("timer", context = BuddySceneContext.TIME) { col ->
-            val ticking = ArrayList<Pair<TextView, Timer>>()
-            val timers = db.timers().filter { it.endAt > System.currentTimeMillis() }
-            timers.forEach { t ->
-                val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(8f), dpi(10f), dpi(8f)) }
-                val v = text(34f, 700).apply { fontFeatureSettings = "tnum" }
-                ticking.add(v to t)
-                card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
-                    addView(v)
-                    addView(text(13f, 500, Theme.MUTED).apply { text = UiText.text(this@MainActivity, R.string.ui_2b804594a6, java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT, AppLanguage.locale(this@MainActivity)).format(java.util.Date(t.endAt))) }) }, LinearLayout.LayoutParams(0, -2, 1f))
-                card.addView(button(UiText.text(this@MainActivity, R.string.ui_9cb9b85e99), Theme.BAD, small = true) { Motion.dismiss(card) { cue("shiver"); db.deleteTimer(t.id); Sched.cancel(this, Sched.KIND_TIMER, t.id); stack.last().onShow?.invoke() } })
-                col.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            }
-            fun tick() {
-                val left = ticking.map { (v, t) -> val s = Countdown.seconds(t.endAt, System.currentTimeMillis()); v.text = if (s >= 3600) "%d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60) else "%02d:%02d".format(s / 60, s % 60); s }
-                left.filter { it > 0 }.minOrNull()?.let { m ->
-                    if (m <= 10) cue(null, if (m % 2L == 0L) -8f else 8f, 6f, force = true)   // conta con gli occhi
-                    else if (m % 10L == 0L) cue(null, if ((m / 10) % 2L == 0L) -18f else 18f, 6f) // pendolo
-                }
-                if (left.any { it <= 0 }) { cue("surprised", force = true); stack.last().onShow?.invoke() }
-            }
-            if (ticking.isNotEmpty()) {
-                // Ancorato al testo della lista corrente: una ricostruzione stacca il vecchio ticker.
-                ViewTicker(ticking.first().first, 1000L, { visible && isCurrentSurface(ticking.first().first) }, ::tick)
-            }
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_faa3ef8f2f)))
-            // Un tamburo di durate, da 10 secondi a 3 ore (in alto e' di meno, in basso di piu').
-            val drum = Drum(this@MainActivity, timerLabels, picked, false) { cue(null, if (it > picked) 8f else -8f, 0f); picked = it }
-            col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(6f), dpi(14f), dpi(6f))
-                addView(drum, LinearLayout.LayoutParams(-1, -2)) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(4f) })
-            // Durate rapide: portano il tamburo su 1, 5, 10 o 30 minuti.
-            col.addView(LinearLayout(this).apply {
-                listOf("1m" to 60, "5m" to 300, "10m" to 600, "30m" to 1800).forEach { (name, secs) ->
-                    addView(button(name, toolAccent, small = true) { drum.select(timerSecs.indexOf(secs)) }, LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dpi(6f); topMargin = dpi(8f) })
-                }
-            })
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_1e70b53208), toolAccent) { cue("nod", 0f, 14f, force = true); startTimerSec(timerSecs[picked]); stack.last().onShow?.invoke() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(10f) })
-        }
-    }
-
-    private val timerSecs = listOf(10, 30, 60, 120, 180, 300, 600, 900, 1200, 1500, 1800, 2700, 3600, 5400, 7200, 10800)
-    private val timerLabels get() = timerSecs.map { s -> if (s < 60) UiText.text(this@MainActivity, R.string.ui_aac3dd2ce9, s) else if (s < 3600) "${s / 60} ${if (s == 60) UiText.text(this@MainActivity, R.string.ui_e53435e667) else UiText.text(this@MainActivity, R.string.ui_61d73c1f14)}" else if (s == 3600) UiText.text(this@MainActivity, R.string.ui_991e4aeded) else if (s % 3600 == 0) UiText.text(this@MainActivity, R.string.ui_90cde61af0, s / 3600) else UiText.text(this@MainActivity, R.string.ui_ff2bd7fd8f, s / 3600) }
-    private fun startTimerSec(sec: Int) { askNotificationsOnce(); db.addTimer(System.currentTimeMillis() + sec * 1000L, ""); Sched.all(this, db) }
-
-    private fun startTimer(minutes: Int) { db.addTimer(System.currentTimeMillis() + minutes * 60_000L, ""); Sched.all(this, db) }
-
-    // -- routine
-
-    private fun routinesScreen(): Screen = if (hermesMode()) hermesJobsScreen() else localRoutinesScreen()
-
-    private fun localRoutinesScreen(): Screen = listPage("routine", context = BuddySceneContext.CONFIGURE) { col ->
-        val agents = visibleAgents()
-        db.routines().forEach { r ->
-            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
-                setOnClickListener { push(routineEditor(r)) } }
-            val nameV = text(21f, 700, Theme.FG).apply { text = r.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; alpha = if (r.on) 1f else 0.45f }
-            card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
-                addView(nameV)
-                addView(text(14f, 500, Theme.MUTED).apply { text = "${Sched.time(r.hour, r.minute)} · ${UiText.days(this@MainActivity, r.days)} · ${agents.firstOrNull { it.id == r.agentId }?.name ?: "?"}"; maxLines = 1 }) }, LinearLayout.LayoutParams(0, -2, 1f))
-            card.addView(SwitchView(this, r.on, Theme.colorOf("green")) { on -> cue(if (on) "wink" else null, 0f, 6f); r.on = on; db.save(r); if (!on) Sched.cancel(this, Sched.KIND_ROUTINE, r.id); Sched.all(this, db); nameV.animate().alpha(if (on) 1f else 0.45f).setDuration(Motion.BASE).start() })
-            col.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        }
-        if (db.routines().isEmpty()) col.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_82b4a5dab1), UiText.text(this@MainActivity, R.string.ui_1b43ea6de4)))
-        col.addView(bigRow("plus", UiText.text(this@MainActivity, R.string.ui_16be2701de), null, Theme.colorOf("green")) { if (agents.isNotEmpty()) push(routineEditor(null)) else snack(UiText.text(this, R.string.ui_62dde8cda6), long = true) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
-    }
-
-    private fun routineEditor(existing: Routine?): Screen {
-        val agents = visibleAgents()
-        val r = existing ?: Routine(0, agents.first().id, "", "", 8, 0, 31, true)
-        val name = field(UiText.text(this@MainActivity, R.string.ui_c9ec307ac9), r.name)
-        val prompt = field(UiText.text(this@MainActivity, R.string.ui_2eb86892f8), r.prompt, multi = true)
-        val status = text(14f, 600, Theme.MUTED).keepCase()
-        return listPage(if (existing == null) UiText.text(this@MainActivity, R.string.ui_16be2701de) else "routine", context = BuddySceneContext.CONFIGURE) { col ->
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_168fedf261)))
-            val chips = LinearLayout(this); val views = ArrayList<Pair<Long, TextView>>()
-            fun paint() = views.forEach { (id, v) -> chipPaint(v, r.agentId == id) }
-            agents.forEach { ag -> views.add(ag.id to chipView(ag.name).apply { setOnClickListener { r.agentId = ag.id; paint() } }.also { chips.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) }) }) }
-            paint(); col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(chips) })
-            listOf<View>(name, prompt).forEach { (it.parent as? ViewGroup)?.removeView(it) }
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_de4da44e7e))); col.addView(name)
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_d3610cf483))); col.addView(prompt)
-            col.addView(timeCard({ r.hour }, { r.hour = it }, { r.minute }, { r.minute = it }), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_aacd348c9b))); col.addView(daysChips({ r.days }, { r.days = it }))
-            fun commit(): Boolean {
-                r.name = name.text.toString().trim().ifEmpty { "routine" }; r.prompt = prompt.text.toString().trim()
-                if (r.prompt.isEmpty()) { status.setTextColor(Theme.BAD); status.text = UiText.text(this@MainActivity, R.string.ui_8037c3e45e); return false }
-                if (agents.none { it.id == r.agentId }) { status.setTextColor(Theme.BAD); status.text = UiText.text(this, R.string.ui_62dde8cda6); return false }
-                r.on = true; db.save(r); Sched.all(this, db); return true
-            }
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_3517056179), toolAccent) { if (commit()) pop() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_46053fe150), toolAccent, primary = false) {
-                if (commit()) { startForegroundService(Intent(this, RoutineService::class.java).putExtra("id", r.id)); status.setTextColor(Theme.colorOf("green")); status.text = UiText.text(this@MainActivity, R.string.ui_1bc14085f3) }
-            }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(4f) })
-            col.addView(status, LinearLayout.LayoutParams(-1, -2).apply { leftMargin = dpi(4f) })
-            if (existing != null) col.addView(button(UiText.text(this@MainActivity, R.string.ui_4a28ceb2d8), Theme.BAD, filled = false) { db.deleteRoutine(r.id); Sched.cancel(this, Sched.KIND_ROUTINE, r.id); pop() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        }
-    }
-
+    internal var torchOn = false
+    internal val timerSecs = listOf(10, 30, 60, 120, 180, 300, 600, 900, 1200, 1500, 1800, 2700, 3600, 5400, 7200, 10800)
+    internal val timerLabels get() = timerSecs.map { s -> if (s < 60) UiText.text(this@MainActivity, R.string.ui_aac3dd2ce9, s) else if (s < 3600) "${s / 60} ${if (s == 60) UiText.text(this@MainActivity, R.string.ui_e53435e667) else UiText.text(this@MainActivity, R.string.ui_61d73c1f14)}" else if (s == 3600) UiText.text(this@MainActivity, R.string.ui_991e4aeded) else if (s % 3600 == 0) UiText.text(this@MainActivity, R.string.ui_90cde61af0, s / 3600) else UiText.text(this@MainActivity, R.string.ui_ff2bd7fd8f, s / 3600) }
     // ---- attivita' pianificate e competenze di Hermes (sincronizzate dal dashboard) -------------------------
 
-    private var jobsCache: List<HermesJob>? = null
-
-    /** Le attivita' pianificate di Hermes: lista con interruttore (pausa/riprendi), tocco per eseguire subito o eliminare, e creazione di nuove. */
-    private fun hermesJobsScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_86e6aa070e), context = BuddySceneContext.CONFIGURE) { col ->
-        val holder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        col.addView(holder)
-        col.addView(bigRow("plus", UiText.text(this@MainActivity, R.string.ui_f4266e420f), null, Theme.accent) { push(hermesJobEditor()) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
-        // Una sola pagina per tutte le attività: sotto i cron di Hermes anche le routine locali di questo telefono.
-        val localRoutines = db.routines()
-        if (localRoutines.isNotEmpty()) {
-            col.addView(section(UiText.text(this@MainActivity, R.string.ui_91bfacd574)))
-            val agentNames = visibleAgents()
-            localRoutines.forEach { r ->
-                col.addView(row(r.name, if (r.on) Theme.accent else Theme.MUTED, sub = "${Sched.time(r.hour, r.minute)} · ${UiText.days(this@MainActivity, r.days)} · ${agentNames.firstOrNull { it.id == r.agentId }?.name ?: "?"}", raw = true, icon = "repeat") { push(routineEditor(r)) },
-                    LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            }
-        }
-        fun jobLine(j: HermesJob): String {
-            val parts = ArrayList<String>()
-            if (j.schedule.isNotBlank()) parts += j.schedule
-            if (!j.enabled) parts += UiText.text(this@MainActivity, R.string.ui_d1afa9b15a)
-            else if (j.nextRun > 0) parts += UiText.text(this@MainActivity, R.string.ui_babc4a5bbf, relativeIn(j.nextRun - System.currentTimeMillis()))
-            if (j.lastRun > 0) parts += UiText.text(this@MainActivity, R.string.ui_e4062a46e5, (if (j.failed()) UiText.text(this@MainActivity, R.string.ui_39d0eed3d8) else ago(j.lastRun)))
-            return parts.joinToString(" · ")
-        }
-        fun card(j: HermesJob): View {
-            val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)); isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false }
-            val nameV = text(20f, 700, Theme.FG).keepCase().apply { text = j.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; alpha = if (j.enabled) 1f else 0.45f }
-            val lineV = text(14f, 500, Theme.MUTED).keepCase().apply { text = jobLine(j); maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END }
-            card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(nameV); addView(lineV) }, LinearLayout.LayoutParams(0, -2, 1f))
-            lateinit var sw: SwitchView
-            sw = SwitchView(this, j.enabled, Theme.colorOf("green")) { on ->
-                nameV.animate().alpha(if (on) 1f else 0.45f).setDuration(Motion.BASE).start()
-                Io.run { try { dash.cronAction(j, if (on) "resume" else "pause"); jobsCache = null; runOnUiThread { if (on) cue("wink") } } catch (e: Exception) { runOnUiThread { cue("surprised", force = true); sw.set(!on, false); nameV.alpha = if (!on) 1f else 0.45f; snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, errorText(e)), long = true) } } }
-            }
-            card.addView(sw)
-            card.setOnClickListener {
-                sheetOf(j.name, listOf(
-                    SheetItem(UiText.text(this@MainActivity, R.string.ui_7bafdb870a), icon = "repeat", sub = if (j.lastStatus.isNotBlank()) UiText.text(this@MainActivity, R.string.ui_d304528aa4, j.lastStatus) else null) {
-                        Io.run { try { dash.cronAction(j, "trigger"); runOnUiThread { cue("bounce", force = true); snack(UiText.text(this@MainActivity, R.string.ui_cdf273e773)) } } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, errorText(e)), long = true) } } }
-                    },
-                    SheetItem(UiText.text(this@MainActivity, R.string.ui_4a28ceb2d8), icon = "close", danger = true) {
-                      sheet(UiText.text(this@MainActivity, R.string.ui_66bebee3af), listOf(UiText.text(this@MainActivity, R.string.ui_4a28ceb2d8) to { Io.run { try { dash.cronDelete(j); jobsCache = jobsCache?.filter { it.id != j.id }; runOnUiThread { stack.lastOrNull()?.onShow?.invoke() } } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, errorText(e)), long = true) } } } }))
-                    },
-                ), subtitle = j.prompt.replace('\n', ' ').take(90))
-            }
-            card.setOnTouchListener { v, e -> Motion.touch(v, e); false }
-            return card
-        }
-        fun render(jobs: List<HermesJob>) {
-            holder.removeAllViews()
-            if (jobs.isEmpty()) holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_6ac0c607ab), UiText.text(this@MainActivity, R.string.ui_83e9847a79)))
-            else jobs.forEach { holder.addView(card(it), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) }) }
-            Motion.stagger(holder, dp(10f))
-        }
-        val cached = jobsCache
-        if (cached != null) render(cached) else holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645)))
-        fun load(): Unit = Io.run {
-            try { val jobs = dash.cronJobs(); jobsCache = jobs; runOnUiThread { whenAttached(holder) { render(jobs) } } }
-            catch (e: Exception) { runOnUiThread { whenAttached(holder) { if (jobsCache == null) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_86750eb32f, errorText(e)))); holder.addView(button(UiText.text(this@MainActivity, R.string.ui_6ed04a5eb7), Theme.accent) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645))); load() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) }) } else snack(errorText(e)) } } }
-        }
-        load()
-    }
-
-    /** Nuova attivita' pianificata su Hermes: profilo (agente), nome, richiesta, ora e giorni (senza giorni parte una volta sola). */
-    private fun hermesJobEditor(): Screen {
-        val agents = visibleAgents()
-        var agent = agents.firstOrNull()
-        var hour = 8; var minute = 0; var days = 31
-        val name = field(UiText.text(this@MainActivity, R.string.ui_c9ec307ac9), "")
-        val prompt = field(UiText.text(this@MainActivity, R.string.ui_2eb86892f8), "", multi = true)
-        val status = text(14f, 600, Theme.MUTED).keepCase()
-        return listPage(UiText.text(this@MainActivity, R.string.ui_f4266e420f), context = BuddySceneContext.CONFIGURE) { col ->
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_168fedf261)))
-            val chips = LinearLayout(this); val views = ArrayList<Pair<Long, TextView>>()
-            fun paint() = views.forEach { (id, v) -> chipPaint(v, agent?.id == id) }
-            agents.forEach { ag -> views.add(ag.id to chipView(ag.name).apply { setOnClickListener { agent = ag; paint() } }.also { chips.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) }) }) }
-            paint(); col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(chips) })
-            listOf<View>(name, prompt).forEach { (it.parent as? ViewGroup)?.removeView(it) }
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_de4da44e7e))); col.addView(name)
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_d3610cf483))); col.addView(prompt)
-            col.addView(timeCard({ hour }, { hour = it }, { minute }, { minute = it }), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_aacd348c9b))); col.addView(daysChips({ days }, { days = it }))
-            col.addView(hint(UiText.text(this@MainActivity, R.string.ui_b30f24d128)))
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_3517056179), Theme.accent) {
-                val ag = agent; val p = prompt.text.toString().trim()
-                if (ag == null || p.isEmpty()) { status.setTextColor(Theme.BAD); status.text = UiText.text(this@MainActivity, R.string.ui_8037c3e45e); return@button }
-                status.setTextColor(Theme.MUTED); status.text = ""
-                Io.run { try { dash.cronCreate(ag.profile, name.text.toString().trim().ifEmpty { p.take(30) }, p, cronExpression(hour, minute, days), days == 0); jobsCache = null; runOnUiThread { pop() } }
-                    catch (e: Exception) { runOnUiThread { status.setTextColor(Theme.BAD); status.text = UiText.text(this@MainActivity, R.string.ui_25d155617f, errorText(e)) } } }
-            }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
-            col.addView(status, LinearLayout.LayoutParams(-1, -2).apply { leftMargin = dpi(4f) })
-        }
-    }
-
-    /** Le competenze (skill) di un profilo Hermes, con interruttore per attivarle o disattivarle. */
-    private fun skillsScreen(agent: Agent): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_d2d5097861)) { col ->
-        val holder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        col.addView(holder)
-        holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645)))
-        fun load(): Unit = Io.run {
-            try {
-                val list = dash.skills(agent.profile).sortedBy { it.name.lowercase() }
-                runOnUiThread { whenAttached(holder) {
-                    holder.removeAllViews()
-                    if (list.isEmpty()) holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_9fb9f54c76)))
-                    val cards = ArrayList<Pair<HermesSkill, View>>()
-                    if (list.size > 8) holder.addView(field(UiText.text(this@MainActivity, R.string.ui_cafd4e1fc8), "").apply {
-                        setSingleLine(true)
-                        addTextChangedListener(object : android.text.TextWatcher {
-                            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
-                            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
-                            override fun afterTextChanged(s: android.text.Editable?) { val q = s.toString().trim().lowercase(); cards.forEach { (sk, v) -> v.visibility = if (q.isEmpty() || sk.name.lowercase().contains(q) || sk.description.lowercase().contains(q)) View.VISIBLE else View.GONE } }
-                        })
-                    })
-                    list.forEach { sk ->
-                        val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(10f), dpi(10f)) }
-                        val nameV = text(18f, 700, Theme.FG).keepCase().apply { text = sk.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; alpha = if (sk.enabled) 1f else 0.45f }
-                        card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(nameV); if (sk.description.isNotBlank()) addView(text(13f, 500, Theme.MUTED).keepCase().apply { text = sk.description; maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END }) }, LinearLayout.LayoutParams(0, -2, 1f))
-                        lateinit var sw: SwitchView
-                        sw = SwitchView(this, sk.enabled, Theme.colorOf("green")) { on ->
-                            nameV.animate().alpha(if (on) 1f else 0.45f).setDuration(Motion.BASE).start()
-                            Io.run { try { dash.toggleSkill(agent.profile, sk.name, on); runOnUiThread { if (on) cue("wink") } } catch (e: Exception) { runOnUiThread { cue("surprised", force = true); sw.set(!on, false); nameV.alpha = if (!on) 1f else 0.45f; snack(UiText.text(this@MainActivity, R.string.ui_25d155617f, errorText(e)), long = true) } } }
-                        }
-                        card.addView(sw)
-                        holder.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) }); cards += sk to card
-                    }
-                    Motion.stagger(holder, dp(10f))
-                } }
-            } catch (e: Exception) { runOnUiThread { whenAttached(holder) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_86750eb32f, errorText(e)))); holder.addView(button(UiText.text(this@MainActivity, R.string.ui_6ed04a5eb7), Theme.accent) { holder.removeAllViews(); holder.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_e400388645))); load() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) }) } } }
-        }
-        load()
-    }
+    internal var jobsCache: List<HermesJob>? = null
 
     // -- suoneria (da notifica)
 
-    private fun ringScreen(title: String, label: String, kind: String): Screen {
+    internal fun ringScreen(title: String, label: String, kind: String): Screen {
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
         val ringBuddy = companion(128f)?.also { it.setScenePose("waiting"); col.addView(it, LinearLayout.LayoutParams(dpi(128f), dpi(128f))) }
         if (ringBuddy != null && !packageName.endsWith(".qa") && !Motion.reduced(this)) { // allarmato: sorpresa all'arrivo, poi brividi e sguardi, al massimo 8 volte
@@ -3826,15 +3189,7 @@ class MainActivity : Activity() {
         return Screen(page(col).also { it.tag = "ring" }, buddyContext = BuddySceneContext.ALERT)
     }
 
-    // ---- spazio dell'agente (da SpaceScreen di r1os): chat, memoria, aspetto, ordine, rimozione ---
-
-    private fun ago(t: Long): String {
-        val s = (System.currentTimeMillis() - t) / 1000
-        return when { s < 60 -> UiText.text(this@MainActivity, R.string.ui_b6ea728a1e); s < 3600 -> UiText.text(this@MainActivity, R.string.ui_1aad585811, s / 60); s < 86400 -> UiText.text(this@MainActivity, R.string.ui_21d1dcf49a, s / 3600); else -> UiText.text(this@MainActivity, R.string.ui_1b030d23ea, s / 86400) }
-    }
-
-
-    private fun space(start: Agent): Screen {
+    internal fun space(start: Agent): Screen {
         val scope = Scope()
         var agent = start
         var showAll = false; var confirmRemove = false; var expandFrom = -1
@@ -3891,537 +3246,7 @@ class MainActivity : Activity() {
     }
 
     /** Il contesto del telefono arriva agli agenti solo se l'utente lo ha acceso in Sicurezza. */
-    private fun applyPhoneContext() { Engine.phoneContext = if (prefs.getBoolean(PhoneContext.PREF, false)) ({ PhoneContext.describe(applicationContext, db, recentApps().mapNotNull { p -> (appCache ?: emptyList()).firstOrNull { it.pkg == p }?.label }) }) else null }
-    private fun actionLogScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_793ade4b26), context = BuddySceneContext.SECURITY) { col ->
-        val list = ActionLog.entries(prefs)
-        if (list.isEmpty()) col.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_7aac7be00d), UiText.text(this@MainActivity, R.string.ui_edaedc429e)))
-        list.forEach { e ->
-            val a = DeviceActions.Action(e.kind, e.arg)
-            col.addView(row(describeAction(a), if (e.ok) Theme.accent else Theme.BAD, sub = ago(e.time) + if (e.ok) "" else " · " + UiText.text(this@MainActivity, R.string.ui_7ef44652ba), icon = if (e.ok) "check" else "close") { },
-                LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        }
-        if (list.isNotEmpty()) col.addView(button(UiText.text(this@MainActivity, R.string.ui_1dcba78d37), Theme.BAD) { confirmTap("actlog") { ActionLog.clear(prefs); pop() } }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
-    }
+    internal fun applyPhoneContext() { Engine.phoneContext = if (prefs.getBoolean(PhoneContext.PREF, false)) ({ PhoneContext.describe(applicationContext, db, recentApps().mapNotNull { p -> (appCache ?: emptyList()).firstOrNull { it.pkg == p }?.label }) }) else null }
+    internal fun performHapticFeedbackSafe() { root.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK) }
 
-    private fun memoryScreen(agent: Agent): Screen {
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val scroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(col, -1, -2) }
-        val accent = Theme.colorOf(agent.color)
-        val input = field(UiText.text(this@MainActivity, R.string.ui_9abd0dbc2a), "")
-        fun render() {
-            col.removeAllViews()
-            col.addView(intro(UiText.text(this@MainActivity, R.string.ui_635a84c89c, agent.name)))
-            val notes = db.memories(agent.id)
-            if (notes.isEmpty()) col.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_7b938546c6), UiText.text(this@MainActivity, R.string.ui_2a838553c5)))
-            notes.forEach { (id, t) ->
-                val card = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(8f), dpi(10f)) ; isClickable = true; setOnClickListener { (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("nota", t)); it.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP); snack(UiText.text(this@MainActivity, R.string.ui_2eba76fd11)) }}
-                card.addView(text(17f, 500).keepCase().apply { text = t }, LinearLayout.LayoutParams(0, -2, 1f))
-                card.addView(button(UiText.text(this@MainActivity, R.string.ui_dcfbe248ac), Theme.BAD, small = true) { Motion.dismiss(card) { db.deleteMemory(id); render() } })
-                col.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            }
-            input.setText("")
-            col.addView(input, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_6c15f34ba8), accent) { val t = input.text.toString().trim(); if (t.isNotEmpty()) { cue("nod", 0f, 10f); db.addMemory(agent.id, t); render() } }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        }
-        render()
-        return Screen(page(framed(UiText.text(this@MainActivity, R.string.ui_7333237b9c), scroll)), buddyContext = BuddySceneContext.MEMORY)
-    }
-
-    private fun manageChats(agent: Agent): Screen {
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val scroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(col, -1, -2) }
-        var pending: Long? = null; var pendingAll = false
-        fun render() {
-            col.removeAllViews()
-            val chats = db.chats(agent.id)
-            if (chats.isEmpty()) col.addView(emptyState(UiText.text(this@MainActivity, R.string.ui_fdb6359504)))
-            chats.forEach { c ->
-                val sure = pending == c.id
-                lateinit var rv: LinearLayout
-                rv = row(if (sure) UiText.text(this@MainActivity, R.string.ui_66bebee3af) else c.title.ifBlank { "chat" }, Theme.BAD, icon = "chat", sub = if (sure) c.title.ifBlank { "chat" } else UiText.text(this@MainActivity, R.string.ui_d8b94a17c8, c.count, ago(c.updated))) {
-                    if (!sure) { cue("surprised", force = true); pending = c.id; pendingAll = false; render() } else Motion.dismiss(rv) { cue("shiver", force = true); pending = null; removeChat(agent, c.id) { render() } }
-                }
-                col.addView(rv)
-            }
-            if (chats.size > 1) col.addView(row(if (pendingAll) UiText.text(this@MainActivity, R.string.ui_5f3fa10d52) else UiText.text(this@MainActivity, R.string.ui_92b3efd6d5), Theme.BAD, icon = "close") {
-                if (!pendingAll) { pendingAll = true; pending = null; render() } else { pendingAll = false; val ids = chats.map { it.id }; var left = ids.size; ids.forEach { removeChat(agent, it) { if (--left == 0) render() } } }
-            })
-        }
-        render()
-        return Screen(page(framed(UiText.text(this@MainActivity, R.string.ui_07832915bd), scroll)), buddyContext = BuddySceneContext.CONFIGURE)
-    }
-
-    // ---- editor agente (forma, colore, finitura, occhi, accessori: dal guardaroba di r1os) --------
-
-    /**
-     * L'aspetto di un agente, al centro il buddy grande. Ogni "proprietà" (forma, colore, finitura, occhi, cappelli e altri accessori, nome,
-     * istruzioni) si sceglie con le frecce ai lati del corpo o con uno scorrimento orizzontale; la rotella (o uno scorrimento verticale, o su/giu')
-     * cambia la proprietà, il cui nome sta sopra. Cosi' tutto si fa con un dito o con la rotella, senza scorrere una pagina lunga.
-     */
-    private fun editor(existing: Agent?): Screen {
-        val a = existing ?: Agent(0, "", "", "", "orb", "orange")
-        class Prop(val title: String, val kind: String, val values: List<Pair<String, String>>)
-        val props = ArrayList<Prop>()
-        props += Prop(UiText.text(this@MainActivity, R.string.ui_80c34c3af8), "form", CharacterView.FORMS.map { it to Appearance.form(this, it, Wardrobe.catalog.form(it).label) })
-        props += Prop(UiText.text(this@MainActivity, R.string.ui_4fd52272a1), "color", Theme.COLORS.keys.map { it to Appearance.color(this, it) })
-        props += Prop(UiText.text(this@MainActivity, R.string.ui_d5fea1049c), "finish", CharacterView.FINISHES.map { it to Appearance.finish(this, it) })
-        props += Prop(UiText.text(this@MainActivity, R.string.ui_5298edb3b5), "eyes", CharacterView.EYES.map { it to Appearance.eyes(this, it, Wardrobe.catalog.eyes(it).label) })
-        for (slot in Wardrobe.catalog.slots) {
-            val items = Wardrobe.catalog.itemsIn(slot.id)
-            if (items.isNotEmpty()) props += Prop(Appearance.slot(this, slot.id, slot.label), "wear:" + slot.id, listOf("" to UiText.text(this@MainActivity, R.string.ui_6ebc1b6951)) + items.map { it.id to Appearance.item(this, it.id, it.label) })
-        }
-        props += Prop(UiText.text(this@MainActivity, R.string.ui_de4da44e7e), "name", emptyList())
-        if (a.profile.isEmpty()) props += Prop(if (hermesMode()) UiText.text(this@MainActivity, R.string.ui_5000750434) else UiText.text(this@MainActivity, R.string.ui_81d613b06c), "prompt", emptyList())
-
-        val name = field(UiText.text(this@MainActivity, R.string.ui_de4da44e7e), a.name)
-        val prompt = field(UiText.text(this@MainActivity, R.string.ui_6ee82c757b), a.prompt, multi = true).apply { minLines = 3; maxLines = 5 }
-        // Mentre scrivi il buddy segue il cursore con lo sguardo (da sinistra a destra lungo la riga).
-        listOf(name to 30, prompt to 60).forEach { (f, span) -> f.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(t: CharSequence?, a0: Int, b: Int, c: Int) {}
-            override fun onTextChanged(t: CharSequence?, a0: Int, b: Int, c: Int) { cue(null, (((t?.length ?: 0) % span) / span.toFloat() - .5f) * 40f, 10f) }
-            override fun afterTextChanged(t: android.text.Editable?) {}
-        }) }
-        val buddy = CharacterView(this, dpi(210f)).also { it.show(a); it.tag = "scene-buddy" }
-        val propTitle = text(28f, 800).apply { gravity = Gravity.CENTER; letterSpacing = -0.01f }
-        val valueLabel = text(22f, 700, Theme.accent).apply { gravity = Gravity.CENTER; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
-        val dots = LinearLayout(this).apply { gravity = Gravity.CENTER }
-        var pi = 0
-        var placeBuddy: (Boolean) -> Unit = {}
-        var setTextLayout: (Boolean) -> Unit = {}
-
-        fun valueIndex(p: Prop): Int = when {
-            p.kind == "form" -> p.values.indexOfFirst { it.first == a.form }
-            p.kind == "color" -> p.values.indexOfFirst { it.first == a.color }
-            p.kind == "finish" -> p.values.indexOfFirst { it.first == a.finish }
-            p.kind == "eyes" -> p.values.indexOfFirst { it.first == a.eyes }
-            p.kind.startsWith("wear:") -> { val worn = a.wear.split(",").firstOrNull { id -> p.values.any { it.first == id && id.isNotEmpty() } } ?: ""; p.values.indexOfFirst { it.first == worn } }
-            else -> -1
-        }.coerceAtLeast(0)
-        fun setValue(p: Prop, id: String) {
-            when {
-                p.kind == "form" -> a.form = id
-                p.kind == "color" -> a.color = id
-                p.kind == "finish" -> a.finish = id
-                p.kind == "eyes" -> a.eyes = id
-                p.kind.startsWith("wear:") -> a.wear = (a.wear.split(",").filter { w -> w.isNotEmpty() && p.values.none { it.first == w } } + listOfNotNull(id.ifEmpty { null })).joinToString(",")
-            }
-        }
-        val isText = { p: Prop -> p.kind == "name" || p.kind == "prompt" }
-
-        // Frecce ai lati del corpo (a meta' altezza del buddy) e area di scorrimento.
-        val left = iconButton("back", Theme.accent, filled = false, size = 48f) {}
-        val right = iconButton("chevron", Theme.accent, filled = false, size = 48f) {}
-        val stage = FrameLayout(this).apply { clipChildren = false }
-        stage.addView(left, FrameLayout.LayoutParams(dpi(48f), dpi(48f), Gravity.START or Gravity.CENTER_VERTICAL).apply { marginStart = dpi(2f) })
-        stage.addView(right, FrameLayout.LayoutParams(dpi(48f), dpi(48f), Gravity.END or Gravity.CENTER_VERTICAL).apply { marginEnd = dpi(2f) })
-        val fields = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE; alpha = 0f }
-        listOf<View>(name, prompt).forEach { (it.parent as? ViewGroup)?.removeView(it) }
-        fields.addView(name, LinearLayout.LayoutParams(-1, -2)); fields.addView(prompt, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-
-        fun paintDots() {
-            dots.removeAllViews()
-            props.forEachIndexed { i, _ -> dots.addView(View(this).apply { background = roundRect(if (i == pi) Theme.accent else Theme.SUBTLE, dp(4f)) }, LinearLayout.LayoutParams(dpi(if (i == pi) 16f else 6f), dpi(6f)).apply { marginStart = dpi(3f); marginEnd = dpi(3f) }) }
-        }
-        fun refreshValue(dir: Int) {
-            val p = props[pi]
-            if (isText(p)) return
-            val v = p.values[valueIndex(p)]
-            Motion.crossfade(valueLabel, v.second)
-            buddy.show(a, "working", "build")
-            placeBuddy(true)
-            buddy.react(if (p.kind == "color" || p.kind == "finish") "bounce" else "wink")
-        }
-        fun showProp(dir: Int) {
-            val p = props[pi]; val text = isText(p)
-            propTitle.animate().cancel()
-            propTitle.animate().translationY(-dir * dp(16f)).alpha(0f).setDuration(Motion.FAST / 2).withEndAction {
-                propTitle.text = p.title; propTitle.translationY = dir * dp(16f)
-                propTitle.animate().translationY(0f).alpha(1f).setDuration(Motion.BASE).setInterpolator(Theme.SETTLE).start()
-            }.start()
-            paintDots(); setTextLayout(text)
-            // Proprieta' di testo: il buddy si rimpicciolisce e compare il campo; altrimenti frecce e valore.
-            listOf(left, right).forEach { it.animate().alpha(if (text) 0f else 1f).setDuration(Motion.BASE).start(); it.isEnabled = !text }
-            if (text) {
-                valueLabel.animate().alpha(0f).setDuration(Motion.FAST).start()
-
-                fields.visibility = View.VISIBLE; fields.animate().alpha(1f).setDuration(Motion.BASE).start()
-                (if (p.kind == "name") name else prompt).post { (if (p.kind == "name") name else prompt).requestFocus() }
-                name.visibility = if (p.kind == "name") View.VISIBLE else View.GONE; prompt.visibility = if (p.kind == "prompt") View.VISIBLE else View.GONE
-            } else {
-                hideKeyboard()
-                fields.animate().alpha(0f).setDuration(Motion.FAST).withEndAction { if (!isText(props[pi])) fields.visibility = View.GONE }.start()
-
-                valueLabel.animate().alpha(1f).setDuration(Motion.BASE).start(); valueLabel.text = p.values[valueIndex(p)].second
-            }
-            buddy.post { placeBuddy(true) }
-        }
-        fun moveProp(d: Int) { val n = (pi + d).coerceIn(0, props.size - 1); if (n == pi) { buddy.react("surprised"); return }; pi = n; showProp(d); performHapticFeedbackSafe() }
-        fun moveValue(d: Int) {
-            val p = props[pi]; if (isText(p)) return
-            val n = (valueIndex(p) + d + p.values.size) % p.values.size
-            setValue(p, p.values[n].first); refreshValue(d); performHapticFeedbackSafe()
-        }
-        left.setOnClickListener { moveValue(-1) }; right.setOnClickListener { moveValue(1) }
-        // Dito: scorrimento orizzontale = valore, verticale = proprieta'. Rotella: la proprieta' (un passo ogni ~40 dp).
-        val gd = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
-            override fun onDown(e: android.view.MotionEvent) = true
-            override fun onFling(e1: android.view.MotionEvent?, e2: android.view.MotionEvent, vx: Float, vy: Float): Boolean {
-                if (Math.abs(vx) > Math.abs(vy) && Math.abs(vx) > 500f) moveValue(if (vx < 0) 1 else -1)
-                else if (Math.abs(vy) > 500f) moveProp(if (vy < 0) 1 else -1)
-                return true
-            }
-        })
-        stage.setOnTouchListener { _, e -> gd.onTouchEvent(e); true }
-        var wheelAcc = 0f
-        val wheelBox = WheelFrame(this, { d ->
-            wheelAcc += d
-            if (Math.abs(wheelAcc) >= dp(40f)) { moveProp(if (wheelAcc < 0) 1 else -1); wheelAcc = 0f }
-        }, { wheelAcc = 0f })
-
-        val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
-        body.addView(propTitle, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(4f) })
-        body.addView(dots, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dpi(6f); bottomMargin = dpi(2f) })
-        body.addView(stage, LinearLayout.LayoutParams(-1, 0, 1f))
-        body.addView(valueLabel, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dpi(8f) })
-        val formColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        formColumn.addView(fields, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dpi(6f) })
-        formColumn.addView(button(UiText.text(this@MainActivity, R.string.ui_3517056179), Theme.colorOf(a.color)) {
-            a.name = name.text.toString().trim().ifEmpty { UiText.text(this@MainActivity, R.string.ui_168fedf261) }
-            if (a.profile.isEmpty()) a.prompt = prompt.text.toString().trim()
-            if (existing == null && hermesMode()) {
-                // Con Hermes un nuovo agente è un nuovo profilo sul dashboard (nome: lettere minuscole, cifre e trattini).
-                val slug = a.name.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-').take(32)
-                if (slug.isEmpty()) { cue("annoyed", force = true); snack(UiText.text(this@MainActivity, R.string.ui_f209be3b5a), long = true); return@button }
-                if (db.agentByProfile(slug) != null) { cue("annoyed", force = true); snack(UiText.text(this@MainActivity, R.string.ui_7eced4aef8), long = true); return@button }
-                snack(UiText.text(this@MainActivity, R.string.ui_3267135c48))
-                Io.run {
-                    try {
-                        dash.createProfile(slug, a.prompt)
-                        db.save(Agent(0, slug, a.prompt, "", a.form, a.color, a.finish, a.eyes, a.wear, slug))
-                        runOnUiThread { homeIndex = visibleAgents().indexOfFirst { it.profile == slug }.coerceAtLeast(0); prefs.edit().putInt("home_index", homeIndex).apply(); pop() }
-                    } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_55684ca59e, UiText.message(this@MainActivity, e.message)), long = true) } }
-                }
-                return@button
-            }
-            db.save(a); pop()
-        }, LinearLayout.LayoutParams(-1, -2))
-        val formScroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(formColumn, -1, -2) }
-        body.addView(formScroll, LinearLayout.LayoutParams(-1, -2))
-        setTextLayout = { text ->
-            stage.visibility = if (text) View.GONE else View.VISIBLE
-            valueLabel.visibility = if (text) View.GONE else View.VISIBLE
-            formScroll.layoutParams = if (text) LinearLayout.LayoutParams(-1, 0, 1f) else LinearLayout.LayoutParams(-1, -2)
-        }
-        wheelBox.addView(body, FrameLayout.LayoutParams(-1, -1))
-        propTitle.text = props[0].title; paintDots(); valueLabel.text = props[0].values[valueIndex(props[0])].second
-        // Un solo personaggio sopra il layout: la tastiera può comprimere l'anteprima,
-        // ma non può ritagliarlo. Nei campi di testo raggiunge la testata fissa.
-        val headerSlot = View(this).apply { layoutParams = LinearLayout.LayoutParams(dpi(64f), dpi(64f)) }
-        val editorSurface = FrameLayout(this)
-        editorSurface.addView(framed(if (existing == null) UiText.text(this@MainActivity, R.string.ui_b1a1efd9f5) else UiText.text(this@MainActivity, R.string.ui_20d6155d10), wheelBox, headerSlot, buddyHeader = false), FrameLayout.LayoutParams(-1, -1))
-        editorSurface.addView(buddy, FrameLayout.LayoutParams(dpi(210f), dpi(210f)))
-        var lastX = Float.NaN; var lastY = Float.NaN; var lastScale = Float.NaN
-        placeBuddy = place@{ animate ->
-            if (editorSurface.width > 0 && headerSlot.width > 0) {
-                val target = if (isText(props[pi]) || stage.height < dpi(64f)) headerSlot else stage
-                val at = IntArray(2); val origin = IntArray(2)
-                target.getLocationInWindow(at); editorSurface.getLocationInWindow(origin)
-                val size = if (target === headerSlot) dpi(64f).toFloat() else minOf(dpi(210f), stage.height, stage.width).toFloat()
-                val x = at[0] - origin[0] + target.width / 2f - buddy.width / 2f
-                val y = at[1] - origin[1] + target.height / 2f - buddy.height / 2f
-                val scale = size / dpi(210f)
-                if (kotlin.math.abs(lastX - x) < .5f && kotlin.math.abs(lastY - y) < .5f && kotlin.math.abs(lastScale - scale) < .001f) return@place
-                val hadPosition = lastX.isFinite(); lastX = x; lastY = y; lastScale = scale
-                buddy.animate().cancel()
-                if (animate && hadPosition && !Motion.reduced(this)) buddy.animate().translationX(x).translationY(y).scaleX(scale).scaleY(scale).setDuration(Motion.BASE).setInterpolator(Theme.SETTLE).start()
-                else { buddy.translationX = x; buddy.translationY = y; buddy.scaleX = scale; buddy.scaleY = scale }
-            }
-        }
-        editorSurface.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> placeBuddy(true) }
-        stage.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> placeBuddy(true) }
-        headerSlot.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> placeBuddy(true) }
-        val screen = Screen(page(editorSurface), { e ->
-            if (e.action != KeyEvent.ACTION_DOWN || currentFocus is EditText) false else when (e.keyCode) {
-                KeyEvent.KEYCODE_DPAD_LEFT -> { moveValue(-1); true }
-                KeyEvent.KEYCODE_DPAD_RIGHT -> { moveValue(1); true }
-                KeyEvent.KEYCODE_DPAD_UP -> { moveProp(-1); true }
-                KeyEvent.KEYCODE_DPAD_DOWN -> { moveProp(1); true }
-                else -> false
-            }
-        }, buddyContext = BuddySceneContext.CONFIGURE)
-        return screen
-    }
-
-    private fun performHapticFeedbackSafe() { root.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK) }
-
-    // ---- login Nous (device code) ---------------------------------------------------------------
-
-    private fun qr(content: String, px: Int): android.graphics.Bitmap {
-        val hints = mapOf(com.google.zxing.EncodeHintType.MARGIN to 0)
-        val m = com.google.zxing.qrcode.QRCodeWriter().encode(content, com.google.zxing.BarcodeFormat.QR_CODE, px, px, hints)
-        val px2 = IntArray(m.width * m.height) { if (m.get(it % m.width, it / m.width)) Color.parseColor("#0b0b0c") else Color.WHITE }
-        return android.graphics.Bitmap.createBitmap(px2, m.width, m.height, android.graphics.Bitmap.Config.ARGB_8888)
-    }
-
-    /** Login a Nous: avatar, titolo, QR su carta bianca, codice a pillola, un solo gesto ("annulla"). */
-    private fun nousLogin(startFlow: Boolean = true): Screen {
-        var cancelled = false
-        val green = Theme.colorOf("green")
-        val avatar = companion(96f)!!
-        fun think(on: Boolean) = avatar.setScenePose(if (on) "thinking" else "idle")
-        val title = text(24f, 800).apply { text = UiText.text(this@MainActivity, R.string.ui_e05f08f5bb); gravity = Gravity.CENTER }
-        val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
-        col.addView(title, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        col.addView(body, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
-        val scroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(col, -1, -2) }
-
-        var restart: () -> Unit = {}
-        fun hint(t: String, color: Int = Theme.MUTED) = text(14f, 500, color).keepCase().apply { text = t; gravity = Gravity.CENTER }
-        fun cancelRow(label: String = UiText.text(this@MainActivity, R.string.ui_9cb9b85e99)) = button(label, Theme.MUTED, primary = false) { pop() }
-        fun show(error: String?, retry: Boolean) {
-            if (error != null) avatar.setScenePose("error")
-            body.removeAllViews()
-            body.addView(hint(error ?: "", Theme.BAD))
-            if (retry) body.addView(button(UiText.text(this@MainActivity, R.string.ui_6ed04a5eb7), green) { restart() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
-            body.addView(cancelRow(UiText.text(this@MainActivity, R.string.ui_e5844b95db)), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        }
-        fun waiting(c: NousAuth.Code) {
-            avatar.setScenePose("waiting")
-            body.removeAllViews()
-            think(true)
-            val card = FrameLayout(this).apply { background = roundRect(Color.WHITE, dpi(18f).toFloat()); setPadding(dpi(10f), dpi(10f), dpi(10f), dpi(10f)) }
-            card.addView(ImageView(this).apply { setImageBitmap(qr(c.uriComplete, dpi(150f))) }, FrameLayout.LayoutParams(dpi(150f), dpi(150f)))
-            body.addView(card)
-            body.addView(hint(UiText.text(this@MainActivity, R.string.ui_ab51840837)), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
-            body.addView(text(15f, 650, Theme.FG).keepCase().apply { text = c.uri.removePrefix("https://"); gravity = Gravity.CENTER })
-            body.addView(hint(UiText.text(this@MainActivity, R.string.ui_b6b51de0f5)), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-            body.addView(text(26f, 800, Theme.ON_ACCENT).keepCase().apply {
-                text = c.userCode; letterSpacing = 0.14f; gravity = Gravity.CENTER
-                background = roundRect(green, dpi(16f).toFloat()); setPadding(dpi(18f), dpi(9f), dpi(18f), dpi(9f))
-            }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dpi(8f) })
-            body.addView(cancelRow(), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(16f); bottomMargin = dpi(12f) })
-        }
-        fun start() {
-            body.removeAllViews(); think(false)
-            body.addView(hint(UiText.text(this@MainActivity, R.string.ui_af341a1d55)))
-            Io.run {
-                try {
-                    val c = nous.requestCode()
-                    runOnUiThread { if (!cancelled) waiting(c) }
-                    val ok = nous.poll(c) { cancelled }
-                    if (ok != null && !cancelled) runOnUiThread {
-                        think(false); avatar.react("love"); title.text = UiText.text(this@MainActivity, R.string.ui_6b696c71a8)
-                        body.removeAllViews(); body.addView(hint(UiText.text(this@MainActivity, R.string.ui_d450171bd7), green))
-                        body.postDelayed({ if (!cancelled) pop() }, 1200)
-                    }
-                } catch (e: Exception) {
-                    runOnUiThread { if (!cancelled) { think(false); avatar.react("surprised"); show(errorText(e), true) } }
-                }
-            }
-        }
-        restart = { start() }
-        if (startFlow) start() else show(null, false)
-        val fixed = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; addView(avatar, LinearLayout.LayoutParams(dpi(96f), dpi(96f))); addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f)) }
-        return Screen(page(fixed), onLeave = { cancelled = true }, buddyContext = BuddySceneContext.LIVE)
-    }
-
-    // ---- impostazioni: fornitore di servizi -----------------------------------------------------
-
-    private fun confirmPairing(pairing: Pairing) {
-        val id = "pairing"
-        overlay(id, UiText.text(this@MainActivity, R.string.ui_30fe006e29), { closeOverlay(id) }) { col, close ->
-            col.addView(text(18f, 650).keepCase().apply { text = pairing.origin })
-            col.addView(intro(UiText.text(this@MainActivity, R.string.ui_a4a9d83109, pairing.user.ifBlank { UiText.text(this@MainActivity, R.string.ui_197bbb6280) })))
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_b4630216c8), Theme.accent) {
-                Io.run {
-                    val configured = runCatching { hermesRuntime.configure(pairing) }
-                    runOnUiThread { configured.onSuccess { settings.provider = Providers.get("dashboard"); close(); push(providerScreen()) }.onFailure { snack(UiText.message(this@MainActivity, it.message) ?: UiText.text(this@MainActivity, R.string.ui_6a0ee75384), long = true) } }
-                }
-            })
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_9cb9b85e99), Theme.MUTED, primary = false) { close() })
-        }
-    }
-    private fun readPairingQr(uri: Uri, cleanup: () -> Unit = {}) {
-        Io.run {
-            val result = runCatching { PairingQr.read { contentResolver.openInputStream(uri) } }
-            cleanup()
-            runOnUiThread { result.onSuccess { confirmPairing(it) }.onFailure { snack(UiText.message(this@MainActivity, it.message) ?: UiText.text(this@MainActivity, R.string.ui_ddcf65537c), long = true) } }
-        }
-    }
-    private fun showPairingQr() {
-        val result = runCatching { Pairing.create(dash.url, dash.user) }
-        result.onFailure { snack(UiText.message(this@MainActivity, it.message) ?: UiText.text(this@MainActivity, R.string.ui_e416804a5e), long = true) }
-        result.onSuccess { pair ->
-            val id = "pairing-qr"
-            overlay(id, UiText.text(this@MainActivity, R.string.ui_6157f65d6b), { closeOverlay(id) }) { col, close ->
-                val size = dpi(260f)
-                col.addView(android.widget.ImageView(this).apply { setImageBitmap(PairingQr.image(pair, size)); contentDescription = UiText.text(this@MainActivity, R.string.ui_19e8e1e64e) }, LinearLayout.LayoutParams(size, size).apply { gravity = Gravity.CENTER_HORIZONTAL })
-                col.addView(hint(UiText.text(this@MainActivity, R.string.ui_ccbb348a08, pair.origin, pair.user)))
-                col.addView(button(UiText.text(this@MainActivity, R.string.ui_a7712b5b03), Theme.MUTED, primary = false) { close() })
-            }
-        }
-    }
-    private fun pairingMenu() = sheet(UiText.text(this@MainActivity, R.string.ui_14d48b2cdd), listOf(
-        UiText.text(this@MainActivity, R.string.ui_1bdaa9d7c8) to { pickPhoto(15) },
-        UiText.text(this@MainActivity, R.string.ui_e5f9aa3385) to { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("image/*"), 14) },
-        UiText.text(this@MainActivity, R.string.ui_bd82ba58da) to { showPairingQr() }
-    ), mapOf(UiText.text(this@MainActivity, R.string.ui_1bdaa9d7c8) to "look", UiText.text(this@MainActivity, R.string.ui_e5f9aa3385) to "attach", UiText.text(this@MainActivity, R.string.ui_bd82ba58da) to "globe"))
-
-    private fun providerScreen(): Screen {
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val scroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(col, -1, -2) }
-        fun build() {
-            col.removeAllViews()
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_64ac619989)))
-            val cur = settings.provider
-            val currentLabel = UiText.owned(this, cur.label)
-            col.addView(bigRow("spark", currentLabel.substringBefore(" ("), UiText.text(this@MainActivity, R.string.ui_ab9e87232e), Theme.accent) {
-                sheet(UiText.text(this@MainActivity, R.string.ui_64ac619989), Providers.all.map { provider -> UiText.owned(this, provider.label) to { if (settings.provider.id != provider.id) cancelLocalTurns(); settings.provider = provider; build() } })
-            }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dpi(8f) })
-            if (cur.id == "dashboard") {
-                col.addView(row(UiText.text(this@MainActivity, R.string.ui_14d48b2cdd), Theme.accent, sub = UiText.text(this@MainActivity, R.string.ui_f3589f24a4), icon = "look") { pairingMenu() })
-                val addr = field(UiText.text(this@MainActivity, R.string.ui_e4edbc6b81), dash.url)
-                val usr = field(UiText.text(this@MainActivity, R.string.ui_6b4422410d), dash.user)
-                val pwd = field("password", dash.password, secret = true)
-                val status = text(13f, 650, Theme.MUTED).keepCase().apply { setPadding(dpi(4f), dpi(8f), 0, 0) }
-                col.addView(label(UiText.text(this@MainActivity, R.string.ui_e074fcb38e))); col.addView(addr)
-                col.addView(label(UiText.text(this@MainActivity, R.string.ui_ee4b96bfac))); col.addView(usr)
-                col.addView(pwd, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-                col.addView(button(UiText.text(this@MainActivity, R.string.ui_3b9b4c05a8), toolAccent) {
-                    val pairing = runCatching { Pairing.create(addr.text.toString(), usr.text.toString()) }
-                    pairing.onFailure { status.text = UiText.message(this@MainActivity, it.message); status.setTextColor(Theme.BAD) }
-                    pairing.onSuccess { config ->
-                        val password = pwd.text.toString()
-                        status.setTextColor(Theme.MUTED); status.text = UiText.text(this@MainActivity, R.string.ui_369c3bf02a)
-                        Io.run {
-                            val r = runCatching { hermesRuntime.configure(config, password); dash.test() }.getOrElse { UiText.message(this@MainActivity, it.message) ?: UiText.text(this@MainActivity, R.string.ui_6a0ee75384) }
-                            runOnUiThread { status.text = UiText.owned(this@MainActivity, r); status.setTextColor(if (r.startsWith("OK")) Theme.colorOf("green") else Theme.BAD) }
-                        }
-                    }
-                }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
-                col.addView(status)
-                col.addView(hint(UiText.text(this@MainActivity, R.string.ui_f120652037)))
-                col.addView(button(UiText.text(this@MainActivity, R.string.ui_c6afddbe7d), toolAccent, primary = false, small = true) {
-                    (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("hermes", "hermes dashboard --host 0.0.0.0 --no-open"))
-                    snack(UiText.text(this@MainActivity, R.string.ui_032d1653f8))
-                }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-                return
-            }
-            if (cur.id == "hermes") {
-                col.addView(label(UiText.text(this@MainActivity, R.string.ui_f4e4b935cf)))
-                if (nous.loggedIn) {
-                    col.addView(row(UiText.text(this@MainActivity, R.string.ui_c7770892d2), Theme.colorOf("green"), bold = true) {}, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dpi(6f) })
-                    col.addView(button(UiText.text(this@MainActivity, R.string.ui_c75e7e5ea0), Theme.BAD, filled = false) { nous.logout(); build() }, LinearLayout.LayoutParams(-1, -2))
-                } else col.addView(row(UiText.text(this@MainActivity, R.string.ui_8b19beadc3), Theme.colorOf("green"), bold = true, sub = UiText.text(this@MainActivity, R.string.ui_1bf30cdcd1)) { push(nousLogin()) }, LinearLayout.LayoutParams(-1, -2))
-            }
-            val key = field(if (cur.id == "hermes") UiText.text(this@MainActivity, R.string.ui_96ed6b40c3) else UiText.text(this@MainActivity, R.string.ui_c65a02daf4), settings.key(cur), secret = true)
-            val base = field(UiText.text(this@MainActivity, R.string.ui_47d34ef65f), settings.base(cur))
-            val model = field(UiText.text(this@MainActivity, R.string.ui_6bec3945e2), settings.model(cur))
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_c65a02daf4))); col.addView(key)
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_47d34ef65f))); col.addView(base)
-
-            col.addView(label(UiText.text(this@MainActivity, R.string.ui_6bec3945e2))); col.addView(model)
-            if (cur.id == "hermes") col.addView(hint(UiText.text(this@MainActivity, R.string.ui_1d8ca53d81)))
-            col.addView(button(UiText.text(this@MainActivity, R.string.ui_3517056179), toolAccent) {
-                settings.set(cur, key.text.toString(), base.text.toString(), model.text.toString()); pop()
-            }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
-        }
-        scroll.post { build() }
-        return Screen(page(framed(UiText.text(this@MainActivity, R.string.ui_64ac619989), scroll)), buddyContext = BuddySceneContext.CONFIGURE)
-    }
-
-    /** Le impostazioni: un riassunto del fornitore in alto e poi le sezioni, in righe grandi. */
-    private fun settingsScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_0c375bfee9), context = BuddySceneContext.CONFIGURE) { col ->
-        companionRow(140f)?.let { col.addView(it, LinearLayout.LayoutParams(-1, dpi(124f)).apply { bottomMargin = dpi(4f) }) }
-        val cur = settings.provider
-        val status = when {
-            cur.id == "dashboard" -> when (dash.state) { HermesDash.State.READY -> UiText.text(this@MainActivity, R.string.ui_26d3536b7e) ; HermesDash.State.CONNECTING -> UiText.text(this@MainActivity, R.string.ui_8ae4c57b7e); HermesDash.State.ERROR -> UiText.text(this@MainActivity, R.string.ui_0a79810a06); else -> UiText.text(this@MainActivity, R.string.ui_4a85016ff2) } + " · " + dash.url.ifBlank { UiText.text(this@MainActivity, R.string.ui_f613d8d937) }
-            cur.id == "hermes" && nous.loggedIn -> UiText.text(this@MainActivity, R.string.ui_79b1c92384)
-            settings.key(cur).isNotBlank() -> UiText.text(this@MainActivity, R.string.ui_09099b15ae) + settings.model(cur).ifBlank { UiText.text(this@MainActivity, R.string.ui_a80f6d0b7b) }
-            else -> UiText.text(this@MainActivity, R.string.ui_649e90a1ed)
-        }
-        col.addView(bigRow("spark", UiText.owned(this@MainActivity, cur.label).substringBefore(" ("), (UiText.owned(this@MainActivity, cur.label).substringAfter(" (", "").removeSuffix(")").let { if (it.isNotEmpty()) "$it · " else "" }) + status, Theme.colorOf("orange")) { push(providerScreen()) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f); bottomMargin = dpi(4f) })
-        if (cur.id == "dashboard" && dash.state == HermesDash.State.READY) {
-            val acct = bigRow("agent", UiText.text(this@MainActivity, R.string.ui_5851d53b86), UiText.text(this@MainActivity, R.string.ui_11720c9cf2), Theme.colorOf("teal")) {}
-            col.addView(acct, LinearLayout.LayoutParams(-1, -2))
-            Io.run { val t = try { dash.account("") } catch (e: Exception) { UiText.text(this@MainActivity, R.string.ui_6ef97386ba) }; runOnUiThread { ((acct.getChildAt(1) as? LinearLayout)?.getChildAt(1) as? TextView)?.text = UiText.owned(this@MainActivity, t) } }
-        }
-        col.addView(label("app"))
-        col.addView(grid(listOf(
-            tile("look", UiText.text(this@MainActivity, R.string.ui_20d6155d10), UiText.text(this@MainActivity, R.string.ui_b2a183c667), Theme.colorOf("purple")) { push(lookScreen()) },
-            tile("data", UiText.text(this@MainActivity, R.string.ui_2953d06507), UiText.text(this@MainActivity, R.string.ui_2cddbe429a), Theme.colorOf("teal")) { sheet(UiText.text(this@MainActivity, R.string.ui_2953d06507), listOf(UiText.text(this@MainActivity, R.string.ui_273893985c) to { startExport() }, UiText.text(this@MainActivity, R.string.ui_26962ddc5b) to { startImport() })) },
-        )))
-        col.addView(row(UiText.text(this@MainActivity, R.string.ui_9729d2de44), Theme.accent, sub = if (pinEnabled()) UiText.text(this@MainActivity, R.string.ui_c10e8db395) else UiText.text(this@MainActivity, R.string.ui_db99ab2043), icon = "lock") { push(securityScreen()) })
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_03b76df6e0)))
-        col.addView(bigRow("sliders", UiText.text(this@MainActivity, R.string.ui_3bab362b6a), UiText.text(this@MainActivity, R.string.ui_db09e3de46), Theme.colorOf("amber")) {
-            try { startActivity(Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { snack(UiText.text(this@MainActivity, R.string.ui_f2c6915e4c)) }
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        // Schermata iniziale (launcher): l'app è selezionabile dal sistema; qui si apre solo la pagina di scelta, l'utente decide.
-        col.addView(bigRow("data", UiText.text(this@MainActivity, R.string.ui_1456190f29), if (isDefaultLauncher()) UiText.text(this@MainActivity, R.string.ui_eddfb6c071) else UiText.text(this@MainActivity, R.string.ui_5993e82081), Theme.colorOf("teal")) {
-            try { startActivity(Intent(android.provider.Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { runCatching { startActivity(Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        col.addView(bigRow("info", "r1agents", UiText.text(this@MainActivity, R.string.ui_18b999e9d9, packageManager.getPackageInfo(packageName, 0).versionName), Theme.colorOf("blue")) { push(aboutScreen()) })
-    }
-
-    private fun aboutScreen(): Screen = listPage(UiText.text(this@MainActivity, R.string.ui_03b76df6e0)) { col ->
-        companionRow(112f)?.let { col.addView(it, LinearLayout.LayoutParams(-1, dpi(112f))) }
-        col.addView(LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(0, dpi(6f), 0, dpi(10f))
-            addView(text(26f, 800).apply { text = "R1 Agents"; gravity = Gravity.CENTER; setPadding(0, dpi(6f), 0, 0) })
-            addView(text(14f, 600, Theme.MUTED).apply { text = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty(); gravity = Gravity.CENTER })
-        })
-        col.addView(intro(UiText.text(this@MainActivity, R.string.ui_391553b02f)))
-        // Aggiornamenti: solo su richiesta, da un indirizzo https scelto dall'utente (il file update.json prodotto da tools/publish-update.py).
-        col.addView(label(UiText.text(this@MainActivity, R.string.ui_f43d53399f)))
-        val address = field(UiText.text(this@MainActivity, R.string.ui_e438a6ee2f), prefs.getString("update_url", "").orEmpty().ifBlank { "https://raw.githubusercontent.com/Syax89/r1-agents/main/update.json" }).apply { setSingleLine(true); inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI }
-        val status = text(14f, 600, Theme.MUTED).keepCase().apply { setPadding(dpi(4f), dpi(8f), dpi(4f), 0) }
-        col.addView(address)
-        col.addView(button(UiText.text(this@MainActivity, R.string.ui_56169e629e), toolAccent) { checkUpdates(address.text.toString().trim(), status) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        col.addView(status)
-    }
-
-    private fun updateMessage(status: TextView, e: Exception) {
-        val text = if (e is UpdateError) (if (e.arg != null) UiText.text(this, e.resource, e.arg) else UiText.text(this, e.resource)) else UiText.text(this, R.string.ui_483f5c9b20, errorText(e) ?: e::class.java.simpleName)
-        status.setTextColor(Theme.BAD); status.text = text
-    }
-
-    private fun checkUpdates(address: String, status: TextView) {
-        if (!Updater.httpsUrl(address)) { status.setTextColor(Theme.BAD); status.text = UiText.text(this, R.string.ui_1320f7c837); return }
-        prefs.edit().putString("update_url", address).apply()
-        status.setTextColor(Theme.MUTED); status.text = UiText.text(this, R.string.ui_bc1ba41905)
-        Io.run {
-            try {
-                val manifest = Updater.fetchManifest(this, address)
-                val installed = packageManager.getPackageInfo(packageName, 0)
-                runOnUiThread {
-                    if (!Updater.isNewer(manifest, installed.longVersionCode)) { status.setTextColor(Theme.colorOf("green")); status.text = UiText.text(this, R.string.ui_3d49cf80ba, installed.versionName) }
-                    else {
-                        status.setTextColor(Theme.MUTED); status.text = manifest.notes.take(400)
-                        sheet(UiText.text(this, R.string.ui_5fe0888cab, manifest.versionName), listOf(UiText.text(this, R.string.ui_922654d58f) to { downloadUpdate(manifest, status) }))
-                    }
-                }
-            } catch (e: Exception) { runOnUiThread { updateMessage(status, e) } }
-        }
-    }
-
-    private fun downloadUpdate(manifest: UpdateManifest, status: TextView) {
-        if (!Updater.canInstall(this)) {
-            snack(UiText.text(this, R.string.ui_9d4279bfc6), long = true)
-            startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:$packageName")))
-            return
-        }
-        status.setTextColor(Theme.MUTED); status.text = UiText.text(this, R.string.ui_2cf76d597f)
-        Io.run {
-            try {
-                val dir = java.io.File(cacheDir, "updates"); dir.listFiles()?.forEach { it.delete() }
-                val apk = java.io.File(dir, "r1agents-${manifest.versionCode}.apk")
-                var lastPercent = -1
-                Updater.download(manifest, apk) { done, total -> val percent = (done * 100 / total).toInt(); if (percent != lastPercent) { lastPercent = percent; runOnUiThread { status.text = UiText.text(this, R.string.ui_2cf76d597f) + " " + percent + "%" } } }
-                Updater.verifyApk(this, apk, manifest)
-                Updater.install(this, apk)
-                runOnUiThread { status.setTextColor(Theme.colorOf("green")); status.text = UiText.text(this, R.string.ui_eb668afd93) }
-            } catch (e: Exception) { runOnUiThread { updateMessage(status, e) } }
-        }
-    }
 }

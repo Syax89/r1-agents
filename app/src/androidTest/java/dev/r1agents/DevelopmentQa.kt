@@ -492,7 +492,7 @@ internal class DevelopmentQa(private val test: Instrumentation) {
                 test.waitForIdleSync(); Thread.sleep(500)
                 val monitor = test.addMonitor(MainActivity::class.java.name, null, false)
                 try {
-                    ui { MainActivity::class.java.getDeclaredMethod("applyLook", String::class.java, String::class.java).apply { isAccessible = true }.invoke(previous, key, value) }
+                    ui { Class.forName("dev.r1agents.SettingsScreensKt").getDeclaredMethod("applyLook", MainActivity::class.java, String::class.java, String::class.java).apply { isAccessible = true }.invoke(null, previous, key, value) }
                     activity = test.waitForMonitorWithTimeout(monitor, 8000) as? MainActivity ?: error("Activity non ricreata: $key")
                 } finally { test.removeMonitor(monitor) }
                 test.waitForIdleSync(); Thread.sleep(700)

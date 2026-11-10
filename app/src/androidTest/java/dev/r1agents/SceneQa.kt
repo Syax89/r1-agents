@@ -206,7 +206,7 @@ internal class SceneQa(private val test: Instrumentation, private val edgesOnly:
             await("caricamento in ingresso") { field("buddyFlight") != null }
             ui {
                 (field("buddyFlight") as BuddyFlight).seek(.6f)
-                val next = MainActivity::class.java.getDeclaredMethod("settingsScreen").apply { isAccessible = true }.invoke(activity)
+                val next = Class.forName("dev.r1agents.SettingsScreensKt").getDeclaredMethod("settingsScreen", MainActivity::class.java).apply { isAccessible = true }.invoke(null, activity)
                 MainActivity::class.java.getDeclaredMethod("replaceTop", next.javaClass).apply { isAccessible = true }.invoke(activity, next)
             }
             await("sostituzione del caricamento") { settled() }; assertCentre("loading-replaced")
