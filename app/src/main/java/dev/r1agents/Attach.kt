@@ -36,10 +36,22 @@ object Attach {
 
     private fun dir(ctx: Context) = File(ctx.filesDir, "attach").also { it.mkdirs() }
 
+    /** Vero solo per file dentro `files/attach` (percorso canonico: niente "../" per uscire dalla cartella). */
+    fun inAttachDir(f: File): Boolean = runCatching { f.canonicalFile.parentFile?.let { it.name == "attach" && it.parentFile?.name == "files" } ?: false }.getOrDefault(false)
+
     private fun safe(n: String) = n.replace(Regex("[^A-Za-z0-9._-]+"), "_").take(60).ifEmpty { "file" }
+
+    /**
+     * Solo contenuti di altre app (`content://` con un'authority che non e' nostra): un `file://` o un nostro provider
+     * permetterebbero a un'app esterna, con una "condivisione", di farci allegare e inviare i nostri file privati.
+     */
+    fun allowedUri(scheme: String?, authority: String?, ownPackage: String): Boolean =
+        scheme.equals("content", ignoreCase = true) && !authority.isNullOrBlank() &&
+            authority != ownPackage && !authority.startsWith("$ownPackage.") && !authority.startsWith("dev.r1agents")
 
     /** Copia il contenuto di `uri` nella cartella degli allegati. Lancia con un messaggio chiaro se è troppo grande o illeggibile. */
     fun fromUri(ctx: Context, uri: Uri, fallbackName: String = "allegato"): Attachment {
+        if (!allowedUri(uri.scheme, uri.authority, ctx.packageName)) throw IllegalStateException("File non accettato.")
         val cr = ctx.contentResolver
         var name = fallbackName
         cr.query(uri, null, null, null, null)?.use { c -> if (c.moveToFirst()) c.getColumnIndex(OpenableColumns.DISPLAY_NAME).takeIf { it >= 0 }?.let { name = c.getString(it) ?: name } }

@@ -12,7 +12,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-PKG=dev.r1agents; ACT=$PKG/.MainActivity
+PKG=dev.r1agents.qa; ACT=$PKG/dev.r1agents.MainActivity   # debug_screen funziona solo nelle build debuggabili (QA)
 OUT=smoke-out; INSTALL=0; JANK=1; SERIAL=""
 while [ $# -gt 0 ]; do case "$1" in
   --install) INSTALL=1;; --out) OUT="$2"; shift;; --serial) SERIAL="$2"; shift;; --no-jank) JANK=0;;

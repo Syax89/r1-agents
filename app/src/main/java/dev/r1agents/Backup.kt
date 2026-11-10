@@ -50,6 +50,17 @@ object Backup {
     }
 
     /** Applica impostazioni lette da un file: solo tipi supportati, mai segreti o dati temporanei. Ritorna quante ne ha applicate. */
+    /**
+     * Un backup puo' venire da chiunque: un blocco "attachment" con un percorso a piacere farebbe leggere e inviare al
+     * fornitore un file privato dell'app. All'import il percorso si toglie (resta il nome: "allegato non piu' disponibile").
+     */
+    fun stripAttachmentPaths(content: String): String = runCatching {
+        val blocks = JSONArray(content)
+        var changed = false
+        for (i in 0 until blocks.length()) blocks.optJSONObject(i)?.let { b -> if (b.optString("type") == "attachment" && b.has("path")) { b.remove("path"); changed = true } }
+        if (changed) blocks.toString() else content
+    }.getOrDefault(content)
+
     fun applyPrefs(j: JSONObject, e: SharedPreferences.Editor): Int {
         var n = 0
         for (k in j.keys()) {
@@ -174,7 +185,7 @@ object Backup {
                 o.optJSONArray("chats")?.let { cs ->
                     for (k in 0 until cs.length()) {
                         val c = cs.getJSONObject(k); val chat = db.newChat(a.id); db.title(chat, c.optString("title"))
-                        c.optJSONArray("messages")?.let { ms -> for (q in 0 until ms.length()) ms.getJSONObject(q).let { db.add(a.id, chat, it.getString("role"), it.getString("content")) } }
+                        c.optJSONArray("messages")?.let { ms -> for (q in 0 until ms.length()) ms.getJSONObject(q).let { db.add(a.id, chat, it.getString("role"), stripAttachmentPaths(it.getString("content"))) } }
                         db.touchChat(chat, c.optLong("updated", System.currentTimeMillis())); chatsN++
                     }
                 }

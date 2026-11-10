@@ -61,7 +61,7 @@ class AssistSession(private val ctx: Context) : VoiceInteractionSession(ctx) {
         mic?.cancel()
         val m = Mics.create(ctx, prefs, { w.text = it }, { t ->
             ch?.show(a, "thinking"); hide()
-            ctx.startActivity(Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra("say", t).putExtra("say_agent", a.id))
+            ctx.startActivity(InternalIntent.mark(Intent(ctx, MainActivity::class.java), ctx).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra("say", t).putExtra("say_agent", a.id))
         }, { err -> hide(); if (err != null) Toast.makeText(ctx, UiText.message(ctx, err), Toast.LENGTH_LONG).show() }, autoStop = true)
         mic = m
         if (!m.start()) hide()

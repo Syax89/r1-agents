@@ -22,6 +22,11 @@ android {
     }
     testBuildType = "qa"
     buildTypes {
+        // La build debug non deve poter sostituire l'app dell'utente (stesso id = aggiornamento silenzioso con una build debuggabile).
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            manifestPlaceholders["appLabel"] = "R1 Agents debug"
+        }
         create("qa") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".qa"

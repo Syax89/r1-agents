@@ -33,7 +33,7 @@ class RingService : Service() {
         }
         val title = i?.getStringExtra("title").orEmpty(); val label = i?.getStringExtra("label").orEmpty(); val kind = i?.getStringExtra("kind").orEmpty()
         Sched.channels(this)
-        val show = PendingIntent.getActivity(this, 1, Intent(this, MainActivity::class.java).putExtra("ring_title", title).putExtra("ring_label", label).putExtra("ring_kind", kind)
+        val show = PendingIntent.getActivity(this, 1, InternalIntent.mark(Intent(this, MainActivity::class.java), this).putExtra("ring_title", title).putExtra("ring_label", label).putExtra("ring_kind", kind)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         fun act(a: String, text: String) = Notification.Action.Builder(null, text, PendingIntent.getService(this, a.hashCode(),
             Intent(this, RingService::class.java).setAction(a).putExtra("label", label), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)).build()

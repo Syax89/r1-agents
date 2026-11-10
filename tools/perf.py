@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--serial', required=True)
-parser.add_argument('--package', default='dev.r1agents')
+parser.add_argument('--package', default='dev.r1agents.qa')  # debug_screen solo nelle build debuggabili
 parser.add_argument('--runs', type=int, default=3)
 parser.add_argument('--scenario', default='idle,nav,carousel,settings,cold_start,mem')
 parser.add_argument('--idle-seconds', type=int, default=30)

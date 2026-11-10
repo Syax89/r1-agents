@@ -196,7 +196,8 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
             if (b.getString("type") != "attachment") { out.put(b); continue }
             val a = Attachment(b.optString("name"), b.optString("mime"), java.io.File(b.optString("path")))
             fun note(t: String) = out.put(JSONObject().put("type", "text").put("text", t))
-            if (!a.file.exists()) { note("[allegato non più disponibile: ${a.name}]"); continue }
+            // Solo file nella cartella degli allegati dell'app: nessun altro percorso (da un backup o altro) viene letto e inviato.
+            if (!Attach.inAttachDir(a.file) || !a.file.exists()) { note("[allegato non più disponibile: ${a.name}]"); continue }
             if (!live()) { note("[allegato: ${a.name}]"); continue }
             try {
                 when (a.kind) {
@@ -414,21 +415,30 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
         }
     } catch (e: Exception) { "errore: ${Vault.redact(e.message)}" }
 
-    /** Solo https verso host pubblici: l'agente non deve poter raggiungere la rete locale dell'utente. */
+    /**
+     * Solo https verso host pubblici: l'agente non deve poter raggiungere la rete locale dell'utente. Il DNS si risolve
+     * una volta sola e la connessione usa proprio gli indirizzi verificati (niente "DNS rebinding" tra controllo e uso).
+     */
     private fun fetch(start: String): String {
         var url = start
+        val client = okhttp3.OkHttpClient.Builder().followRedirects(false).followSslRedirects(false)
+            .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS).readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .dns(object : okhttp3.Dns {
+                override fun lookup(hostname: String): List<InetAddress> {
+                    val all = InetAddress.getAllByName(hostname).toList()
+                    require(all.isNotEmpty() && all.all { WebGuard.publicAddress(it) }) { "host non pubblico" }
+                    return all
+                }
+            }).build()
         repeat(4) {
             val u = URL(url)
             require(u.protocol == "https") { "solo https" }
-            val bad = InetAddress.getAllByName(u.host).any { it.isLoopbackAddress || it.isSiteLocalAddress || it.isLinkLocalAddress || it.isAnyLocalAddress }
-            require(!bad) { "host non pubblico" }
-            val c = (u.openConnection() as HttpURLConnection).apply { instanceFollowRedirects = false; connectTimeout = 10000; readTimeout = 15000 }
-            try {
-                if (c.responseCode in 300..399) { url = URL(u, c.getHeaderField("Location") ?: error("redirect vuoto")).toString(); return@repeat }
-                val raw = c.inputStream.bufferedReader().use { r -> CharArray(200_000).let { b -> String(b, 0, maxOf(r.read(b), 0)) } }
+            client.newCall(okhttp3.Request.Builder().url(url).build()).execute().use { r ->
+                if (r.code in 300..399) { url = URL(u, r.header("Location") ?: error("redirect vuoto")).toString(); return@repeat }
+                val raw = r.body?.charStream()?.use { WebGuard.readUpTo(it, 200_000) }.orEmpty()
                 return raw.replace(Regex("(?is)<(script|style).*?</\\1>"), " ").replace(Regex("<[^>]+>"), " ")
                     .replace(Regex("\\s+"), " ").trim().take(6000)
-            } finally { c.disconnect() }
+            }
         }
         error("troppi redirect")
     }

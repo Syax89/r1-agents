@@ -230,6 +230,12 @@ class MainActivity : Activity() {
             i.data = null
             runCatching { Pairing.parse(uri.toString()) }.onSuccess { confirmPairing(it) }.onFailure { snack(UiText.message(this@MainActivity, it.message) ?: UiText.text(this@MainActivity, R.string.ui_4bd3645750), long = true) }
         }
+        val debuggable = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        // Suoneria e bozza vocale solo se l'intent viene da questa app (token privato): l'activity e' esportata.
+        if (i.hasExtra("ring_kind") && !InternalIntent.ok(i, this)) i.removeExtra("ring_kind")
+        if (i.hasExtra("say") && !InternalIntent.ok(i, this)) i.removeExtra("say")
+        // Le schermate di prova da adb (debug_*) solo nelle build debuggabili: in release un'altra app non deve aprire pagine o finte richieste.
+        if (!debuggable) { i.removeExtra("debug_req"); i.removeExtra("debug_screen"); i.removeExtra("debug_md") }
         if (i.hasExtra("ring_kind")) {
             // Solo per la suoneria: sopra il blocco e schermo acceso. Il resto dell'app non tocca il blocco né lo schermo.
             setShowWhenLocked(true); setTurnScreenOn(true)
@@ -313,6 +319,8 @@ class MainActivity : Activity() {
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE == 0) return
         i ?: return
         i.getStringExtra("nous_client_id")?.let { nous.clientId = it }
+        // Solo prove visive su build debuggabili: `--ez qa_portrait true` blocca la SOLA activity in verticale (non cambia le impostazioni del telefono).
+        if (i.getBooleanExtra("qa_portrait", false)) requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         // Solo prove visive su build debuggabili (mai sul pacchetto dell'utente): `--es look_mode light|dark` cambia il tema di questa installazione.
         i.getStringExtra("look_mode")?.takeIf { it == "light" || it == "dark" && prefs.getString("look_mode", "dark") != it || it == "light" }?.let { mode ->
             if (prefs.getString("look_mode", "dark") != mode) { prefs.edit().putString("look_mode", mode).apply(); i.removeExtra("look_mode"); window.decorView.post { recreate() } }
