@@ -141,3 +141,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.59 (code 66): nuova pagina «voce e audio» nelle Impostazioni, accanto a tasto laterale e sicurezza, con la lettura delle risposte e il riconoscimento vocale. Prima queste scelte stavano in fondo ad Aspetto senza titolo. La riga mostra il riconoscimento in uso.
 
 0.5.60 (code 67): voce dal tasto laterale più fluida. Tenendolo premuto si apre subito la schermata vocale dell app, la stessa del push to talk, già in ascolto, anche dall orologio di standby o dal blocco: sul blocco passa prima dallo sblocco di Android. Il messaggio parte da solo quando smetti di parlare (con Groq, altro Whisper e offline), e un secondo tieni premuto lo invia subito. Se non dici niente per 8 secondi l ascolto si chiude. Il pannello vocale separato è stato tolto.
+
+0.5.61 (code 68): ripremendo il tasto laterale la conversazione vocale continua. Con la schermata vocale aperta il tasto riprende ad ascoltare lì, nella stessa conversazione e con la risposta precedente ancora visibile: prima Android riapriva l app e la schermata ripartiva vuota. Se l agente sta ancora rispondendo, ascolta appena ha finito.

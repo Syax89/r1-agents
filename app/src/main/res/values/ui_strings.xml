@@ -762,6 +762,7 @@
     <string name="ui_efb328b323" formatted="false">"voce e audio"</string>
     <string name="ui_4963571d41">"riconoscimento: %1$s"</string>
     <string name="ui_702651a8e2" formatted="false">"invio quando smetti di parlare"</string>
+    <string name="ui_6c8fc3ec32" formatted="false">"ti ascolto appena finisce di rispondere"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

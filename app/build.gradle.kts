@@ -20,8 +20,8 @@ android {
         // Solo ARM a 64 bit (ogni R1): le librerie native di Vosk per le altre architetture pesavano decine di MB in più.
         ndk { abiFilters += listOf("arm64-v8a") }
         targetSdk = 34
-        versionCode = 67
-        versionName = "0.5.60"
+        versionCode = 68
+        versionName = "0.5.61"
         testInstrumentationRunner = "dev.r1agents.RuntimeInstrumentation"
         manifestPlaceholders["appLabel"] = "R1 Agents"
     }

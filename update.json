@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 67,
-  "versionName": "0.5.60",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.60/r1agents-release-signed.apk",
-  "sha256": "00b64c7999dbfa9dd87ae7b3f177efa3eb057c1c1bb3cdb47b0cbece5dbc32b1",
-  "sizeBytes": 11889348,
-  "notes": "0.5.60 (code 67): voce dal tasto laterale più fluida. Tenendolo premuto si apre subito la schermata vocale dell app, la stessa del push to talk, già in ascolto, anche dall orologio di standby o dal blocco: sul blocco passa prima dallo sblocco di Android. Il messaggio parte da solo quando smetti di parlare (con Groq, altro Whisper e offline), e un secondo tieni premuto lo invia subito. Se non dici niente per 8 secondi l ascolto si chiude. Il pannello vocale separato è stato tolto.",
+  "versionCode": 68,
+  "versionName": "0.5.61",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.61/r1agents-release-signed.apk",
+  "sha256": "9f24c820f856ac1856979dc946a4a07db60ef039e0ba1729659bc110fdfc479b",
+  "sizeBytes": 11893444,
+  "notes": "0.5.61 (code 68): ripremendo il tasto laterale la conversazione vocale continua. Con la schermata vocale aperta il tasto riprende ad ascoltare lì, nella stessa conversazione e con la risposta precedente ancora visibile: prima Android riapriva l app e la schermata ripartiva vuota. Se l agente sta ancora rispondendo, ascolta appena ha finito.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

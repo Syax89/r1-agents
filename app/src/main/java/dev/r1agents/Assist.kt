@@ -27,7 +27,8 @@ class AssistSession(private val ctx: Context) : VoiceInteractionSession(ctx) {
     override fun onShow(args: Bundle?, showFlags: Int) {
         super.onShow(args, showFlags)
         val live = MainActivity.current?.get()
-        if (live != null && SideButton.action(ctx) == "voice" && live.voiceRecording()) { live.runOnUiThread { live.runSideAction() }; hide(); return }
+        // Schermata vocale già aperta (in ascolto, in attesa della risposta o ferma): si continua lì, nella stessa conversazione.
+        if (live != null && SideButton.action(ctx) == "voice" && (live.voiceRecording() || live.voiceOpen())) { live.runOnUiThread { live.runSideAction() }; hide(); return }
         runCatching { startAssistantActivity(Intent(ctx, MainActivity::class.java).setAction(Intent.ACTION_ASSIST).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)) }
         hide()
     }

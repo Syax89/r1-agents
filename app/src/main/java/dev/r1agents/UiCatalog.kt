@@ -769,6 +769,7 @@ internal object UiCatalog {
         UiEntry(R.string.ui_efb328b323, "voce e audio"),
         UiEntry(R.string.ui_4963571d41, "riconoscimento: %1\$s"),
         UiEntry(R.string.ui_702651a8e2, "invio quando smetti di parlare"),
+        UiEntry(R.string.ui_6c8fc3ec32, "ti ascolto appena finisce di rispondere"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

@@ -44,6 +44,16 @@ internal class VoiceConversation(
     private var recording = false
     /** Ascolto dal tasto laterale: si invia da solo al silenzio (il rilascio del tasto non arriva all'app). */
     var autoSend = false
+    /** Tasto premuto mentre l'agente risponde: si riprende ad ascoltare appena ha finito (la conversazione continua). */
+    private var listenAfter = false
+    val isBusy get() = busy || transcribing
+    fun listenNext() {
+        if (!alive) return
+        listenAfter = true
+        performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+        hold.text = UiText.text(act, R.string.ui_6c8fc3ec32)
+    }
+    private fun maybeListenAgain() { if (listenAfter && alive) { listenAfter = false; post { startListening() } } }
     /** Vero mentre registra: il tasto laterale tenuto di nuovo chiude e invia. */
     val isRecording get() = recording
     private var transcribing = false
@@ -224,9 +234,9 @@ internal class VoiceConversation(
         }
         when (s.status) {
             TurnProgress.Status.RUNNING -> if (s.activity.isNotBlank()) showPhase(BuddyVisualState.fromActivity(s.activity).kind, R.string.voice_working, s.activity) else showPhase(if (s.text.isBlank()) "thinking" else "speaking", if (s.text.isBlank()) R.string.voice_thinking else R.string.voice_responding)
-            TurnProgress.Status.DONE -> { reset(); if (s.text.isNotBlank() && !muted) speakReply(s.text) }
-            TurnProgress.Status.ERROR -> { reset(); showPhase("error", R.string.voice_error); Toast.makeText(act, UiText.message(act, s.error), Toast.LENGTH_LONG).show() }
-            TurnProgress.Status.CANCELLED -> { reset(); showPhase("idle", R.string.voice_cancelled) }
+            TurnProgress.Status.DONE -> { reset(); if (listenAfter) maybeListenAgain() else if (s.text.isNotBlank() && !muted) speakReply(s.text) }
+            TurnProgress.Status.ERROR -> { reset(); showPhase("error", R.string.voice_error); Toast.makeText(act, UiText.message(act, s.error), Toast.LENGTH_LONG).show(); maybeListenAgain() }
+            TurnProgress.Status.CANCELLED -> { reset(); showPhase("idle", R.string.voice_cancelled); maybeListenAgain() }
         }
     }
     private fun stopTurn() {

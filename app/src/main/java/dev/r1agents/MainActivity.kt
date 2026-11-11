@@ -1317,7 +1317,7 @@ class MainActivity : Activity() {
     internal var homeVoiceStartY = 0f
 
     internal fun pttStart() {
-        voiceConversation?.let { it.startListening(); return }
+        voiceConversation?.let { it.autoSend = pttAutoStop; it.startListening(); return }
         val agent = visibleAgents().getOrNull(homeIndex) ?: return
         val mode = VoiceConversation(this, agent, hermesMode(), resolveChat = {
             if (hermesMode() && agent.profile.isNotEmpty()) syncSessions(agent)
@@ -1386,6 +1386,8 @@ class MainActivity : Activity() {
     /** Ascolto partito dal tasto laterale: si invia da solo quando smetti di parlare (il rilascio del tasto non arriva). */
     internal var pttAutoStop = false
     internal fun voiceRecording() = voiceConversation?.isRecording == true
+    /** La schermata vocale è aperta e in vista: il tasto laterale continua la stessa conversazione. */
+    internal fun voiceOpen() = voiceConversation != null && visible
     // Standby (Standby.kt): l'orologio sopra il blocco e sempre acceso in carica.
     internal var standbyScreen: Screen? = null
     internal var aodOn = false
