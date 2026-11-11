@@ -658,6 +658,20 @@ fun Context.cardify(col: LinearLayout, head: Int = 0, tail: Int = 0) {
     var card: LinearLayout? = null
     kids.forEachIndexed { i, v ->
         if (i < head || i >= tailStart) { card = null; col.addView(v); return@forEachIndexed }
+        if (v.tag == "group") { card = null; col.addView(v); return@forEachIndexed }
+        if (v.tag == "setting") {
+            // Righe d'impostazione vicine: una scheda sola, con un divisore sottile tra l'una e l'altra.
+            val c = card
+            val last = c?.takeIf { it.childCount > 0 }?.getChildAt(c.childCount - 1)?.tag
+            if (c != null && last == "label") { c.addView(v, LinearLayout.LayoutParams(-1, -2)); return@forEachIndexed }   // sotto un'etichetta: stessa scheda
+            if (c != null && last == "setting") {
+                c.addView(View(this).apply { tag = "divider"; setBackgroundColor(Theme.withAlpha(Theme.FG, 0.08f)) }, LinearLayout.LayoutParams(-1, maxOf(1, dpi(0.6f))).apply { marginStart = dpi(4f) })
+                c.addView(v, LinearLayout.LayoutParams(-1, -2)); return@forEachIndexed
+            }
+            card = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(12f), dpi(4f), dpi(12f), dpi(4f)) }
+            col.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+            card!!.addView(v, LinearLayout.LayoutParams(-1, -2)); return@forEachIndexed
+        }
         if (v.tag == "label") {
             card = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; background = roundRect(Theme.CARD, dp(22f)); setPadding(dpi(14f), dpi(10f), dpi(14f), dpi(14f)) }
             col.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })

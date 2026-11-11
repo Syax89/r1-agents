@@ -754,6 +754,8 @@
     <string name="ui_73dc130ca9" formatted="false">"modello pronto"</string>
     <string name="ui_b128736752" formatted="false">"elimina il modello"</string>
     <string name="ui_fe76631f65">"Scaricamento non riuscito: %1$s"</string>
+    <string name="ui_90cbd0f729" formatted="false">"tipo di sfondo"</string>
+    <string name="ui_d084e1da9a" formatted="false">"scurisci la foto"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

@@ -751,5 +751,7 @@
   "scaricamento… %1$s": "downloading… %1$s",
   "modello pronto": "model ready",
   "elimina il modello": "delete the model",
-  "Scaricamento non riuscito: %1$s": "Download failed: %1$s"
+  "Scaricamento non riuscito: %1$s": "Download failed: %1$s",
+  "tipo di sfondo": "background type",
+  "scurisci la foto": "darken the photo"
 }

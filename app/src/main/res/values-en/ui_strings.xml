@@ -754,6 +754,8 @@
     <string name="ui_73dc130ca9" formatted="false">"model ready"</string>
     <string name="ui_b128736752" formatted="false">"delete the model"</string>
     <string name="ui_fe76631f65">"Download failed: %1$s"</string>
+    <string name="ui_90cbd0f729" formatted="false">"background type"</string>
+    <string name="ui_d084e1da9a" formatted="false">"darken the photo"</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>

@@ -761,6 +761,8 @@ internal object UiCatalog {
         UiEntry(R.string.ui_73dc130ca9, "modello pronto"),
         UiEntry(R.string.ui_b128736752, "elimina il modello"),
         UiEntry(R.string.ui_fe76631f65, "Scaricamento non riuscito: %1\$s"),
+        UiEntry(R.string.ui_90cbd0f729, "tipo di sfondo"),
+        UiEntry(R.string.ui_d084e1da9a, "scurisci la foto"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

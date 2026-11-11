@@ -430,12 +430,14 @@ internal class DevelopmentQa(private val test: Instrumentation) {
                             scroll.fullScroll(View.FOCUS_DOWN)
                         }
                         Thread.sleep(150)
-                        ui {
-                            views(a.window.decorView).filterIsInstance<android.widget.TextView>().last { it.text.toString() == a.getString(R.string.voice_sound_on) }.performClick()
-                            check(prefs.getBoolean("voice_tts", false))
-                            views(a.window.decorView).filterIsInstance<android.widget.TextView>().last { it.text.toString() == a.getString(R.string.voice_sound_off) }.performClick()
-                            check(!prefs.getBoolean("voice_tts", true))
-                        }
+                        // "Lettura nella modalità vocale" è una riga con interruttore: ogni tocco la inverte (e la pagina si ridisegna).
+                        fun ttsRow() = views(a.window.decorView).last { it.isShown && it.contentDescription?.toString() == a.getString(R.string.voice_read_fullscreen) }
+                        val before = prefs.getBoolean("voice_tts", true)
+                        ui { ttsRow().performClick() }; test.waitForIdleSync(); Thread.sleep(150)
+                        check(prefs.getBoolean("voice_tts", before) == !before)
+                        ui { ttsRow().performClick() }; test.waitForIdleSync(); Thread.sleep(150)
+                        check(prefs.getBoolean("voice_tts", !before) == before)
+                        prefs.edit().putBoolean("voice_tts", false).commit()
                     }
                     shot("$language-$look-$screen")
                     ui { a.onBackPressed() }; Thread.sleep(450)

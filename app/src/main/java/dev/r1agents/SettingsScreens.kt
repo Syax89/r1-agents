@@ -29,6 +29,15 @@ import android.content.Context.CLIPBOARD_SERVICE
 internal fun MainActivity.applyLook(key: String, value: String) { prefs.edit().putString(key, value).putString("reopen", "look").apply(); if (key == "app_language") { prefs.edit().remove("w_at").remove("w_text").apply(); Sched.channels(this); hermesRuntime.refreshChannels() }; lookSnapshot = runCatching { android.graphics.Bitmap.createBitmap(root.width, root.height, android.graphics.Bitmap.Config.ARGB_8888).also { root.draw(android.graphics.Canvas(it)) } }.getOrNull(); recreate(); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
 
 internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookScreen, R.string.ui_20d6155d10), context = BuddySceneContext.CONFIGURE) { col ->
+    /** Applica una scelta (stessa logica per righe, interruttori e chip). */
+    fun choose(key: String, id: String) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "idle_after") { prefs.edit().putString("idle_after", id).apply(); stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) }
+    /** Scelta a testo: riga con il valore a destra; il tocco apre il foglio con le opzioni (spuntata quella attiva). */
+    fun pick(title: String, options: List<Pair<String, String>>, current: String, key: String): View =
+        settingRow(title, options.firstOrNull { it.first == current }?.second ?: current) {
+            sheetOf(title, options.map { (id, lab) -> MainActivity.SheetItem(lab, selected = id == current) { if (id != current) choose(key, id) } })
+        }
+    /** Scelta sì/no: interruttore. */
+    fun switch(title: String, on: Boolean, key: String, onId: String = "on", offId: String = "off"): View = settingSwitch(title, on) { v -> choose(key, if (v) onId else offId) }
     fun chips(options: List<Pair<String, String>>, current: String, key: String, font: Boolean = false): View {
         val row = LinearLayout(this)
         options.forEach { (id, label) ->
@@ -36,7 +45,7 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
             row.addView(chipView(label).apply {
                 chipPaint(this, on)
                 if (font) typeface = Theme.fontOf(id, 700)
-                setOnClickListener { if (!on) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "idle_after") { prefs.edit().putString("idle_after", id).apply(); stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) } }
+                setOnClickListener { if (!on) choose(key, id) }
             }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
         }
         // La scelta attiva resta visibile anche quando è in fondo alla riga (es. "offline" nel riconoscimento vocale).
@@ -44,10 +53,9 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
             post { options.indexOfFirst { it.first == current }.takeIf { it > 0 }?.let { row.getChildAt(it) }?.let { c -> scrollTo((c.right - width + dpi(16f)).coerceAtLeast(0), 0) } } }
     }
     col.addView(groupTitle(UiText.text(this@lookScreen, R.string.ui_147f3d4b53)))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_1909c29a8f)))
-    col.addView(chips(listOf("it" to "Italiano", "en" to "English"), AppLanguage.selected(this), "app_language"))
+    col.addView(pick(UiText.text(this@lookScreen, R.string.ui_1909c29a8f), listOf("it" to "Italiano", "en" to "English"), AppLanguage.selected(this), "app_language"))
     col.addView(hint(UiText.text(this@lookScreen, R.string.ui_7df11394ff)))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_b828c7599e))); col.addView(chips(listOf("dark" to UiText.text(this@lookScreen, R.string.ui_67d1d02f39), "light" to UiText.text(this@lookScreen, R.string.ui_e7e35d97b7)), prefs.getString("look_mode", "dark")!!, "look_mode"))
+    col.addView(pick(UiText.text(this@lookScreen, R.string.ui_b828c7599e), listOf("dark" to UiText.text(this@lookScreen, R.string.ui_67d1d02f39), "light" to UiText.text(this@lookScreen, R.string.ui_e7e35d97b7)), prefs.getString("look_mode", "dark")!!, "look_mode"))
     col.addView(label(UiText.text(this@lookScreen, R.string.ui_bdbffaa426)))
     col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@lookScreen).apply {
         Theme.COLORS.forEach { (n, c) ->
@@ -57,21 +65,16 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
                 contentDescription = n; isSelected = on; isClickable = true; setOnClickListener { if (!on) applyLook("look_accent", n) } }, LinearLayout.LayoutParams(dpi(40f), dpi(40f)).apply { marginEnd = dpi(8f) })
         } }) })
     col.addView(groupTitle(UiText.text(this@lookScreen, R.string.ui_6742e04458)))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_449d113dca)))
-    col.addView(chips(listOf("normal" to UiText.text(this@lookScreen, R.string.ui_bae7591bb2), "flip" to UiText.text(this@lookScreen, R.string.ui_a9d1bc7eca)), if (r1WheelLandscapeFlip) "flip" else "normal", "wheel_flip"))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_2c24e821f5)))
-    col.addView(chips(listOf("1" to UiText.text(this@lookScreen, R.string.ui_3eb8a90885), "2" to UiText.text(this@lookScreen, R.string.ui_47742d68e8), "5" to UiText.text(this@lookScreen, R.string.ui_b45ebd80de), "10" to UiText.text(this@lookScreen, R.string.ui_4605ee7759), "never" to UiText.text(this@lookScreen, R.string.ui_ea4440bd94)), prefs.getString("idle_after", "1")!!, "idle_after"))
+    col.addView(switch(UiText.text(this@lookScreen, R.string.ui_449d113dca), r1WheelLandscapeFlip, "wheel_flip", onId = "flip", offId = "normal"))
+    col.addView(pick(UiText.text(this@lookScreen, R.string.ui_2c24e821f5), listOf("1" to UiText.text(this@lookScreen, R.string.ui_3eb8a90885), "2" to UiText.text(this@lookScreen, R.string.ui_47742d68e8), "5" to UiText.text(this@lookScreen, R.string.ui_b45ebd80de), "10" to UiText.text(this@lookScreen, R.string.ui_4605ee7759), "never" to UiText.text(this@lookScreen, R.string.ui_ea4440bd94)), prefs.getString("idle_after", "1")!!, "idle_after"))
     col.addView(groupTitle(UiText.text(this@lookScreen, R.string.ui_15a1464f73)))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_78cb0ec0e3)))
-    col.addView(chips(listOf("ask" to UiText.text(this@lookScreen, R.string.ui_3cd50c52c0), "auto" to UiText.text(this@lookScreen, R.string.ui_9e67d0a179), "off" to UiText.text(this@lookScreen, R.string.ui_22938aeb5f)), DeviceActions.mode, "dev_actions"))
+    col.addView(pick(UiText.text(this@lookScreen, R.string.ui_78cb0ec0e3), listOf("ask" to UiText.text(this@lookScreen, R.string.ui_3cd50c52c0), "auto" to UiText.text(this@lookScreen, R.string.ui_9e67d0a179), "off" to UiText.text(this@lookScreen, R.string.ui_22938aeb5f)), DeviceActions.mode, "dev_actions"))
     col.addView(groupTitle(UiText.text(this@lookScreen, R.string.ui_e0f65ded6a)))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_1b496fbbd9)))
-    col.addView(chips((listOf("rubik") + Theme.FAMILIES.keys).map { it to it }, prefs.getString("look_font", "rubik")!!, "look_font", font = true))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_1456190f29))); col.addView(chips(listOf("glance" to UiText.text(this@lookScreen, R.string.ui_3d9a5cdfac), "home" to "home"), prefs.getString("start", "home")!!, "start"))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_18da3e53ab)))
-    col.addView(chips(listOf("glance" to UiText.text(this@lookScreen, R.string.ui_3d9a5cdfac), "home" to "home"), prefs.getString("bg_edit", "glance")!!, "bg_edit"))
+    col.addView(label(UiText.text(this@lookScreen, R.string.ui_1b496fbbd9))); col.addView(chips((listOf("rubik") + Theme.FAMILIES.keys).map { it to it }, prefs.getString("look_font", "rubik")!!, "look_font", font = true))
+    col.addView(pick(UiText.text(this@lookScreen, R.string.ui_1456190f29), listOf("glance" to UiText.text(this@lookScreen, R.string.ui_3d9a5cdfac), "home" to "home"), prefs.getString("start", "home")!!, "start"))
+    col.addView(pick(UiText.text(this@lookScreen, R.string.ui_18da3e53ab), listOf("glance" to UiText.text(this@lookScreen, R.string.ui_3d9a5cdfac), "home" to "home"), prefs.getString("bg_edit", "glance")!!, "bg_edit"))
     val scr = prefs.getString("bg_edit", "glance")!!
-    col.addView(chips(listOf("plain" to UiText.text(this@lookScreen, R.string.ui_7ef76e6237), "tint" to UiText.text(this@lookScreen, R.string.ui_8e3547d8f5), "gradient" to UiText.text(this@lookScreen, R.string.ui_c59119b0bf), "mesh" to UiText.text(this@lookScreen, R.string.ui_5cf2b74e33), "photo" to UiText.text(this@lookScreen, R.string.ui_0eb57679c4)), prefs.getString("bg_$scr", "plain")!!, "bg_$scr"), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+    col.addView(pick(UiText.text(this@lookScreen, R.string.ui_90cbd0f729), listOf("plain" to UiText.text(this@lookScreen, R.string.ui_7ef76e6237), "tint" to UiText.text(this@lookScreen, R.string.ui_8e3547d8f5), "gradient" to UiText.text(this@lookScreen, R.string.ui_c59119b0bf), "mesh" to UiText.text(this@lookScreen, R.string.ui_5cf2b74e33), "photo" to UiText.text(this@lookScreen, R.string.ui_0eb57679c4)), prefs.getString("bg_$scr", "plain")!!, "bg_$scr"))
     if (prefs.getString("bg_$scr", "plain") in listOf("gradient", "mesh")) {
         col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@lookScreen).apply {
             palettes.keys.forEach { n ->
@@ -84,39 +87,33 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
     if (prefs.getString("bg_$scr", "plain") == "photo") {
         col.addView(button(UiText.text(this@lookScreen, R.string.ui_660ca97329), toolAccent, primary = false) { bgPick = scr; startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).setType("image/*"), 8) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
         val cur = prefs.getFloat("bgd_$scr", 0.4f)
-        col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@lookScreen).apply {
-            listOf(0f, 0.25f, 0.4f, 0.6f, 0.75f).forEach { d ->
-                val on = Math.abs(cur - d) < 0.01f
-                addView(chipView(UiText.text(this@lookScreen, R.string.ui_e2344072da, (d * 100).toInt())).apply { chipPaint(this, on)
-                    setOnClickListener { prefs.edit().putFloat("bgd_$scr", d).putString("reopen", "look").apply(); recreate() } }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f); topMargin = dpi(6f) })
-            } }) })
+        val veils = listOf(0f, 0.25f, 0.4f, 0.6f, 0.75f)
+        fun veil(d: Float) = UiText.text(this@lookScreen, R.string.ui_e2344072da, (d * 100).toInt())
+        col.addView(settingRow(UiText.text(this@lookScreen, R.string.ui_d084e1da9a), veil(veils.minByOrNull { Math.abs(it - cur) } ?: cur)) {
+            sheetOf(UiText.text(this@lookScreen, R.string.ui_d084e1da9a), veils.map { d -> MainActivity.SheetItem(veil(d), selected = Math.abs(cur - d) < 0.01f) {
+                prefs.edit().putFloat("bgd_$scr", d).putString("reopen", "look").apply(); recreate() } })
+        })
     }
     col.addView(label(UiText.text(this@lookScreen, R.string.ui_1b435ea125)))
-    fun toggles(key: String, options: List<Pair<String, String>>, defaults: String): View {
+    /** Scelte multiple (cosa mostra il glance, i widget): un interruttore per voce, nella stessa scheda. */
+    fun toggles(key: String, options: List<Pair<String, String>>, defaults: String) {
         val on = prefs.getString(key, defaults)!!.split(",").filter { it.isNotEmpty() }.toMutableSet()
-        return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(LinearLayout(this@lookScreen).apply {
-            options.forEach { (id, lab) ->
-                val sel = id in on
-                addView(text(15f, 700).apply { text = lab; setPadding(dpi(14f), dpi(8f), dpi(14f), dpi(8f)); isClickable = true
-                    setTextColor(if (sel) Theme.ON_ACCENT else Theme.FG); background = roundRect(if (sel) toolAccent else Theme.FOCUS, dp(14f))
-                    setOnClickListener { if (sel) on.remove(id) else on.add(id); prefs.edit().putString(key, on.joinToString(",")).apply(); stack.last().onShow?.invoke() } }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
-            } }) }
+        options.forEach { (id, lab) -> col.addView(settingSwitch(lab, id in on) { v -> if (v) on.add(id) else on.remove(id); prefs.edit().putString(key, on.joinToString(",")).apply(); if (key == "gw" && id == "meteo") stack.last().onShow?.invoke() }) }
     }
-    col.addView(toggles("gshow", listOf("date" to UiText.text(this@lookScreen, R.string.ui_a17c9aaa61), "status" to UiText.text(this@lookScreen, R.string.ui_1a3700624b), "alarm" to UiText.text(this@lookScreen, R.string.ui_4b15f21af0)), "date,status,alarm"))
+    toggles("gshow", listOf("date" to UiText.text(this@lookScreen, R.string.ui_a17c9aaa61), "status" to UiText.text(this@lookScreen, R.string.ui_1a3700624b), "alarm" to UiText.text(this@lookScreen, R.string.ui_4b15f21af0)), "date,status,alarm")
     col.addView(label("widget"))
-    col.addView(toggles("gw", listOf("hermes" to "hermes", "meteo" to UiText.text(this@lookScreen, R.string.ui_4028f305d5), "timer" to "timer", "routine" to UiText.text(this@lookScreen, R.string.ui_149d78e63c), "nota" to UiText.text(this@lookScreen, R.string.ui_2b295425f3)), ""))
+    toggles("gw", listOf("hermes" to "hermes", "meteo" to UiText.text(this@lookScreen, R.string.ui_4028f305d5), "timer" to "timer", "routine" to UiText.text(this@lookScreen, R.string.ui_149d78e63c), "nota" to UiText.text(this@lookScreen, R.string.ui_2b295425f3)), "")
     if ("meteo" in prefs.getString("gw", "")!!.split(",")) {
         val city = field(UiText.text(this@lookScreen, R.string.ui_dbf977e9ce), prefs.getString("weather_city", "").orEmpty())
         col.addView(city, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
         col.addView(button(UiText.text(this@lookScreen, R.string.ui_1fa7ec8671), toolAccent, primary = false, small = true) { prefs.edit().putString("weather_city", city.text.toString().trim()).remove("w_at").apply() }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dpi(4f) })
     }
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_3d9a5cdfac))); col.addView(chips(listOf("bold", "light", "condensed", "stacked", "serif", "mono", "words", "dial").map { it to it }, prefs.getString("clock", "bold")!!, "clock"))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_41b75bd493))); col.addView(chips(listOf("left" to UiText.text(this@lookScreen, R.string.ui_3b72eca895), "center" to UiText.text(this@lookScreen, R.string.ui_d6b2c56f12)), prefs.getString("clock_align", "left")!!, "clock_align"))
-    col.addView(label(getString(R.string.voice_read_chat))); col.addView(chips(listOf("off" to UiText.text(this@lookScreen, R.string.ui_8e6720c901), "on" to UiText.text(this@lookScreen, R.string.ui_5777f60da9)), if (prefs.getBoolean("tts", false)) "on" else "off", "tts"))
-    col.addView(label(getString(R.string.voice_read_fullscreen)))
-    col.addView(chips(listOf("off" to getString(R.string.voice_sound_off), "on" to getString(R.string.voice_sound_on)), if (prefs.getBoolean("voice_tts", true)) "on" else "off", "voice_tts"))
+    col.addView(pick(UiText.text(this@lookScreen, R.string.ui_3d9a5cdfac), listOf("bold", "light", "condensed", "stacked", "serif", "mono", "words", "dial").map { it to it }, prefs.getString("clock", "bold")!!, "clock"))
+    col.addView(pick(UiText.text(this@lookScreen, R.string.ui_41b75bd493), listOf("left" to UiText.text(this@lookScreen, R.string.ui_3b72eca895), "center" to UiText.text(this@lookScreen, R.string.ui_d6b2c56f12)), prefs.getString("clock_align", "left")!!, "clock_align"))
+    col.addView(switch(getString(R.string.voice_read_chat), prefs.getBoolean("tts", false), "tts"))
+    col.addView(switch(getString(R.string.voice_read_fullscreen), prefs.getBoolean("voice_tts", true), "voice_tts"))
     col.addView(hint(getString(if (SpeechSupport.hasEngine(this@lookScreen)) R.string.voice_read_fullscreen_hint else R.string.voice_engine_help)))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_5393e82f8d))); col.addView(chips(listOf("device" to UiText.text(this@lookScreen, R.string.ui_843e6206e1), "groq" to "groq whisper", "openai" to UiText.text(this@lookScreen, R.string.ui_976e75efae), "hermes" to "hermes", "offline" to UiText.text(this@lookScreen, R.string.ui_d1ffda5dc9)), prefs.getString("stt", "device")!!, "stt"))
+    col.addView(pick(UiText.text(this@lookScreen, R.string.ui_5393e82f8d), listOf("device" to UiText.text(this@lookScreen, R.string.ui_843e6206e1), "groq" to "groq whisper", "openai" to UiText.text(this@lookScreen, R.string.ui_976e75efae), "hermes" to "hermes", "offline" to UiText.text(this@lookScreen, R.string.ui_d1ffda5dc9)), prefs.getString("stt", "device")!!, "stt"))
     sttExtras(col, prefs.getString("stt", "device")!!)
     if (prefs.getString("stt", "device") == "groq") {
         val key = field(UiText.text(this@lookScreen, R.string.ui_6d3fd91ed0), prefs.secret("groq_key"), secret = true)
@@ -134,7 +131,7 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
         col.addView(st)
         col.addView(hint(UiText.text(this@lookScreen, R.string.ui_08e8413321)))
     }
-    col.addView(hint(UiText.text(this@lookScreen, R.string.ui_c3c6e6b033)))
+    if (prefs.getString("stt", "device") == "device") col.addView(hint(UiText.text(this@lookScreen, R.string.ui_c3c6e6b033)))
     cardify(col)
 }
 

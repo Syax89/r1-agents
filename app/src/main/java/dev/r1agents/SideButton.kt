@@ -4,7 +4,6 @@ import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import dev.r1agents.MainActivity.Screen
 import dev.r1os.host.ui.*
@@ -83,17 +82,13 @@ private fun MainActivity.sideButtonList(): Screen = listPage(UiText.text(this, R
             .recoverCatching { startActivity(Intent(android.provider.Settings.ACTION_SETTINGS)) }
             .onFailure { snack(UiText.text(this, R.string.ui_14be4f8e71)) }
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-    col.addView(label(UiText.text(this, R.string.ui_194603a73f)))
     val current = SideButton.action(this)
-    val row = LinearLayout(this)
-    SideButton.ACTIONS.filter { it != "torch" || DeviceActions.hasFlash }.forEach { id ->
-        val on = id == current
-        row.addView(chipView(sideLabel(id)).apply {
-            chipPaint(this, on)
-            setOnClickListener { if (!on) { prefs.edit().putString(SideButton.PREF, id).apply(); stack.last().onShow?.invoke() } }
-        }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
-    }
-    col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(row) })
+    val choices = SideButton.ACTIONS.filter { it != "torch" || DeviceActions.hasFlash }
+    // Come in Aspetto: una riga con il valore scelto, il tocco apre il foglio con le azioni.
+    col.addView(settingRow(UiText.text(this, R.string.ui_194603a73f), sideLabel(current)) {
+        sheetOf(UiText.text(this, R.string.ui_194603a73f), choices.map { id -> MainActivity.SheetItem(sideLabel(id), selected = id == current) {
+            if (id != current) { prefs.edit().putString(SideButton.PREF, id).apply(); stack.lastOrNull()?.onShow?.invoke() } } })
+    }.also { it.background = roundRect(Theme.CARD, dp(22f)); it.setPadding(dpi(16f), dpi(6f), dpi(14f), dpi(6f)) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
     if (current == "voice") col.addView(hint(UiText.text(this, R.string.ui_4174759ddc)))
     col.addView(button(UiText.text(this, R.string.ui_46053fe150), toolAccent, primary = false, small = true) { runSideAction() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(14f) })
 }

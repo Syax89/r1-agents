@@ -223,9 +223,13 @@ class RuntimeInstrumentation : Instrumentation() {
             runOnMainSync { ctx.startActivity(Intent(ctx, MainActivity::class.java).putExtra("open_chat", englishChat).putExtra("open_agent", named.id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)) }
             await("chat pronta prima del cambio lingua") { runtime.visibleChat == englishChat }
             runOnMainSync { ctx.startActivity(Intent(ctx, MainActivity::class.java).putExtra("debug_screen", "look").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)) }
-            await("selettore lingua nell’interfaccia") { var found = false; runOnMainSync { found = findText(activity!!.window.decorView, "English") != null }; found }
+            // La lingua è una riga con il valore a destra ("Italiano"): il tocco apre il foglio con le lingue.
+            fun clickable(v: android.view.View): android.view.View { var c: android.view.View = v; while (!c.isClickable) c = c.parent as? android.view.View ?: break; return c }
+            await("selettore lingua nell’interfaccia") { var found = false; runOnMainSync { found = findText(activity!!.window.decorView, "Italiano") != null }; found }
+            runOnMainSync { clickable(findText(activity!!.window.decorView, "Italiano")!!).performClick() }
+            await("foglio delle lingue") { var found = false; runOnMainSync { found = findText(activity!!.window.decorView, "English") != null }; found }
             val monitor = addMonitor(MainActivity::class.java.name, null, false)
-            runOnMainSync { findText(activity!!.window.decorView, "English")!!.performClick() }
+            runOnMainSync { clickable(findText(activity!!.window.decorView, "English")!!).performClick() }
             activity = waitForMonitorWithTimeout(monitor, 12000) ?: error("ricreazione inglese non completata")
             removeMonitor(monitor)
             check(activity!!.resources.configuration.locales[0].language == "en")
