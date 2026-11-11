@@ -706,6 +706,23 @@ internal object UiCatalog {
         UiEntry(R.string.ui_c23a024853, "di nuovo in linea"),
         UiEntry(R.string.ui_b106e64b3f, "app aperte di recente"),
         UiEntry(R.string.ui_110d1350b1, "Nessuna app recente: aprine una dal cassetto."),
+        UiEntry(R.string.ui_ed62d9032c, "volume %1\$s"),
+        UiEntry(R.string.ui_17d094a7e3, "luminosità %1\$s"),
+        UiEntry(R.string.ui_9b90bc7395, "musica: %1\$s"),
+        UiEntry(R.string.ui_471cbe4581, "promemoria alle %1\$s"),
+        UiEntry(R.string.ui_86f329a66f, "evento in calendario: %1\$s"),
+        UiEntry(R.string.ui_49f38d764e, "Per la luminosità serve il permesso «modifica impostazioni di sistema»: concedilo e riprova."),
+        UiEntry(R.string.ui_d1faa1a845, "quando parte"),
+        UiEntry(R.string.ui_ce5f4874c1, "a un orario"),
+        UiEntry(R.string.ui_323a8a8501, "cavo scollegato"),
+        UiEntry(R.string.ui_ef0cba7732, "connesso al wifi"),
+        UiEntry(R.string.ui_65b3007ba9, "cuffie collegate"),
+        UiEntry(R.string.ui_dce6e6ddf5, "Parte da sola quando succede, al massimo una volta ogni 10 minuti, finché R1 Agents è attivo."),
+        UiEntry(R.string.ui_10b9764379, "Password sbagliata o file danneggiato."),
+        UiEntry(R.string.ui_77c7dfe5ae, "esporta con password"),
+        UiEntry(R.string.ui_26514a5595, "password del backup"),
+        UiEntry(R.string.ui_00dead5d37, "Il backup è protetto: scrivi la password."),
+        UiEntry(R.string.ui_2553dd7241, "Senza questa password il file non si potrà più leggere: conservala."),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

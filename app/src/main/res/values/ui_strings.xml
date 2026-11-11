@@ -699,6 +699,23 @@
     <string name="ui_c23a024853" formatted="false">"di nuovo in linea"</string>
     <string name="ui_b106e64b3f" formatted="false">"app aperte di recente"</string>
     <string name="ui_110d1350b1" formatted="false">"Nessuna app recente: aprine una dal cassetto."</string>
+    <string name="ui_ed62d9032c">"volume %1$s"</string>
+    <string name="ui_17d094a7e3">"luminosità %1$s"</string>
+    <string name="ui_9b90bc7395">"musica: %1$s"</string>
+    <string name="ui_471cbe4581">"promemoria alle %1$s"</string>
+    <string name="ui_86f329a66f">"evento in calendario: %1$s"</string>
+    <string name="ui_49f38d764e" formatted="false">"Per la luminosità serve il permesso «modifica impostazioni di sistema»: concedilo e riprova."</string>
+    <string name="ui_d1faa1a845" formatted="false">"quando parte"</string>
+    <string name="ui_ce5f4874c1" formatted="false">"a un orario"</string>
+    <string name="ui_323a8a8501" formatted="false">"cavo scollegato"</string>
+    <string name="ui_ef0cba7732" formatted="false">"connesso al wifi"</string>
+    <string name="ui_65b3007ba9" formatted="false">"cuffie collegate"</string>
+    <string name="ui_dce6e6ddf5" formatted="false">"Parte da sola quando succede, al massimo una volta ogni 10 minuti, finché R1 Agents è attivo."</string>
+    <string name="ui_10b9764379" formatted="false">"Password sbagliata o file danneggiato."</string>
+    <string name="ui_77c7dfe5ae" formatted="false">"esporta con password"</string>
+    <string name="ui_26514a5595" formatted="false">"password del backup"</string>
+    <string name="ui_00dead5d37" formatted="false">"Il backup è protetto: scrivi la password."</string>
+    <string name="ui_2553dd7241" formatted="false">"Senza questa password il file non si potrà più leggere: conservala."</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

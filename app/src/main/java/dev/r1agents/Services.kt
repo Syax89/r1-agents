@@ -66,34 +66,36 @@ class RoutineService : Service() {
         val id = i?.getLongExtra("id", 0) ?: 0
         Sched.channels(this)
         startForeground(2, Notification.Builder(this, Sched.CH_INFO).setSmallIcon(android.R.drawable.ic_popup_sync).setContentTitle(UiText.text(this@RoutineService, R.string.ui_5c6d1ac4e6)).build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-        Io.run {
-            val ctx: Context = this
-            val db = Db.get(ctx)
-            try {
-                val r = db.routine(id); val agent = db.agents().firstOrNull { it.id == r?.agentId }
-                if (r != null && agent != null) {
-                    val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-                    // Il dash condiviso: un secondo HermesDash rifiutava le approvazioni, non salvava la sessione e lasciava un socket aperto.
-                    val engine = Engine(db, Settings(prefs), NousAuth(prefs), HermesRuntime.get(ctx).dash)
-                    val chat = db.newChat(agent.id); db.title(chat, r.name)
-                    var text = ""
-                    try { engine.turn(agent, chat, r.prompt) { } } catch (e: Exception) { text = UiText.text(this@RoutineService, R.string.ui_2f38b99da3, UiText.message(this@RoutineService, e.message)) }
-                    if (text.isEmpty()) text = lastAnswer(db, chat)
-                    val open = PendingIntent.getActivity(ctx, chat.toInt(), Intent(ctx, MainActivity::class.java).putExtra("open_chat", chat).putExtra("open_agent", agent.id)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-                    getSystemService(android.app.NotificationManager::class.java).notify(1000 + chat.toInt(),
-                        Notification.Builder(ctx, Sched.CH_INFO).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("${agent.name} · ${r.name}")
-                            .setContentText(text.take(120)).setStyle(Notification.BigTextStyle().bigText(text.take(600))).setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(open).setAutoCancel(true).build())
-                }
-            } finally { stopSelf(startId) } // con due routine insieme, la prima che finisce non ferma la seconda
-        }
+        Io.run { try { execute(this, id) } finally { stopSelf(startId) } } // con due routine insieme, la prima che finisce non ferma la seconda
         return START_NOT_STICKY
     }
 
-    private fun lastAnswer(db: Db, chat: Long): String {
-        val m = db.messages(chat).lastOrNull { it.first == "assistant" } ?: return UiText.text(this@RoutineService, R.string.ui_1f1c954e90)
-        val a = org.json.JSONArray(m.second); val sb = StringBuilder()
-        for (k in 0 until a.length()) a.getJSONObject(k).takeIf { it.getString("type") == "text" }?.let { sb.append(it.optString("text")) }
-        return sb.toString().ifBlank { UiText.text(this@RoutineService, R.string.ui_1f1c954e90) }
+    companion object {
+        /** Esegue la routine e notifica la risposta. Usata dal servizio e, se Android non lascia avviarlo dal background, direttamente. */
+        fun execute(ctx: Context, id: Long) {
+            val db = Db.get(ctx)
+            val r = db.routine(id); val agent = db.agents().firstOrNull { it.id == r?.agentId }
+            if (r == null || agent == null) return
+            val prefs = ctx.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            // Il dash condiviso: un secondo HermesDash rifiutava le approvazioni, non salvava la sessione e lasciava un socket aperto.
+            val engine = Engine(db, Settings(prefs), NousAuth(prefs), HermesRuntime.get(ctx).dash)
+            val chat = db.newChat(agent.id); db.title(chat, r.name)
+            var text = ""
+            try { engine.turn(agent, chat, r.prompt) { } } catch (e: Exception) { text = UiText.text(ctx, R.string.ui_2f38b99da3, UiText.message(ctx, e.message)) }
+            if (text.isEmpty()) text = lastAnswer(ctx, db, chat)
+            val open = PendingIntent.getActivity(ctx, chat.toInt(), Intent(ctx, MainActivity::class.java).putExtra("open_chat", chat).putExtra("open_agent", agent.id)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            Sched.channels(ctx)
+            ctx.getSystemService(android.app.NotificationManager::class.java).notify(1000 + chat.toInt(),
+                Notification.Builder(ctx, Sched.CH_INFO).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("${agent.name} · ${r.name}")
+                    .setContentText(text.take(120)).setStyle(Notification.BigTextStyle().bigText(text.take(600))).setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(open).setAutoCancel(true).build())
+        }
+
+        private fun lastAnswer(ctx: Context, db: Db, chat: Long): String {
+            val m = db.messages(chat).lastOrNull { it.first == "assistant" } ?: return UiText.text(ctx, R.string.ui_1f1c954e90)
+            val a = org.json.JSONArray(m.second); val sb = StringBuilder()
+            for (k in 0 until a.length()) a.getJSONObject(k).takeIf { it.getString("type") == "text" }?.let { sb.append(it.optString("text")) }
+            return sb.toString().ifBlank { UiText.text(ctx, R.string.ui_1f1c954e90) }
+        }
     }
 }

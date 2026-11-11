@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 53,
-  "versionName": "0.5.46",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.46/r1agents-release-signed.apk",
-  "sha256": "8c2680b4941ad81463bf3205809c0b4cb37b562d35f6b4d0ecc1451965957748",
-  "sizeBytes": 1407303,
-  "notes": "0.5.46 (code 53): multitasking: dal fondo dello schermo scorri in alto e tieni (o menu, recenti) e le app aperte di recente fluttuano come schede su sfondo nero; rotella o dito per scegliere, tocco per aprirla a tutto schermo con l acqua, colpo in alto per toglierla. Senza rete il messaggio resta pronto e parte da solo quando torna; con Claude il prompt resta in cache (meno costi e attese); le azioni sul telefono dicono all agente se sono riuscite; Hermes si riposa in background e non perde messaggi o approvazioni dopo una riconnessione.",
+  "versionCode": 54,
+  "versionName": "0.5.47",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.47/r1agents-release-signed.apk",
+  "sha256": "6a75d3bcaf82b56cb0f1c69e93b88abc965a819828b2da166a1aecd236a9053c",
+  "sizeBytes": 1423687,
+  "notes": "0.5.47 (code 54): gli agenti possono anche regolare volume e luminosità, comandare la musica, mettere un promemoria a un orario e proporre un evento da confermare nel calendario. Routine a evento: partono quando il Rabbit va in carica, si scollega, trova il wifi o si collegano le cuffie. Esportazione con password (AES-256): senza la password il file non si legge. MainActivity più snella (azioni, multitasking, pagina dell agente in file propri).",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

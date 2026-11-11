@@ -52,4 +52,30 @@ class DeviceActionsTest {
         assertNotNull(DeviceActions.validate("chiama", "mamma")); assertNotNull(DeviceActions.validate("nota", " "))
         assertNotNull(DeviceActions.validate("pannello", "impostazioni"))
     }
+
+    @Test fun livelli() {
+        assertEquals(50, DeviceActions.level("50")); assertEquals(70, DeviceActions.level("70%"))
+        assertEquals(DeviceActions.UP, DeviceActions.level("su")); assertEquals(DeviceActions.DOWN, DeviceActions.level("giù")); assertEquals(DeviceActions.MUTE, DeviceActions.level("muto"))
+        assertNull(DeviceActions.level("101")); assertNull(DeviceActions.level("forte"))
+        assertNull(DeviceActions.validate("volume", "muto")); assertNotNull(DeviceActions.validate("luminosita", "muto")); assertNotNull(DeviceActions.validate("volume", "200"))
+    }
+    @Test fun media() {
+        assertNull(DeviceActions.validate("media", "pausa")); assertNotNull(DeviceActions.validate("media", "spegni"))
+    }
+    @Test fun promemoria() {
+        assertEquals(Triple(18, 30, "chiama Anna"), DeviceActions.reminder("18:30 chiama Anna"))
+        assertNull(DeviceActions.reminder("chiama Anna")); assertNull(DeviceActions.reminder("25:00 x")); assertNull(DeviceActions.reminder("18:30"))
+    }
+    @Test fun eventi() {
+        val now = java.time.LocalDateTime.of(2026, 11, 11, 16, 0)
+        assertEquals(java.time.LocalDateTime.of(2026, 11, 20, 15, 0) to "dentista", DeviceActions.event("2026-11-20 15:00 dentista", now))
+        assertEquals(java.time.LocalDateTime.of(2026, 11, 12, 9, 0) to "riunione", DeviceActions.event("9:00 riunione", now))   // già passato: domani
+        assertEquals(java.time.LocalDateTime.of(2026, 11, 11, 18, 0) to "cena", DeviceActions.event("18 cena", now))
+        assertNull(DeviceActions.event("2026-13-40 10:00 x", now)); assertNull(DeviceActions.event("domani dentista", now))
+    }
+    @Test fun nuoveDirettive() {
+        val p = DeviceActions.parse("ok [[r1:volume=30]] [[r1:media=pausa]] [[r1:promemoria=18:30 chiama Anna]]")
+        assertEquals(listOf("volume=30", "media=pausa", "promemoria=18:30 chiama Anna"), p.actions.map { it.key })
+        assertEquals(true, DeviceActions.instruction().endsWith("Non esiste nessun'altra azione.]\n"))
+    }
 }

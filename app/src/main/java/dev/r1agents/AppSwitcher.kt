@@ -2,6 +2,8 @@ package dev.r1agents
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.Intent
+import android.view.ViewGroup
 import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.view.Choreographer
@@ -360,4 +362,26 @@ internal class AppSwitcher(
     private object TextUtilsCompat {
         fun ellipsize(s: String, p: Paint, w: Float): String = android.text.TextUtils.ellipsize(s, android.text.TextPaint(p), w, android.text.TextUtils.TruncateAt.END).toString()
     }
+}
+
+/** Apre il multitasking sopra la pagina attuale (menu → recenti, gesto dal fondo, schermata di prova). */
+internal fun MainActivity.openSwitcher() {
+    if (appSwitcher != null || pinGate != null) return
+    if (pttView != null) pttClose()
+    val apps = appCache ?: loadApps().also { appCache = it }
+    val recent = recentApps().mapNotNull { p -> apps.firstOrNull { it.pkg == p } }
+    val sw = AppSwitcher(this, recent, UiText.text(this, R.string.ui_950486e052), UiText.text(this, R.string.ui_110d1350b1),
+        onPick = { a ->
+            try {
+                noteLaunched(a.pkg); switcherLaunched = true
+                startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setClassName(a.pkg, a.cls)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or Intent.FLAG_ACTIVITY_NO_ANIMATION)); true
+            } catch (e: Exception) { switcherLaunched = false; snack(UiText.text(this, R.string.ui_f2c6915e4c)); false }
+        },
+        onRemove = { a -> forgetRecent(a.pkg) },
+        onClosed = { appSwitcher = null; switcherLaunched = false; stack.lastOrNull()?.view?.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_AUTO })
+    appSwitcher = sw
+    stack.lastOrNull()?.view?.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+    root.addView(sw, ViewGroup.LayoutParams(-1, -1)); sw.bringToFront(); pinGate?.bringToFront()
+    root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
 }

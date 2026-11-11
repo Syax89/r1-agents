@@ -601,7 +601,7 @@ internal fun MainActivity.settingsScreen(): Screen = listPage(UiText.text(this@s
     col.addView(label("app"))
     col.addView(grid(listOf(
         tile("look", UiText.text(this@settingsScreen, R.string.ui_20d6155d10), UiText.text(this@settingsScreen, R.string.ui_b2a183c667), Theme.colorOf("purple")) { push(lookScreen()) },
-        tile("data", UiText.text(this@settingsScreen, R.string.ui_2953d06507), UiText.text(this@settingsScreen, R.string.ui_2cddbe429a), Theme.colorOf("teal")) { sheet(UiText.text(this@settingsScreen, R.string.ui_2953d06507), listOf(UiText.text(this@settingsScreen, R.string.ui_273893985c) to { startExport() }, UiText.text(this@settingsScreen, R.string.ui_26962ddc5b) to { startImport() })) },
+        tile("data", UiText.text(this@settingsScreen, R.string.ui_2953d06507), UiText.text(this@settingsScreen, R.string.ui_2cddbe429a), Theme.colorOf("teal")) { sheet(UiText.text(this@settingsScreen, R.string.ui_2953d06507), listOf(UiText.text(this@settingsScreen, R.string.ui_273893985c) to { startExport() }, UiText.text(this@settingsScreen, R.string.ui_77c7dfe5ae) to { startProtectedExport() }, UiText.text(this@settingsScreen, R.string.ui_26962ddc5b) to { startImport() })) },
     )))
     col.addView(row(UiText.text(this@settingsScreen, R.string.ui_9729d2de44), Theme.accent, sub = if (pinEnabled()) UiText.text(this@settingsScreen, R.string.ui_c10e8db395) else UiText.text(this@settingsScreen, R.string.ui_db99ab2043), icon = "lock") { push(securityScreen()) })
     col.addView(label(UiText.text(this@settingsScreen, R.string.ui_03b76df6e0)))

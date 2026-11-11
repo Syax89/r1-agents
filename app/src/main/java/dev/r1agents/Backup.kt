@@ -28,6 +28,46 @@ object Backup {
         }
         return out.toString(Charsets.UTF_8.name())
     }
+    // ---- cifratura facoltativa: AES-256-GCM con chiave dalla password (PBKDF2-HMAC-SHA256) ----------------------
+
+    private const val PBKDF2_ROUNDS = 120_000
+    private val b64e = java.util.Base64.getEncoder(); private val b64d = java.util.Base64.getDecoder()
+
+    private fun key(password: CharArray, salt: ByteArray, rounds: Int): javax.crypto.spec.SecretKeySpec {
+        val spec = javax.crypto.spec.PBEKeySpec(password, salt, rounds, 256)
+        try { return javax.crypto.spec.SecretKeySpec(javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded, "AES") }
+        finally { spec.clearPassword() }
+    }
+
+    /** Vero se il file è un'esportazione cifrata (serve la password per leggerla). */
+    fun isEncrypted(text: String): Boolean = runCatching { JSONObject(text).let { it.optString("app") == "r1agents" && it.has("cipher") } }.getOrDefault(false)
+
+    /** Cifra un'esportazione: il file resta riconoscibile come R1 Agents, ma senza password non si legge niente. */
+    fun encrypt(json: String, password: CharArray): String {
+        require(password.isNotEmpty())
+        val rnd = java.security.SecureRandom()
+        val salt = ByteArray(16).also { rnd.nextBytes(it) }; val iv = ByteArray(12).also { rnd.nextBytes(it) }
+        val c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        c.init(javax.crypto.Cipher.ENCRYPT_MODE, key(password, salt, PBKDF2_ROUNDS), javax.crypto.spec.GCMParameterSpec(128, iv))
+        c.updateAAD("r1agents".toByteArray())
+        val data = c.doFinal(json.toByteArray(Charsets.UTF_8))
+        return JSONObject().put("app", "r1agents").put("version", VERSION).put("cipher", "AES-256-GCM").put("kdf", "PBKDF2-HMAC-SHA256").put("rounds", PBKDF2_ROUNDS)
+            .put("salt", b64e.encodeToString(salt)).put("iv", b64e.encodeToString(iv)).put("data", b64e.encodeToString(data)).toString()
+    }
+
+    /** Decifra; con password sbagliata o file alterato lancia un errore chiaro (GCM verifica l'integrità). */
+    fun decrypt(text: String, password: CharArray): String {
+        val j = try { JSONObject(text) } catch (e: Exception) { throw IllegalArgumentException("Il file non è un'esportazione di R1 Agents.") }
+        if (j.optString("cipher") != "AES-256-GCM") throw IllegalArgumentException("Il file non è un'esportazione di R1 Agents.")
+        val rounds = j.optInt("rounds", PBKDF2_ROUNDS).takeIf { it in 10_000..2_000_000 } ?: throw IllegalArgumentException("Il backup contiene dati mancanti o non validi.")
+        return try {
+            val c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+            c.init(javax.crypto.Cipher.DECRYPT_MODE, key(password, b64d.decode(j.getString("salt")), rounds), javax.crypto.spec.GCMParameterSpec(128, b64d.decode(j.getString("iv"))))
+            c.updateAAD("r1agents".toByteArray())
+            String(c.doFinal(b64d.decode(j.getString("data"))), Charsets.UTF_8)
+        } catch (e: Exception) { throw IllegalArgumentException("Password sbagliata o file danneggiato.") }
+    }
+
     /** Impostazioni che decidono verso quale server partono chiavi e password: mai da un file importato. */
     internal fun isDestination(k: String) = k.startsWith("base_") || k.startsWith("dash_") || k == "update_url" || k == "nous_client_id" || k == "dev_actions" || k == "ctx_phone" || k == "cron_notify"
     private val skipPrefix = listOf("nous_", "dash_sid_", "w_", "reopen", "app_pin_", "pin_", "running_", "pending_", "actlog_", "draft_", "hint_", "asked_")
@@ -89,7 +129,7 @@ object Backup {
                 chats.put(JSONObject().put("title", c.title).put("updated", c.updated).put("messages", msgs)); chatCount++
             }
             val routines = JSONArray()
-            allRoutines.filter { it.agentId == a.id }.forEach { r -> routines.put(JSONObject().put("name", r.name).put("prompt", r.prompt).put("hour", r.hour).put("minute", r.minute).put("days", r.days).put("on", r.on)) }
+            allRoutines.filter { it.agentId == a.id }.forEach { r -> routines.put(JSONObject().put("name", r.name).put("prompt", r.prompt).put("hour", r.hour).put("minute", r.minute).put("days", r.days).put("on", r.on).put("trigger", r.trigger)) }
             agents.put(JSONObject().put("name", a.name).put("prompt", a.prompt).put("form", a.form).put("color", a.color).put("finish", a.finish).put("eyes", a.eyes).put("wear", a.wear).put("profile", a.profile)
                 .put("memories", JSONArray(db.memories(a.id).map { it.second })).put("chats", chats).put("routines", routines))
         }
@@ -190,7 +230,7 @@ object Backup {
                     }
                 }
                 o.optJSONArray("routines")?.let { rs ->
-                    for (k in 0 until rs.length()) { val r = rs.getJSONObject(k); db.save(Routine(0, a.id, r.optString("name", "routine"), r.optString("prompt"), r.optInt("hour"), r.optInt("minute"), r.optInt("days"), r.optBoolean("on", true))); routinesN++ }
+                    for (k in 0 until rs.length()) { val r = rs.getJSONObject(k); db.save(Routine(0, a.id, r.optString("name", "routine"), r.optString("prompt"), r.optInt("hour"), r.optInt("minute"), r.optInt("days"), r.optBoolean("on", true), r.optString("trigger").takeIf { it in RoutineEvents.TRIGGERS }.orEmpty())); routinesN++ }
                 }
             }
             j.optJSONArray("notes")?.let { n -> for (k in 0 until n.length()) n.getJSONObject(k).let { db.addNote(it.getString("text"), it.optLong("ts", System.currentTimeMillis())) } }

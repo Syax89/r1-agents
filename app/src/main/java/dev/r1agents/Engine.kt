@@ -85,7 +85,7 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
 
     /** Dove finiscono le direttive delle azioni sul telefono: il testo della risposta (poi gestite da DeviceActions: pulsanti o esecuzione automatica). */
     private var emit: ((String) -> Unit)? = null
-    private val phoneTool = Triple("phone_action", "Agisce sul telefono dell'utente. kind: apri (nome app), timer (es. 10m), sveglia (es. 07:30), torcia (on/off), nota (testo), pannello (wifi, bluetooth, volume). L'utente conferma o la esecuzione è automatica, secondo le sue impostazioni.",
+    private val phoneTool = Triple("phone_action", "Agisce sul telefono dell'utente. kind: apri (nome app), timer (es. 10m), sveglia (es. 07:30), torcia (on/off), nota (testo), pannello (wifi, bluetooth, volume), volume e luminosita (0-100, su, giu; volume anche muto), media (play, pausa, avanti, indietro), promemoria (HH:MM testo), calendario ([AAAA-MM-GG] HH:MM titolo: si apre il calendario per confermare). L'utente conferma o la esecuzione è automatica, secondo le sue impostazioni.",
         JSONObject().put("type", "object").put("properties", JSONObject()
             .put("kind", JSONObject().put("type", "string").put("enum", JSONArray(DeviceActions.KINDS.sorted())))
             .put("arg", JSONObject().put("type", "string"))).put("required", JSONArray().put("kind").put("arg")))

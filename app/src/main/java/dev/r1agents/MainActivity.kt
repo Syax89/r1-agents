@@ -208,6 +208,7 @@ class MainActivity : Activity() {
         DeviceActions.mode = prefs.getString("dev_actions", "ask") ?: "ask"; applyPhoneContext()
         Engine.deviceExec = deviceExec
         NetworkMonitor.start(this)
+        RoutineEvents.start(this)
         DeviceActions.hasFlash = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_CAMERA_FLASH)
         Theme.setLook(prefs.getString("look_mode", "dark") == "light", prefs.getString("look_accent", "orange") ?: "orange", prefs.getString("look_font", "rubik") ?: "rubik")
         db = Db.get(this)
@@ -672,9 +673,13 @@ class MainActivity : Activity() {
     internal fun sheet(title: String, rows: List<Pair<String, () -> Unit>>, icons: Map<String, String> = emptyMap(), danger: Set<String> = emptySet()) =
         sheetOf(title, rows.map { (label, act) -> SheetItem(label, icon = icons[label], danger = label in danger, action = act) })
 
-    internal fun askText(title: String, hint: String, onOk: (String) -> Unit) {
+    internal fun askText(title: String, hint: String, secret: Boolean = false, note: String? = null, onOk: (String) -> Unit) {
         sheetPanel(title) { col, close, then ->
-            val f = field(hint, "").apply { imeOptions = EditorInfo.IME_ACTION_DONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI }
+            note?.let { col.addView(this@MainActivity.hint(it)) }
+            val f = field(hint, "").apply {
+                imeOptions = EditorInfo.IME_ACTION_DONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI
+                if (secret) { inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD; transformationMethod = android.text.method.PasswordTransformationMethod.getInstance() }
+            }
             col.addView(f, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(4f) })
             fun submit() { val t = f.text.toString().trim(); if (t.isNotEmpty()) then { onOk(t) } }
             f.setOnEditorActionListener { _, a, _ -> if (a == EditorInfo.IME_ACTION_DONE) { submit(); true } else false }
@@ -1779,8 +1784,18 @@ class MainActivity : Activity() {
             Io.run {
                 try {
                     val text = contentResolver.openInputStream(uri)?.use { s -> Backup.read(s) } ?: throw IllegalStateException(UiText.text(this@MainActivity, R.string.ui_0003bfadca))
-                    val sum = Backup.inspect(text)
-                    runOnUiThread { confirmImport(text, sum) }
+                    if (Backup.isEncrypted(text)) runOnUiThread {
+                        // Backup protetto: prima la password, poi lo stesso riepilogo di sempre.
+                        askText(UiText.text(this@MainActivity, R.string.ui_26514a5595), UiText.text(this@MainActivity, R.string.ui_26514a5595), secret = true, note = UiText.text(this@MainActivity, R.string.ui_00dead5d37)) { pw ->
+                            Io.run {
+                                try { val plain = Backup.decrypt(text, pw.toCharArray()); val sum = Backup.inspect(plain); runOnUiThread { confirmImport(plain, sum) } }
+                                catch (e: Exception) { runOnUiThread { snack(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_23a3dc3076), long = true) } }
+                            }
+                        }
+                    } else {
+                        val sum = Backup.inspect(text)
+                        runOnUiThread { confirmImport(text, sum) }
+                    }
                 } catch (e: Exception) { runOnUiThread { snack(UiText.message(this@MainActivity, e.message) ?: UiText.text(this@MainActivity, R.string.ui_23a3dc3076), long = true) } }
             }
         }
@@ -1826,10 +1841,17 @@ class MainActivity : Activity() {
     internal var exportJson: String? = null
     internal var exportSummary: Backup.Summary? = null
 
-    internal fun startExport() {
+    /** Esporta con password: il file si legge solo con quella (vedi Backup.encrypt). */
+    internal fun startProtectedExport() {
+        askText(UiText.text(this@MainActivity, R.string.ui_77c7dfe5ae), UiText.text(this@MainActivity, R.string.ui_26514a5595), secret = true, note = UiText.text(this@MainActivity, R.string.ui_2553dd7241)) { pw -> startExport(pw.toCharArray()) }
+    }
+
+    internal fun startExport(password: CharArray? = null) {
         Io.run {
             try {
-                val (json, sum) = Backup.export(db, prefs); exportJson = json; exportSummary = sum
+                val (plain, sum) = Backup.export(db, prefs)
+                val json = if (password != null && password.isNotEmpty()) Backup.encrypt(plain, password).also { password.fill(' ') } else plain
+                exportJson = json; exportSummary = sum
                 val name = "r1agents-${java.text.SimpleDateFormat("yyyy-MM-dd", AppLanguage.locale(this@MainActivity)).format(java.util.Date())}.json"
                 runOnUiThread { @Suppress("DEPRECATION") startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json").putExtra(Intent.EXTRA_TITLE, name), 11) }
             } catch (e: Exception) { runOnUiThread { snack(UiText.text(this@MainActivity, R.string.ui_9bf3187280, UiText.message(this@MainActivity, e.message)), long = true) } }
@@ -2014,49 +2036,12 @@ class MainActivity : Activity() {
             .map { AppEntry(it.loadLabel(packageManager).toString(), it.activityInfo.packageName, it.activityInfo.name, it.loadIcon(packageManager)) }
             .distinctBy { it.pkg + "/" + it.cls }.sortedBy { it.label.lowercase() }
     }
-    // ---- azioni del dispositivo: l'agente opera sul telefono (vedi DeviceActions) ----
-    internal fun describeAction(a: DeviceActions.Action): String = when (a.kind) {
-        "apri" -> UiText.text(this@MainActivity, R.string.ui_6ef46e17aa, a.arg)
-        "timer" -> { val sec = DeviceActions.seconds(a.arg) ?: 0; UiText.text(this@MainActivity, R.string.ui_922c82d62c, (if (sec < 60) UiText.text(this@MainActivity, R.string.ui_e641f081b3, sec) else if (sec < 3600) UiText.text(this@MainActivity, R.string.ui_32b259a068, sec / 60) else UiText.text(this@MainActivity, R.string.ui_f31be6b4f3, sec / 3600))) }
-        "sveglia" -> UiText.text(this@MainActivity, R.string.ui_a21efabed5, a.arg)
-        "torcia" -> if (a.arg.equals("off", true)) UiText.text(this@MainActivity, R.string.ui_1a839844ee) else UiText.text(this@MainActivity, R.string.ui_24c8ab553b)
-        "nota" -> UiText.text(this@MainActivity, R.string.ui_510a578c56)
-        else -> UiText.text(this@MainActivity, R.string.ui_77027ea210, a.arg)
-    }
-    /** Esegue l'azione e, se viene da un agente, la scrive nel registro (pagina Sicurezza → azioni dell'agente). */
-    internal fun runDeviceAction(a: DeviceActions.Action, log: Boolean = true): Boolean = execDeviceAction(a).also { if (log) ActionLog.record(prefs, a.kind, a.arg, it) }
-    internal fun execDeviceAction(a: DeviceActions.Action): Boolean = runCatching {
-        when (a.kind) {
-            "apri" -> {
-                val apps = appCache ?: loadApps().also { appCache = it }
-                val i = appForCommand("apri " + a.arg, apps.map { it.label }) ?: apps.indexOfFirst { it.label.equals(a.arg, true) }.takeIf { it >= 0 } ?: return@runCatching false
-                launchApp(apps[i]); true
-            }
-            "timer" -> { val sec = DeviceActions.seconds(a.arg) ?: return@runCatching false; askNotificationsOnce(); db.addTimer(System.currentTimeMillis() + sec * 1000L, ""); Sched.all(this, db); true }
-            "sveglia" -> { val (h, m) = DeviceActions.time(a.arg) ?: return@runCatching false; db.save(Alarm(0, h, m, 0, "", true)); Sched.all(this, db); true }
-            "torcia" -> {
-                val cm = getSystemService(android.hardware.camera2.CameraManager::class.java)
-                val id = cm.cameraIdList.firstOrNull { cm.getCameraCharacteristics(it).get(android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE) == true } ?: return@runCatching false
-                cm.setTorchMode(id, !a.arg.equals("off", true)); true
-            }
-            "nota" -> { db.addNote(a.arg.take(500)); true }
-            "pannello" -> {
-                val action = when (a.arg.lowercase()) { "wifi", "internet" -> android.provider.Settings.Panel.ACTION_INTERNET_CONNECTIVITY; "volume" -> android.provider.Settings.Panel.ACTION_VOLUME; "bluetooth" -> android.provider.Settings.ACTION_BLUETOOTH_SETTINGS; "nfc" -> android.provider.Settings.Panel.ACTION_NFC; else -> return@runCatching false }
-                startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); true
-            }
-            else -> false
-        }
-    }.getOrDefault(false)
+    // Azioni del dispositivo: DeviceActionRunner.kt
     /** Azioni chieste da un agente con lo strumento phone_action in modalità automatica: esito vero all'agente, avviso all'utente. */
     private val deviceExec: (DeviceActions.Action) -> Boolean = { a ->
         val ok = !isDestroyed && runDeviceAction(a)
         if (!isDestroyed) snack(if (ok) UiText.text(this@MainActivity, R.string.ui_dab426e957, describeAction(a)) else UiText.text(this@MainActivity, R.string.ui_606d15c3e0, describeAction(a)), long = !ok)
         ok
-    }
-    internal fun reportAction(a: DeviceActions.Action) {
-        val ok = runDeviceAction(a)
-        snack(if (ok) UiText.text(this@MainActivity, R.string.ui_dab426e957, describeAction(a)) else UiText.text(this@MainActivity, R.string.ui_606d15c3e0, describeAction(a)), long = !ok)
-        cue(if (ok) "nod" else "surprised", force = true)
     }
     /** Modalità «automatiche»: le direttive di una risposta appena completata si eseguono una sola volta. */
     @JvmName("autoRunActions") internal fun autoRunActions(text: String) {
@@ -2088,26 +2073,7 @@ class MainActivity : Activity() {
     internal var appSwitcher: AppSwitcher? = null
     internal var switcherLaunched = false
 
-    @JvmName("openSwitcher") internal fun openSwitcher() {
-        if (appSwitcher != null || pinGate != null) return
-        if (pttView != null) pttClose()
-        val apps = appCache ?: loadApps().also { appCache = it }
-        val recent = recentApps().mapNotNull { p -> apps.firstOrNull { it.pkg == p } }
-        val sw = AppSwitcher(this, recent, UiText.text(this@MainActivity, R.string.ui_950486e052), UiText.text(this@MainActivity, R.string.ui_110d1350b1),
-            onPick = { a ->
-                try {
-                    noteLaunched(a.pkg); switcherLaunched = true
-                    startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setClassName(a.pkg, a.cls)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or Intent.FLAG_ACTIVITY_NO_ANIMATION)); true
-                } catch (e: Exception) { switcherLaunched = false; snack(UiText.text(this@MainActivity, R.string.ui_f2c6915e4c)); false }
-            },
-            onRemove = { a -> forgetRecent(a.pkg) },
-            onClosed = { appSwitcher = null; switcherLaunched = false; stack.lastOrNull()?.view?.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_AUTO })
-        appSwitcher = sw
-        stack.lastOrNull()?.view?.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
-        root.addView(sw, ViewGroup.LayoutParams(-1, -1)); sw.bringToFront(); pinGate?.bringToFront()
-        root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
-    }
+    // openSwitcher(): AppSwitcher.kt (in fondo)
     /** «apri calendario»: se il testo è un comando e un'app corrisponde in modo certo, la apre e non manda nulla all'agente. */
     internal fun tryOpenApp(t: String): Boolean {
         val c = t.trim()
@@ -2157,86 +2123,7 @@ class MainActivity : Activity() {
 
     // -- suoneria (da notifica)
 
-    internal fun ringScreen(title: String, label: String, kind: String): Screen {
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
-        val ringBuddy = companion(128f)?.also { it.setScenePose("waiting"); col.addView(it, LinearLayout.LayoutParams(dpi(128f), dpi(128f))) }
-        if (ringBuddy != null && !packageName.endsWith(".qa") && !Motion.reduced(this)) { // allarmato: sorpresa all'arrivo, poi brividi e sguardi, al massimo 8 volte
-            var rings = 0
-            val alarmLoop = object : Runnable { override fun run() {
-                if (!col.isAttachedToWindow || rings++ >= 8) return
-                if (visible) { ringBuddy.react("shiver"); ringBuddy.lookAt(if (rings % 2 == 0) 22f else -22f, -6f, hold = Motion.FAST) }
-                col.postDelayed(this, Motion.LOOP_SLOW * 3)
-            } }
-            col.postDelayed({ if (col.isAttachedToWindow) ringBuddy.react("surprised") }, Motion.BASE)
-            col.postDelayed(alarmLoop, Motion.BASE + 900L)
-        }
-        col.addView(text(64f, 700).apply { text = title; gravity = Gravity.CENTER })
-        col.addView(text(20f, 600, Theme.MUTED).keepCase().apply { text = label.ifBlank { if (kind == Sched.KIND_TIMER) UiText.text(this@MainActivity, R.string.ui_1bb7fcaedb) else UiText.text(this@MainActivity, R.string.ui_4b15f21af0) }; gravity = Gravity.CENTER; setPadding(0, dpi(6f), 0, dpi(28f)) })
-        fun send(a: String) { startService(Intent(this, RingService::class.java).setAction(a).putExtra("label", label)); pop() }
-        col.addView(button("stop", Theme.colorOf("green")) { send("stop") }, LinearLayout.LayoutParams(-1, -2))
-        col.addView(button(UiText.text(this@MainActivity, R.string.ui_8d6a685440), toolAccent, primary = false) { send("snooze") }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        return Screen(page(col).also { it.tag = "ring" }, buddyContext = BuddySceneContext.ALERT)
-    }
-
-    internal fun space(start: Agent): Screen {
-        val scope = Scope()
-        var agent = start
-        var showAll = false; var confirmRemove = false; var expandFrom = -1
-        var live = emptyMap<String, String>()
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val scroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(col, -1, -2) }
-        val headerBuddy = companion(64f, start)!!
-        val headerName = text(28f, 700).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
-        val headerSummary = text(16f, 650, Theme.MUTED).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
-        // Come tutti i sotto menu: indietro, titolo, buddy a destra (qui il titolo e' il nome dell'agente con la sua descrizione sotto).
-        val header = LinearLayout(this).apply {
-            gravity = Gravity.CENTER_VERTICAL; minimumHeight = dpi(70f); setPadding(0, 0, 0, dpi(6f))
-            addView(iconButton("back", Theme.accent, filled = false) { pop() })
-            addView(LinearLayout(this@MainActivity).apply { orientation = LinearLayout.VERTICAL; setPadding(dpi(12f), 0, 0, 0); addView(headerName); addView(headerSummary) }, LinearLayout.LayoutParams(0, -2, 1f))
-            addView(headerBuddy, LinearLayout.LayoutParams(dpi(64f), dpi(64f)).apply { marginStart = dpi(4f) })
-        }
-        val pageBody = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(header); addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f)) }
-        var headerLook = ""
-        val shown = 8
-        fun render() {
-            agent = db.agents().firstOrNull { it.id == agent.id } ?: return
-            val accent = Theme.colorOf(agent.color)
-            col.removeAllViews()
-            headerName.text = agent.name
-            headerSummary.text = agent.prompt.lineSequence().firstOrNull().orEmpty().ifBlank { UiText.text(this@MainActivity, R.string.ui_45c37524b3) }
-            val look = "${agent.form}:${agent.color}:${agent.finish}:${agent.eyes}:${agent.wear}"
-            if (look != headerLook) { headerBuddy.show(agent); headerLook = look }
-            col.addView(row(UiText.text(this@MainActivity, R.string.ui_7f4849bfb0), accent, bold = true, icon = "plus") { push(chat(agent, db.newChat(agent.id))) })
-            val chats = db.chats(agent.id).filter { it.count > 0 || it.title.isNotEmpty() }
-            if (chats.isNotEmpty()) col.addView(section("chat"))
-            val rowsBase = col.childCount
-            (if (showAll) chats else chats.take(shown)).forEach { c ->
-                col.addView(row(c.title.ifBlank { "chat" }, accent, sub = "${c.count} ${if (c.count == 1) UiText.text(this@MainActivity, R.string.ui_151a6c958d) else UiText.text(this@MainActivity, R.string.ui_947032528d)} · ${ago(c.updated)}" + (if (live[db.hsid(c.id)] in listOf("working", "waiting")) UiText.text(this@MainActivity, R.string.ui_4d3d99856c) else ""), icon = if (live[db.hsid(c.id)] in listOf("working", "waiting")) "spark" else "chat") { openChat(agent, c.id) }.apply { rowTitle(this).maxLines = 2 })
-            }
-            if (!showAll && chats.size > shown) col.addView(row(UiText.text(this@MainActivity, R.string.ui_6e3552c6eb), Theme.MUTED, sub = UiText.text(this@MainActivity, R.string.ui_abec4365e1, chats.size - shown)) { showAll = true; expandFrom = shown; render() })
-            col.addView(section(UiText.text(this@MainActivity, R.string.ui_a299eba5bf)))
-            val n = db.memories(agent.id).size
-            if (agent.profile.isEmpty()) col.addView(row(UiText.text(this@MainActivity, R.string.ui_7333237b9c), accent, icon = "note", sub = if (n == 0) UiText.text(this@MainActivity, R.string.ui_7b938546c6) else "$n ${if (n == 1) "nota" else UiText.text(this@MainActivity, R.string.ui_c51048b732)}") { push(memoryScreen(agent)) })
-            col.addView(row(UiText.text(this@MainActivity, R.string.ui_fd7448c50e), accent, icon = "look", sub = UiText.text(this@MainActivity, R.string.ui_e573d2350b)) { push(editor(agent)) })
-            if (hermesMode() && agent.profile.isNotEmpty()) col.addView(row(UiText.text(this@MainActivity, R.string.ui_d2d5097861), accent, icon = "spark", sub = UiText.text(this@MainActivity, R.string.ui_7ca2785861, agent.name)) { push(skillsScreen(agent)) })
-            col.addView(row(UiText.text(this@MainActivity, R.string.ui_07832915bd), accent, icon = "sliders", sub = UiText.text(this@MainActivity, R.string.ui_2ad1ad3777)) { push(manageChats(agent)) })
-            val all = visibleAgents(); val at = all.indexOfFirst { it.id == agent.id }
-            if (at > 0) col.addView(row(UiText.text(this@MainActivity, R.string.ui_a61739c1b8), Theme.MUTED, icon = "chevron") { db.move(agent.id, -1, all.map { it.id }); homeIndex = (at - 1).coerceAtLeast(0); render() })
-            if (at in 0 until all.size - 1) col.addView(row(UiText.text(this@MainActivity, R.string.ui_18e4c8d6fb), Theme.MUTED, icon = "chevron") { db.move(agent.id, 1, all.map { it.id }); homeIndex = at + 1; render() })
-            if (agent.profile.isEmpty()) col.addView(row(if (confirmRemove) UiText.text(this@MainActivity, R.string.ui_39ced40b15) else UiText.text(this@MainActivity, R.string.ui_235936fba8), Theme.BAD, icon = "close", sub = if (confirmRemove) UiText.text(this@MainActivity, R.string.ui_ff36018e8f) else null) {
-                if (!confirmRemove) { confirmRemove = true; render() } else { db.routines().filter { it.agentId == agent.id }.forEach { Sched.cancel(this, Sched.KIND_ROUTINE, it.id) }; db.delete(agent.id); homeIndex = 0; pop() }
-            })
-            val firstChatRow = if (chats.isNotEmpty()) col.getChildAt(rowsBase) else null
-            groupRows(col) // come le altre pagine: righe vicine in un'unica scheda con divisori e freccia
-            // Chat appena mostrate con «chat meno recenti»: entrano a cascata, dentro la scheda delle chat.
-            if (expandFrom >= 0) { val chatCard = firstChatRow?.parent as? LinearLayout ?: col; Motion.stagger(chatCard, dp(10f), from = expandFrom.coerceAtMost(chatCard.childCount)); expandFrom = -1 }
-        }
-        render()
-        if (hermesMode() && agent.profile.isNotEmpty()) Io.run { try { syncSessions(agent) } catch (e: Exception) { }; live = dash.live(); runOnUiThread { if (scope.alive) render() } }
-        return Screen(page(pageBody), onShow = { confirmRemove = false; render() }, scope = scope)
-    }
-
-    /** Il contesto del telefono arriva agli agenti solo se l'utente lo ha acceso in Sicurezza. */
+    // ringScreen() e space(): SpaceScreen.kt
     internal fun applyPhoneContext() { Engine.phoneContext = if (prefs.getBoolean(PhoneContext.PREF, false)) ({ PhoneContext.describe(applicationContext, db, recentApps().mapNotNull { p -> (appCache ?: emptyList()).firstOrNull { it.pkg == p }?.label }) }) else null }
     internal fun performHapticFeedbackSafe() { root.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK) }
 

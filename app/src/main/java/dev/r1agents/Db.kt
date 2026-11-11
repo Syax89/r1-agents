@@ -10,12 +10,13 @@ class Agent(var id: Long, var name: String, var prompt: String, var memory: Stri
 
 class Alarm(var id: Long, var hour: Int, var minute: Int, var days: Int, var label: String, var on: Boolean)
 class Timer(val id: Long, val endAt: Long, val label: String)
-class Routine(var id: Long, var agentId: Long, var name: String, var prompt: String, var hour: Int, var minute: Int, var days: Int, var on: Boolean)
+/** `trigger` vuoto = a orario (`hour`, `minute`, `days`); altrimenti un evento del telefono (vedi `RoutineEvents`). */
+class Routine(var id: Long, var agentId: Long, var name: String, var prompt: String, var hour: Int, var minute: Int, var days: Int, var on: Boolean, var trigger: String = "")
 
 class Chat(val id: Long, val agentId: Long, val title: String, val updated: Long, val count: Int)
 
 /** Agenti, chat, memorie e messaggi. I messaggi sono salvati in formato neutro (blocchi stile Anthropic). */
-class Db private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "agents.db", null, 7) {
+class Db private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "agents.db", null, 8) {
     companion object {
         @Volatile private var inst: Db? = null
         /** Un'unica istanza per processo: apre il database una volta sola ed è sicura tra thread, servizi e ricevitori. */
@@ -34,7 +35,7 @@ class Db private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "agents.db", 
         db.execSQL("CREATE TABLE memories(id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id INTEGER, text TEXT, ts INTEGER)")
         db.execSQL("CREATE TABLE alarms(id INTEGER PRIMARY KEY AUTOINCREMENT, hour INTEGER, minute INTEGER, days INTEGER DEFAULT 0, label TEXT DEFAULT '', on_ INTEGER DEFAULT 1)")
         db.execSQL("CREATE TABLE timers(id INTEGER PRIMARY KEY AUTOINCREMENT, end_at INTEGER, label TEXT DEFAULT '')")
-        db.execSQL("CREATE TABLE routines(id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id INTEGER, name TEXT, prompt TEXT, hour INTEGER, minute INTEGER, days INTEGER DEFAULT 0, on_ INTEGER DEFAULT 1)")
+        db.execSQL("CREATE TABLE routines(id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id INTEGER, name TEXT, prompt TEXT, hour INTEGER, minute INTEGER, days INTEGER DEFAULT 0, on_ INTEGER DEFAULT 1, trigger_ TEXT DEFAULT '')")
         db.execSQL("CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, ts INTEGER)")
         INDEXES.forEach { db.execSQL(it) }
     }
@@ -78,6 +79,7 @@ class Db private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "agents.db", 
             INDEXES.forEach { db.execSQL(it) }
         }
         if (o < 5) db.execSQL("CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, ts INTEGER)")
+        if (o < 8) db.execSQL("ALTER TABLE routines ADD COLUMN trigger_ TEXT DEFAULT ''")   // routine a evento
     }
 
     // ---- agenti ---------------------------------------------------------------------------------
@@ -191,11 +193,11 @@ class Db private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "agents.db", 
     fun addTimer(endAt: Long, label: String): Long = writableDatabase.insertOrThrow("timers", null, ContentValues().apply { put("end_at", endAt); put("label", label) })
     fun deleteTimer(id: Long) { writableDatabase.delete("timers", "id=?", arrayOf(id.toString())) }
 
-    fun routines(): List<Routine> = readableDatabase.rawQuery("SELECT id,agent_id,name,prompt,hour,minute,days,on_ FROM routines ORDER BY hour, minute", null).use { c ->
-        buildList { while (c.moveToNext()) add(Routine(c.getLong(0), c.getLong(1), c.getString(2), c.getString(3), c.getInt(4), c.getInt(5), c.getInt(6), c.getInt(7) == 1)) } }
+    fun routines(): List<Routine> = readableDatabase.rawQuery("SELECT id,agent_id,name,prompt,hour,minute,days,on_,trigger_ FROM routines ORDER BY hour, minute", null).use { c ->
+        buildList { while (c.moveToNext()) add(Routine(c.getLong(0), c.getLong(1), c.getString(2), c.getString(3), c.getInt(4), c.getInt(5), c.getInt(6), c.getInt(7) == 1, c.getString(8).orEmpty())) } }
     fun routine(id: Long) = routines().firstOrNull { it.id == id }
     fun save(r: Routine) {
-        val v = ContentValues().apply { put("agent_id", r.agentId); put("name", r.name); put("prompt", r.prompt); put("hour", r.hour); put("minute", r.minute); put("days", r.days); put("on_", if (r.on) 1 else 0) }
+        val v = ContentValues().apply { put("agent_id", r.agentId); put("name", r.name); put("prompt", r.prompt); put("hour", r.hour); put("minute", r.minute); put("days", r.days); put("on_", if (r.on) 1 else 0); put("trigger_", r.trigger) }
         if (r.id == 0L) r.id = writableDatabase.insertOrThrow("routines", null, v) else writableDatabase.update("routines", v, "id=?", arrayOf(r.id.toString()))
     }
     fun deleteRoutine(id: Long) { writableDatabase.delete("routines", "id=?", arrayOf(id.toString())) }

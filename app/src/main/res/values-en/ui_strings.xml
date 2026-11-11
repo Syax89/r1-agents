@@ -699,6 +699,23 @@
     <string name="ui_c23a024853" formatted="false">"back online"</string>
     <string name="ui_b106e64b3f" formatted="false">"recently opened apps"</string>
     <string name="ui_110d1350b1" formatted="false">"No recent apps: open one from the drawer."</string>
+    <string name="ui_ed62d9032c">"volume %1$s"</string>
+    <string name="ui_17d094a7e3">"brightness %1$s"</string>
+    <string name="ui_9b90bc7395">"music: %1$s"</string>
+    <string name="ui_471cbe4581">"reminder at %1$s"</string>
+    <string name="ui_86f329a66f">"calendar event: %1$s"</string>
+    <string name="ui_49f38d764e" formatted="false">"Brightness needs the “modify system settings” permission: grant it and try again."</string>
+    <string name="ui_d1faa1a845" formatted="false">"when it runs"</string>
+    <string name="ui_ce5f4874c1" formatted="false">"at a time"</string>
+    <string name="ui_323a8a8501" formatted="false">"unplugged"</string>
+    <string name="ui_ef0cba7732" formatted="false">"on wifi"</string>
+    <string name="ui_65b3007ba9" formatted="false">"headphones on"</string>
+    <string name="ui_dce6e6ddf5" formatted="false">"Runs by itself when it happens, at most once every 10 minutes, while R1 Agents is running."</string>
+    <string name="ui_10b9764379" formatted="false">"Wrong password or damaged file."</string>
+    <string name="ui_77c7dfe5ae" formatted="false">"export with password"</string>
+    <string name="ui_26514a5595" formatted="false">"backup password"</string>
+    <string name="ui_00dead5d37" formatted="false">"This backup is protected: enter the password."</string>
+    <string name="ui_2553dd7241" formatted="false">"Without this password the file can\'t be read again: keep it safe."</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>

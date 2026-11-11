@@ -52,7 +52,7 @@ object Sched {
         for (a in db.alarms()) if (a.on) set(ctx, KIND_ALARM, a.id, next(a.hour, a.minute, a.days)) else cancel(ctx, KIND_ALARM, a.id)
         for (t in db.timers()) if (t.endAt > System.currentTimeMillis()) set(ctx, KIND_TIMER, t.id, t.endAt)
         val agents = db.agents().map { it.id }.toSet()
-        for (r in db.routines()) if (r.on && r.agentId in agents) set(ctx, KIND_ROUTINE, r.id, next(r.hour, r.minute, r.days)) else cancel(ctx, KIND_ROUTINE, r.id)
+        for (r in db.routines()) if (r.on && r.agentId in agents && r.trigger.isEmpty()) set(ctx, KIND_ROUTINE, r.id, next(r.hour, r.minute, r.days)) else cancel(ctx, KIND_ROUTINE, r.id)
     }
 
     fun time(h: Int, m: Int) = "%02d:%02d".format(h, m)

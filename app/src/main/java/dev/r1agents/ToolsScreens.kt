@@ -389,13 +389,20 @@ internal fun MainActivity.localRoutinesScreen(): Screen = listPage("routine", co
         val nameV = text(21f, 700, Theme.FG).apply { text = r.name; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; alpha = if (r.on) 1f else 0.45f }
         card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
             addView(nameV)
-            addView(text(14f, 500, Theme.MUTED).apply { text = "${Sched.time(r.hour, r.minute)} · ${UiText.days(this@localRoutinesScreen, r.days)} · ${agents.firstOrNull { it.id == r.agentId }?.name ?: "?"}"; maxLines = 1 }) }, LinearLayout.LayoutParams(0, -2, 1f))
+            addView(text(14f, 500, Theme.MUTED).apply { text = "${routineWhen(r)} · ${agents.firstOrNull { it.id == r.agentId }?.name ?: "?"}"; maxLines = 1 }) }, LinearLayout.LayoutParams(0, -2, 1f))
         card.addView(SwitchView(this, r.on, Theme.colorOf("green")) { on -> cue(if (on) "wink" else null, 0f, 6f); r.on = on; db.save(r); if (!on) Sched.cancel(this, Sched.KIND_ROUTINE, r.id); Sched.all(this, db); nameV.animate().alpha(if (on) 1f else 0.45f).setDuration(Motion.BASE).start() })
         col.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
     }
     if (db.routines().isEmpty()) col.addView(emptyState(UiText.text(this@localRoutinesScreen, R.string.ui_82b4a5dab1), UiText.text(this@localRoutinesScreen, R.string.ui_1b43ea6de4)))
     col.addView(bigRow("plus", UiText.text(this@localRoutinesScreen, R.string.ui_16be2701de), null, Theme.colorOf("green")) { if (agents.isNotEmpty()) push(routineEditor(null)) else snack(UiText.text(this, R.string.ui_62dde8cda6), long = true) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
 }
+
+/** Nome dell'evento di una routine («a un orario» se non ne ha). */
+internal fun MainActivity.triggerLabel(t: String): String = UiText.text(this, when (t) {
+    "carica" -> R.string.ui_74cd9507a1; "scollega" -> R.string.ui_323a8a8501; "wifi" -> R.string.ui_ef0cba7732; "cuffie" -> R.string.ui_65b3007ba9; else -> R.string.ui_ce5f4874c1 })
+
+/** Quando parte una routine, per gli elenchi: «08:00 · lun-ven» oppure «in carica». */
+internal fun MainActivity.routineWhen(r: Routine): String = if (r.trigger.isEmpty()) "${Sched.time(r.hour, r.minute)} · ${UiText.days(this, r.days)}" else triggerLabel(r.trigger)
 
 internal fun MainActivity.routineEditor(existing: Routine?): Screen {
     val agents = visibleAgents()
@@ -412,8 +419,22 @@ internal fun MainActivity.routineEditor(existing: Routine?): Screen {
         listOf<View>(name, prompt).forEach { (it.parent as? ViewGroup)?.removeView(it) }
         col.addView(label(UiText.text(this@routineEditor, R.string.ui_de4da44e7e))); col.addView(name)
         col.addView(label(UiText.text(this@routineEditor, R.string.ui_d3610cf483))); col.addView(prompt)
-        col.addView(timeCard({ r.hour }, { r.hour = it }, { r.minute }, { r.minute = it }), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-        col.addView(label(UiText.text(this@routineEditor, R.string.ui_aacd348c9b))); col.addView(daysChips({ r.days }, { r.days = it }))
+        // Quando parte: a un orario (scheda dell'ora e giorni) o a un evento del telefono.
+        col.addView(label(UiText.text(this@routineEditor, R.string.ui_d1faa1a845)))
+        val whenChips = LinearLayout(this); val whenViews = ArrayList<Pair<String, TextView>>()
+        val timed = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val eventHint = hint(UiText.text(this@routineEditor, R.string.ui_dce6e6ddf5))
+        fun paintWhen() {
+            whenViews.forEach { (t, v) -> chipPaint(v, r.trigger == t) }
+            if (r.trigger.isEmpty()) { Motion.show(timed); Motion.hide(eventHint) } else { Motion.hide(timed); Motion.show(eventHint) }
+        }
+        (listOf("") + RoutineEvents.TRIGGERS).forEach { t -> whenViews.add(t to chipView(triggerLabel(t)).apply { setOnClickListener { r.trigger = t; paintWhen() } }.also { whenChips.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) }) }) }
+        col.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(whenChips) })
+        timed.addView(timeCard({ r.hour }, { r.hour = it }, { r.minute }, { r.minute = it }), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+        timed.addView(label(UiText.text(this@routineEditor, R.string.ui_aacd348c9b))); timed.addView(daysChips({ r.days }, { r.days = it }))
+        col.addView(timed); col.addView(eventHint)
+        if (r.trigger.isEmpty()) eventHint.visibility = View.GONE else timed.visibility = View.GONE
+        paintWhen()
         fun commit(): Boolean {
             r.name = name.text.toString().trim().ifEmpty { "routine" }; r.prompt = prompt.text.toString().trim()
             if (r.prompt.isEmpty()) { status.setTextColor(Theme.BAD); status.text = UiText.text(this@routineEditor, R.string.ui_8037c3e45e); return false }
@@ -440,7 +461,7 @@ internal fun MainActivity.hermesJobsScreen(): Screen = listPage(UiText.text(this
         col.addView(section(UiText.text(this@hermesJobsScreen, R.string.ui_91bfacd574)))
         val agentNames = visibleAgents()
         localRoutines.forEach { r ->
-            col.addView(row(r.name, if (r.on) Theme.accent else Theme.MUTED, sub = "${Sched.time(r.hour, r.minute)} · ${UiText.days(this@hermesJobsScreen, r.days)} · ${agentNames.firstOrNull { it.id == r.agentId }?.name ?: "?"}", raw = true, icon = "repeat") { push(routineEditor(r)) },
+            col.addView(row(r.name, if (r.on) Theme.accent else Theme.MUTED, sub = "${routineWhen(r)} · ${agentNames.firstOrNull { it.id == r.agentId }?.name ?: "?"}", raw = true, icon = "repeat") { push(routineEditor(r)) },
                 LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
         }
     }

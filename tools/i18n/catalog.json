@@ -696,5 +696,22 @@
   "nessuna rete: lo invio appena torna": "no network: I'll send it as soon as it's back",
   "di nuovo in linea": "back online",
   "app aperte di recente": "recently opened apps",
-  "Nessuna app recente: aprine una dal cassetto.": "No recent apps: open one from the drawer."
+  "Nessuna app recente: aprine una dal cassetto.": "No recent apps: open one from the drawer.",
+  "volume %1$s": "volume %1$s",
+  "luminosità %1$s": "brightness %1$s",
+  "musica: %1$s": "music: %1$s",
+  "promemoria alle %1$s": "reminder at %1$s",
+  "evento in calendario: %1$s": "calendar event: %1$s",
+  "Per la luminosità serve il permesso «modifica impostazioni di sistema»: concedilo e riprova.": "Brightness needs the “modify system settings” permission: grant it and try again.",
+  "quando parte": "when it runs",
+  "a un orario": "at a time",
+  "cavo scollegato": "unplugged",
+  "connesso al wifi": "on wifi",
+  "cuffie collegate": "headphones on",
+  "Parte da sola quando succede, al massimo una volta ogni 10 minuti, finché R1 Agents è attivo.": "Runs by itself when it happens, at most once every 10 minutes, while R1 Agents is running.",
+  "Password sbagliata o file danneggiato.": "Wrong password or damaged file.",
+  "esporta con password": "export with password",
+  "password del backup": "backup password",
+  "Il backup è protetto: scrivi la password.": "This backup is protected: enter the password.",
+  "Senza questa password il file non si potrà più leggere: conservala.": "Without this password the file can't be read again: keep it safe."
 }
