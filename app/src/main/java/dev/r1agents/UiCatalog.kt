@@ -744,6 +744,8 @@ internal object UiCatalog {
         UiEntry(R.string.ui_c31924ac93, "da fare: scegli R1 Agents come assistente digitale"),
         UiEntry(R.string.ui_d2bcbe16d9, "da fare: scegli «assistente digitale»"),
         UiEntry(R.string.ui_4174759ddc, "Parla: tieni premuto per iniziare ad ascoltare, tieni premuto di nuovo per inviare. Android non comunica alle app quando il tasto viene rilasciato."),
+        UiEntry(R.string.ui_c07b09985e, "parla a %1\$s · tieni premuto il tasto o tocca per inviare"),
+        UiEntry(R.string.ui_369029220d, "Sul Rabbit non c'è un riconoscimento vocale di sistema: scegli Groq Whisper in Aspetto e voce e inserisci la chiave."),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

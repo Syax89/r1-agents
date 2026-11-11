@@ -205,9 +205,18 @@ fun askMic(c: Context) {
 
 /** Il microfono scelto in Aspetto e voce: Groq Whisper (con la chiave) o il riconoscimento del dispositivo. */
 object Mics {
+    /** Vero se il riconoscimento vocale di sistema è il servizio vuoto di questa app (vedi AssistRecognition.kt). */
+    fun ownRecognizerOnly(ctx: Context): Boolean {
+        val set = android.provider.Settings.Secure.getString(ctx.contentResolver, "voice_recognition_service").orEmpty()
+        val others = ctx.packageManager.queryIntentServices(Intent(android.speech.RecognitionService.SERVICE_INTERFACE), 0).any { it.serviceInfo.packageName != ctx.packageName }
+        return set.startsWith(ctx.packageName + "/") || (set.isEmpty() && !others)
+    }
+
     fun create(ctx: Context, prefs: android.content.SharedPreferences, onStatus: (String) -> Unit, onFinal: (String) -> Unit, onEnd: (String?) -> Unit, autoStop: Boolean = false): Mic {
         val key = prefs.secret("groq_key")
         if (prefs.getString("stt", "device") == "groq" && key.isBlank()) return UnavailableMic(ctx, R.string.ui_9f8232d0cb, onEnd)
+        // Il riconoscimento "del dispositivo" che rimanda a R1 Agents stesso (assistente digitale, nessun motore vero): serve Groq.
+        if (prefs.getString("stt", "device") != "groq" && ownRecognizerOnly(ctx)) return UnavailableMic(ctx, R.string.ui_369029220d, onEnd)
         return if (prefs.getString("stt", "device") == "groq")
             GroqStt(ctx, key, prefs.getString("groq_model", "whisper-large-v3-turbo").orEmpty(), prefs.getString("groq_lang", AppLanguage.selected(ctx)).orEmpty(), onStatus, onFinal, onEnd, autoStop)
         else Voice(ctx, onStatus, onFinal, onEnd)

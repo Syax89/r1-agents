@@ -734,5 +734,7 @@
   "2. tieni premuto": "2. press and hold",
   "da fare: scegli R1 Agents come assistente digitale": "to do: pick R1 Agents as digital assistant",
   "da fare: scegli «assistente digitale»": "to do: pick “digital assistant”",
-  "Parla: tieni premuto per iniziare ad ascoltare, tieni premuto di nuovo per inviare. Android non comunica alle app quando il tasto viene rilasciato.": "Talk: press and hold to start listening, press and hold again to send. Android doesn't tell apps when the button is released."
+  "Parla: tieni premuto per iniziare ad ascoltare, tieni premuto di nuovo per inviare. Android non comunica alle app quando il tasto viene rilasciato.": "Talk: press and hold to start listening, press and hold again to send. Android doesn't tell apps when the button is released.",
+  "parla a %1$s · tieni premuto il tasto o tocca per inviare": "talk to %1$s · hold the button or tap to send",
+  "Sul Rabbit non c'è un riconoscimento vocale di sistema: scegli Groq Whisper in Aspetto e voce e inserisci la chiave.": "There's no system speech recognition on the Rabbit: choose Groq Whisper in Look and voice and enter the key."
 }

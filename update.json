@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 59,
-  "versionName": "0.5.52",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.52/r1agents-release-signed.apk",
-  "sha256": "60145342a871ae0cdf2e489c3da508875b3955744e9ac709f22918b6833c28e7",
-  "sizeBytes": 1440127,
-  "notes": "0.5.52 (code 59): tasto laterale. Per Android è il tasto di accensione: la pressione breve resta lo standby, mentre il «tieni premuto» può aprire R1 Agents come assistente digitale. In Impostazioni, tasto laterale, trovi i due passaggi di sistema e scegli cosa fa: parla (tieni premuto per ascoltare, di nuovo per inviare), chat, recenti, orologio o torcia.",
+  "versionCode": 60,
+  "versionName": "0.5.53",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.53/r1agents-release-signed.apk",
+  "sha256": "0b023064e2159fda7bc467411202c1bf3e5637c2d7dccd37c8ef495d3dbb3169",
+  "sizeBytes": 1440183,
+  "notes": "0.5.53 (code 60): il tasto laterale funziona davvero. R1 Agents è ora un assistente digitale completo per Android, quindi la scelta resta anche dopo gli aggiornamenti. Con «parla», tenendo premuto si apre il pannello vocale sopra qualunque app; si invia tenendo premuto di nuovo o toccando il pannello, Indietro annulla. Se sul dispositivo non c è un riconoscimento vocale di sistema, l app chiede di usare Groq Whisper.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }
