@@ -80,10 +80,10 @@ internal fun waterCentre(space: View, from: RectF): PointF {
 object ContainerReveal {
     private val running = java.util.WeakHashMap<View, Animator>()
 
-    private class State { var cx = 0f; var cy = 0f; var radius = 0f; var k = 0f; var fade = 1f }
+    private class State { var cx = 0f; var cy = 0f; var radius = 0f; var k = 0f; var fade = 1f; var alpha = 1f }
 
     private class Veil(private val st: State, private val density: Float) : android.graphics.drawable.Drawable() {
-        override fun draw(c: Canvas) = Ripples.draw(c, st.cx, st.cy, st.radius, st.k, st.fade, density)
+        override fun draw(c: Canvas) = Ripples.draw(c, st.cx, st.cy, st.radius, st.k, st.fade * st.alpha, density)
         override fun setAlpha(a: Int) {}
         override fun setColorFilter(f: android.graphics.ColorFilter?) {}
         @Suppress("OVERRIDE_DEPRECATION") override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
@@ -103,12 +103,17 @@ object ContainerReveal {
             }
         }
         page.clipToOutline = true
-        val veil = Veil(st, d); page.foreground = veil
+        // Prestazioni: la pagina resta ferma durante l'onda, quindi si disegna una volta in un livello hardware e ogni
+        // fotogramma la compone soltanto (trasparenza e ritaglio ovale non la ridisegnano). Il velo delle increspature sta
+        // nell'overlay del contenitore, non nella pagina: se fosse nella pagina invaliderebbe il livello a ogni fotogramma.
+        page.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        val veil = Veil(st, d).also { it.setBounds(0, 0, space.width.coerceAtLeast(w.toInt()), space.height.coerceAtLeast(h.toInt())) }
+        space.overlay.add(veil)
         val began = android.os.SystemClock.uptimeMillis()
         fun apply(k: Float, time: Float) {
             st.k = k; st.radius = start + (full - start) * k
             // Trasparente come l'acqua: la pagina nuova lascia vedere quella sotto e si posa solo alla fine.
-            page.alpha = 0.30f + 0.70f * (k * k * k)
+            page.alpha = 0.30f + 0.70f * (k * k * k); st.alpha = page.alpha
             // L'acqua si calma nell'ultima parte.
             st.fade = (1f - ((time - 0.40f) / 0.60f)).coerceIn(0f, 1f)
             page.invalidateOutline(); veil.invalidateSelf()
@@ -131,7 +136,8 @@ object ContainerReveal {
                 override fun onAnimationEnd(animation: Animator) {
                     running.remove(page)
                     Water.clear(space)
-                    page.clipToOutline = false; page.outlineProvider = ViewOutlineProvider.BACKGROUND; page.foreground = null
+                    page.clipToOutline = false; page.outlineProvider = ViewOutlineProvider.BACKGROUND
+                    space.overlay.remove(veil); page.setLayerType(View.LAYER_TYPE_NONE, null)
                     page.alpha = 1f
                     if (!cancelled) onEnd()
                 }

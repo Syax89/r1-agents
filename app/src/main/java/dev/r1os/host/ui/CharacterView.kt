@@ -58,8 +58,8 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
     private var haloColor = c
     private var active = true
 
-    private val halo = Layer { cv, p -> p.style = Paint.Style.STROKE; p.strokeWidth = 2 * k; p.color = haloColor; cv.drawCircle(100 * k, 100 * k, 86 * k, p) }
-    private val orbit = Layer { cv, p -> p.color = c; for ((x, y, r) in ORBIT) cv.drawCircle(x * k, y * k, r * k, p) }
+    private val halo = Layer(flat = true) { cv, p -> p.style = Paint.Style.STROKE; p.strokeWidth = 2 * k; p.color = haloColor; cv.drawCircle(100 * k, 100 * k, 86 * k, p) }
+    private val orbit = Layer(flat = true) { cv, p -> p.color = c; for ((x, y, r) in ORBIT) cv.drawCircle(x * k, y * k, r * k, p) }
     private val float = FrameLayout(context)
     private val body = Layer(cached = true) { cv, _ -> bodyBitmap?.let { cv.drawBitmap(it, 0f, 0f, null) } }
     private val eyes = Layer { cv, _ -> drawEyes(cv) }
@@ -71,8 +71,8 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
     private val underWear = Layer(cached = true) { cv, _ -> drawWorn(cv, "back", "neck", "cheeks") }
     private val faceWear = Layer(cached = true) { cv, _ -> drawWorn(cv, "face") }
     private val hatWear = Layer(cached = true) { cv, _ -> drawWorn(cv, "head"); drawEars(cv) }
-    private val mouth = Layer { cv, p -> val y = fit().point("mouth").second; p.color = if (form == "bot") c else EYE; cv.drawOval(91 * k, (y - 5) * k, 109 * k, (y + 5) * k, p) }
-    private val thought = List(3) { i -> Layer { cv, p -> p.color = c; val (x, y, r) = THOUGHT[i]; cv.drawCircle(x * k, y * k, r * k, p) } }
+    private val mouth = Layer(flat = true) { cv, p -> val y = fit().point("mouth").second; p.color = if (form == "bot") c else EYE; cv.drawOval(91 * k, (y - 5) * k, 109 * k, (y + 5) * k, p) }
+    private val thought = List(3) { i -> Layer(flat = true) { cv, p -> p.color = c; val (x, y, r) = THOUGHT[i]; cv.drawCircle(x * k, y * k, r * k, p) } }
     private val badge = Layer { cv, p -> drawBadge(cv, p) }
     private val icon = Layer { cv, p -> drawIcon(cv, p) }
     private val unreadView = TextView(context)
@@ -913,10 +913,16 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
     }
 
     /** A full-size layer that draws once. */
-    private inner class Layer(cached: Boolean = false, private val paint: (Canvas, Paint) -> Unit) : View(context) {
+    private inner class Layer(cached: Boolean = false, private val flat: Boolean = false, private val paint: (Canvas, Paint) -> Unit) : View(context) {
         private val p = Paint(Paint.ANTI_ALIAS_FLAG)
         /** I livelli che cambiano di rado (corpo, vestiti) diventano una texture: la GPU la ridisegna senza rifare i path ogni frame. */
         init { if (cached) setLayerType(LAYER_TYPE_HARDWARE, null) }
+        /**
+         * `flat`: le forme del livello non si sovrappongono (alone, puntini dell'orbita, bocca, nuvolette), quindi la
+         * trasparenza si applica forma per forma. Altrimenti ogni livello semitrasparente in movimento (l'orbita al 90% che
+         * ruota nella posa "al lavoro") diventava un buffer fuori schermo a ogni fotogramma, costoso sulla GPU del Rabbit.
+         */
+        override fun hasOverlappingRendering() = !flat
         override fun onDraw(canvas: Canvas) {
             p.reset()
             p.isAntiAlias = true

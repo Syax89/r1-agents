@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 57,
-  "versionName": "0.5.50",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.50/r1agents-release-signed.apk",
-  "sha256": "667f58eb04838fd3358745f202e462d93b512682f4425ab6cf2cc9b8f271731e",
+  "versionCode": 58,
+  "versionName": "0.5.51",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.51/r1agents-release-signed.apk",
+  "sha256": "f41aae61cebed1d8ba4fe77c6153995dbcac81c4c1e3ceac553db058e3c42a10",
   "sizeBytes": 1431935,
-  "notes": "0.5.50 (code 57): MainActivity sotto le 1800 righe: sfondi, fogli, messaggi brevi, allegati e strumenti in ActivityParts.kt; restano nell activity solo navigazione, volo del buddy e ciclo di vita. Nessun cambiamento visibile.",
+  "notes": "0.5.51 (code 58): aperture delle pagine più fluide sul Rabbit. Le voci che si aprono a fisarmonica e le pagine durante l onda e lo scorrimento si disegnano una volta sola e poi si muovono, il velo delle increspature non ridisegna più la pagina, e l anello e l alone del buddy semitrasparenti non creano più buffer extra a ogni fotogramma. Aprendo impostazioni, strumenti e controlli i fotogrammi oltre 32 ms passano da 55-175 a 10-14 ogni 6 aperture (p95 da 42 a 26 ms). Aspetto invariato.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

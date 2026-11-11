@@ -893,7 +893,9 @@ fun unfold(col: ViewGroup) {
             r.alpha = 0f; r.rotationX = -72f; r.translationY = -6f * d; r.cameraDistance = 9000f * d
             r.post {
                 r.pivotX = r.width / 2f; r.pivotY = 0f
-                r.animate().rotationX(0f).alpha(1f).translationY(0f).setStartDelay(delay).setDuration(Motion.UNFOLD).setInterpolator(Theme.SETTLE).start()
+                // Livello hardware per voce durante la piega: la riga si disegna una volta e poi si ruota e sfuma da sola.
+                // Senza, ogni voce semitrasparente e ruotata in 3D era un livello fuori schermo ridisegnato a ogni fotogramma (~42 ms sul Rabbit).
+                r.animate().rotationX(0f).alpha(1f).translationY(0f).setStartDelay(delay).setDuration(Motion.UNFOLD).setInterpolator(Theme.SETTLE).withLayer().start()
             }
         }
     }

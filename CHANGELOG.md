@@ -121,3 +121,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.49 (code 56): Indietro passa dal nuovo sistema di Android (OnBackInvokedCallback), pronto per le prossime versioni; esportazione, importazione e scossa in file propri, MainActivity sotto le 2100 righe.
 
 0.5.50 (code 57): MainActivity sotto le 1800 righe: sfondi, fogli, messaggi brevi, allegati e strumenti in ActivityParts.kt; restano nell activity solo navigazione, volo del buddy e ciclo di vita. Nessun cambiamento visibile.
+
+0.5.51 (code 58): aperture delle pagine più fluide sul Rabbit. Le voci che si aprono a fisarmonica e le pagine durante l onda e lo scorrimento si disegnano una volta sola e poi si muovono, il velo delle increspature non ridisegna più la pagina, e l anello e l alone del buddy semitrasparenti non creano più buffer extra a ogni fotogramma. Aprendo impostazioni, strumenti e controlli i fotogrammi oltre 32 ms passano da 55-175 a 10-14 ogni 6 aperture (p95 da 42 a 26 ms). Aspetto invariato.

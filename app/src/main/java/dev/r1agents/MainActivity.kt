@@ -1089,7 +1089,7 @@ class MainActivity : Activity() {
                     if (flight != null) {
                         if (origin != null) {
                             ContainerReveal.open(s.view, origin, root.width.toFloat(), root.height.toFloat())
-                            prev.view.animate().alpha(dimmed).scaleX(0.96f).scaleY(0.96f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start()
+                            prev.view.animate().alpha(dimmed).scaleX(0.96f).scaleY(0.96f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).withLayer().start()
                         }
                         flight.animateTo(1f)
                     } else { s.view.alpha = 1f; detach(prev.view); clearCarriedBuddy() }
@@ -1122,12 +1122,12 @@ class MainActivity : Activity() {
             s.origin = origin
             if (Motion.reduced(this)) { s.view.alpha = 0f; s.view.animate().alpha(1f).setDuration(Motion.BASE).start() }
             else ContainerReveal.open(s.view, origin, root.width.toFloat(), root.height.toFloat())
-            prev.view.animate().scaleX(0.94f).scaleY(0.94f).alpha(dimmed).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).withEndAction { if (stack.lastOrNull() !== prev) detach(prev.view) }.start()
+            prev.view.animate().scaleX(0.94f).scaleY(0.94f).alpha(dimmed).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).withLayer().withEndAction { if (stack.lastOrNull() !== prev) detach(prev.view) }.start()
             return
         }
         s.view.translationX = w
-        s.view.animate().translationX(0f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start()
-        prev.view.animate().translationX(-w * parallax).alpha(dimmed).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).withEndAction { if (stack.lastOrNull() !== prev) detach(prev.view) }.start()
+        s.view.animate().translationX(0f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).withLayer().start()
+        prev.view.animate().translationX(-w * parallax).alpha(dimmed).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).withLayer().withEndAction { if (stack.lastOrNull() !== prev) detach(prev.view) }.start()
     }
 
     /** Indietro: la pagina sotto torna al suo posto mentre quella in cima esce a destra (se il gesto e' partito dal bordo, riprende da dove l'ha lasciata il dito). */
@@ -1169,7 +1169,7 @@ class MainActivity : Activity() {
             root.addView(back.view, 0, ViewGroup.LayoutParams(-1, -1))
         }
         back.view.animate().cancel()
-        back.view.animate().translationX(0f).scaleX(1f).scaleY(1f).alpha(1f).setDuration(if (fromDrag) Motion.BASE else Motion.SLOW).setInterpolator(Theme.SETTLE).start()
+        back.view.animate().translationX(0f).scaleX(1f).scaleY(1f).alpha(1f).setDuration(if (fromDrag) Motion.BASE else Motion.SLOW).setInterpolator(Theme.SETTLE).withLayer().start()
         s.view.animate().cancel()
         if (origin != null) {
             // Torna nell'elemento da cui era nata: si rimpicciolisce verso di esso e sfuma.
@@ -1177,7 +1177,7 @@ class MainActivity : Activity() {
             if (Motion.reduced(this)) s.view.animate().alpha(0f).setDuration(Motion.BASE).withEndAction { root.removeView(s.view); s.view.alpha = 1f }.start()
             else ContainerReveal.close(s.view, origin, root.width.toFloat(), root.height.toFloat()) { root.removeView(s.view) }
         } else {
-            s.view.animate().translationX(w).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).withEndAction { root.removeView(s.view); s.view.translationX = 0f }.start()
+            s.view.animate().translationX(w).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).withLayer().withEndAction { root.removeView(s.view); s.view.translationX = 0f }.start()
         }
         runtimeVisibility()
         showScreen(back)
