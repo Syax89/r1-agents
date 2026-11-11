@@ -719,6 +719,24 @@
     <string name="ui_ff65cb979a" formatted="false">"R1 Agents: anteprime del multitasking"</string>
     <string name="ui_0452cbabe0" formatted="false">"Salva solo su questo telefono un\'immagine piccola dell\'ultima schermata di ogni app, per mostrarla nel multitasking. Le app protette (banche, password) restano nere. Spegnendolo le immagini si cancellano."</string>
     <string name="ui_748240f22f" formatted="false">"anteprime nel multitasking"</string>
+    <string name="ui_addbf9ddc4" formatted="false">"tasto laterale"</string>
+    <string name="ui_f9c821d87b">"tieni premuto: %1$s"</string>
+    <string name="ui_3bb63f1950" formatted="false">"non ancora attivo"</string>
+    <string name="ui_76d6820858" formatted="false">"Tenendo premuto il tasto laterale Android apre il menu di spegnimento. Con due passaggi lo apre R1 Agents e fa l\'azione che scegli qui; la pressione breve resta lo standby."</string>
+    <string name="ui_6d4b419162" formatted="false">"1. R1 Agents come assistente"</string>
+    <string name="ui_1672b058c2" formatted="false">"2. tieni premuto: assistente digitale"</string>
+    <string name="ui_0e596a8dcc" formatted="false">"fatto"</string>
+    <string name="ui_cd7980b363" formatted="false">"da fare: tocca per aprire"</string>
+    <string name="ui_51698da844" formatted="false">"Scegli «Assistente digitale» in «Tieni premuto il tasto di accensione»."</string>
+    <string name="ui_194603a73f" formatted="false">"cosa fa"</string>
+    <string name="ui_2cf67fba62" formatted="false">"parla"</string>
+    <string name="ui_7ecde348ff" formatted="false">"chat"</string>
+    <string name="ui_14be4f8e71" formatted="false">"Questa pagina di sistema non c\'è su questo dispositivo."</string>
+    <string name="ui_3f00a4dc58" formatted="false">"1. assistente"</string>
+    <string name="ui_129a753f2c" formatted="false">"2. tieni premuto"</string>
+    <string name="ui_c31924ac93" formatted="false">"da fare: scegli R1 Agents come assistente digitale"</string>
+    <string name="ui_d2bcbe16d9" formatted="false">"da fare: scegli «assistente digitale»"</string>
+    <string name="ui_4174759ddc" formatted="false">"Parla: tieni premuto per iniziare ad ascoltare, tieni premuto di nuovo per inviare. Android non comunica alle app quando il tasto viene rilasciato."</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

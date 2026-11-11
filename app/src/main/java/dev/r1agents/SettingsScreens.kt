@@ -108,8 +108,6 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
         col.addView(city, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
         col.addView(button(UiText.text(this@lookScreen, R.string.ui_1fa7ec8671), toolAccent, primary = false, small = true) { prefs.edit().putString("weather_city", city.text.toString().trim()).remove("w_at").apply() }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dpi(4f) })
     }
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_de4a8ea6f8)))
-    col.addView(hint(UiText.text(this@lookScreen, R.string.ui_2245aa74cd)))
     col.addView(label(UiText.text(this@lookScreen, R.string.ui_3d9a5cdfac))); col.addView(chips(listOf("bold", "light", "condensed", "stacked", "serif", "mono", "words", "dial").map { it to it }, prefs.getString("clock", "bold")!!, "clock"))
     col.addView(label(UiText.text(this@lookScreen, R.string.ui_41b75bd493))); col.addView(chips(listOf("left" to UiText.text(this@lookScreen, R.string.ui_3b72eca895), "center" to UiText.text(this@lookScreen, R.string.ui_d6b2c56f12)), prefs.getString("clock_align", "left")!!, "clock_align"))
     col.addView(label(getString(R.string.voice_read_chat))); col.addView(chips(listOf("off" to UiText.text(this@lookScreen, R.string.ui_8e6720c901), "on" to UiText.text(this@lookScreen, R.string.ui_5777f60da9)), if (prefs.getBoolean("tts", false)) "on" else "off", "tts"))
@@ -603,6 +601,7 @@ internal fun MainActivity.settingsScreen(): Screen = listPage(UiText.text(this@s
         tile("look", UiText.text(this@settingsScreen, R.string.ui_20d6155d10), UiText.text(this@settingsScreen, R.string.ui_b2a183c667), Theme.colorOf("purple")) { push(lookScreen()) },
         tile("data", UiText.text(this@settingsScreen, R.string.ui_2953d06507), UiText.text(this@settingsScreen, R.string.ui_2cddbe429a), Theme.colorOf("teal")) { sheet(UiText.text(this@settingsScreen, R.string.ui_2953d06507), listOf(UiText.text(this@settingsScreen, R.string.ui_273893985c) to { startExport() }, UiText.text(this@settingsScreen, R.string.ui_77c7dfe5ae) to { startProtectedExport() }, UiText.text(this@settingsScreen, R.string.ui_26962ddc5b) to { startImport() })) },
     )))
+    col.addView(row(UiText.text(this@settingsScreen, R.string.ui_addbf9ddc4), Theme.accent, sub = sideButtonSummary(), icon = "power") { push(sideButtonScreen()) })
     col.addView(row(UiText.text(this@settingsScreen, R.string.ui_9729d2de44), Theme.accent, sub = if (pinEnabled()) UiText.text(this@settingsScreen, R.string.ui_c10e8db395) else UiText.text(this@settingsScreen, R.string.ui_db99ab2043), icon = "lock") { push(securityScreen()) })
     col.addView(label(UiText.text(this@settingsScreen, R.string.ui_03b76df6e0)))
     col.addView(bigRow("sliders", UiText.text(this@settingsScreen, R.string.ui_3bab362b6a), UiText.text(this@settingsScreen, R.string.ui_db09e3de46), Theme.colorOf("amber")) {

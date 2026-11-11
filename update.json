@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 58,
-  "versionName": "0.5.51",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.51/r1agents-release-signed.apk",
-  "sha256": "f41aae61cebed1d8ba4fe77c6153995dbcac81c4c1e3ceac553db058e3c42a10",
-  "sizeBytes": 1431935,
-  "notes": "0.5.51 (code 58): aperture delle pagine più fluide sul Rabbit. Le voci che si aprono a fisarmonica e le pagine durante l onda e lo scorrimento si disegnano una volta sola e poi si muovono, il velo delle increspature non ridisegna più la pagina, e l anello e l alone del buddy semitrasparenti non creano più buffer extra a ogni fotogramma. Aprendo impostazioni, strumenti e controlli i fotogrammi oltre 32 ms passano da 55-175 a 10-14 ogni 6 aperture (p95 da 42 a 26 ms). Aspetto invariato.",
+  "versionCode": 59,
+  "versionName": "0.5.52",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.52/r1agents-release-signed.apk",
+  "sha256": "60145342a871ae0cdf2e489c3da508875b3955744e9ac709f22918b6833c28e7",
+  "sizeBytes": 1440127,
+  "notes": "0.5.52 (code 59): tasto laterale. Per Android è il tasto di accensione: la pressione breve resta lo standby, mentre il «tieni premuto» può aprire R1 Agents come assistente digitale. In Impostazioni, tasto laterale, trovi i due passaggi di sistema e scegli cosa fa: parla (tieni premuto per ascoltare, di nuovo per inviare), chat, recenti, orologio o torcia.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

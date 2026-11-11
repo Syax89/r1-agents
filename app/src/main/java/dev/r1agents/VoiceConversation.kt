@@ -42,6 +42,8 @@ internal class VoiceConversation(
     private var generation = 0
     private var alive = true
     private var recording = false
+    /** Vero mentre registra: il tasto laterale tenuto di nuovo chiude e invia. */
+    val isRecording get() = recording
     private var transcribing = false
     private var busy = false
     private val muted = !prefs.getBoolean("voice_tts", true)

@@ -419,6 +419,7 @@ class IconView(ctx: Context, private val kind: String, private val color: Int, p
             "recents" -> { // schede affiancate: quella al centro più grande
                 path.addRoundRect(android.graphics.RectF(8f, 5f, 16f, 19f), 2.2f, 2.2f, android.graphics.Path.Direction.CW)
                 path.moveTo(5f, 7.5f); path.lineTo(5f, 16.5f); path.moveTo(19f, 7.5f); path.lineTo(19f, 16.5f) }
+            "power" -> { path.addArc(android.graphics.RectF(4.5f, 5.5f, 19.5f, 20.5f), -60f, 300f); path.moveTo(12f, 3.5f); path.lineTo(12f, 11.5f) }
             "info" -> { path.addCircle(12f, 12f, 9f, android.graphics.Path.Direction.CW); path.moveTo(12f, 11f); path.lineTo(12f, 17f); path.addCircle(12f, 7.6f, 0.4f, android.graphics.Path.Direction.CW) }
             "sliders" -> { path.moveTo(4f, 7f); path.lineTo(13f, 7f); path.moveTo(19f, 7f); path.lineTo(20f, 7f); path.addCircle(16f, 7f, 2.6f, android.graphics.Path.Direction.CW)
                 path.moveTo(4f, 17f); path.lineTo(5f, 17f); path.moveTo(11f, 17f); path.lineTo(20f, 17f); path.addCircle(8f, 17f, 2.6f, android.graphics.Path.Direction.CW) }

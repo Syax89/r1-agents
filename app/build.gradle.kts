@@ -15,8 +15,8 @@ android {
         applicationId = "dev.r1agents"
         minSdk = 29          // Android 10+: copre ogni R1 con Android (rabbitOS e ROM di terzi)
         targetSdk = 34
-        versionCode = 58
-        versionName = "0.5.51"
+        versionCode = 59
+        versionName = "0.5.52"
         testInstrumentationRunner = "dev.r1agents.RuntimeInstrumentation"
         manifestPlaceholders["appLabel"] = "R1 Agents"
     }

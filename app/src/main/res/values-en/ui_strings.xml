@@ -719,6 +719,24 @@
     <string name="ui_ff65cb979a" formatted="false">"R1 Agents: multitasking previews"</string>
     <string name="ui_0452cbabe0" formatted="false">"Saves, only on this phone, a small picture of each app\'s last screen to show it in multitasking. Protected apps (banks, passwords) stay black. Turning it off deletes the pictures."</string>
     <string name="ui_748240f22f" formatted="false">"previews in multitasking"</string>
+    <string name="ui_addbf9ddc4" formatted="false">"side button"</string>
+    <string name="ui_f9c821d87b">"press and hold: %1$s"</string>
+    <string name="ui_3bb63f1950" formatted="false">"not active yet"</string>
+    <string name="ui_76d6820858" formatted="false">"Holding the side button opens Android\'s power menu. In two steps it opens R1 Agents instead and does the action you choose here; a short press still puts it to sleep."</string>
+    <string name="ui_6d4b419162" formatted="false">"1. R1 Agents as assistant"</string>
+    <string name="ui_1672b058c2" formatted="false">"2. press and hold: digital assistant"</string>
+    <string name="ui_0e596a8dcc" formatted="false">"done"</string>
+    <string name="ui_cd7980b363" formatted="false">"to do: tap to open"</string>
+    <string name="ui_51698da844" formatted="false">"Choose “Digital assistant” under “Press and hold power button”."</string>
+    <string name="ui_194603a73f" formatted="false">"what it does"</string>
+    <string name="ui_2cf67fba62" formatted="false">"talk"</string>
+    <string name="ui_7ecde348ff" formatted="false">"chat"</string>
+    <string name="ui_14be4f8e71" formatted="false">"This system page isn\'t available on this device."</string>
+    <string name="ui_3f00a4dc58" formatted="false">"1. assistant"</string>
+    <string name="ui_129a753f2c" formatted="false">"2. press and hold"</string>
+    <string name="ui_c31924ac93" formatted="false">"to do: pick R1 Agents as digital assistant"</string>
+    <string name="ui_d2bcbe16d9" formatted="false">"to do: pick “digital assistant”"</string>
+    <string name="ui_4174759ddc" formatted="false">"Talk: press and hold to start listening, press and hold again to send. Android doesn\'t tell apps when the button is released."</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>
