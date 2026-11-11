@@ -38,7 +38,7 @@ internal class AppSwitcher(
 ) : FrameLayout(ctx), Choreographer.FrameCallback {
 
     private val items = apps.toMutableList()
-    private val cards = items.map { Card(ctx, it) }.toMutableList()
+    private val cards = items.map { Card(ctx, it, PreviewService.load(ctx, it.pkg)) }.toMutableList()
     private val pos = Spring { layoutCards() }
     private val d = ctx.resources.displayMetrics.density
     private var startedAt = 0L
@@ -299,7 +299,7 @@ internal class AppSwitcher(
 
     // ---- scheda --------------------------------------------------------------------------------------
 
-    private class Card(ctx: Context, app: AppEntry) : View(ctx) {
+    private class Card(ctx: Context, app: AppEntry, private val preview: Bitmap?) : View(ctx) {
         var lift = 0f
         var fade = 1f
         var corner = 1f; set(v) { field = v; invalidate() }
@@ -322,15 +322,41 @@ internal class AppSwitcher(
             rim.shader = LinearGradient(0f, 0f, 0f, h.toFloat(), Color.argb(110, 255, 255, 255), Color.argb(20, 255, 255, 255), Shader.TileMode.CLAMP)
         }
 
+        private val shot = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        private val badge = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(200, 0, 0, 0) }
+        private val clip = Path()
+
         override fun onDraw(c: Canvas) {
             val rad = Shapes.CARD * d * corner
             r.set(0f, 0f, width.toFloat(), height.toFloat())
+            if (preview != null) { drawPreview(c, rad); return }
             c.drawRoundRect(r, rad, rad, bg)
             c.drawRoundRect(r, rad, rad, glow)
             if (corner > 0f) { r.inset(rim.strokeWidth / 2, rim.strokeWidth / 2); c.drawRoundRect(r, rad, rad, rim) }
             val s = (width * 0.36f).roundToInt(); val cx = width / 2; val cy = (height * 0.42f).roundToInt()
             icon.setBounds(cx - s / 2, cy - s / 2, cx + s / 2, cy + s / 2); icon.draw(c)
             c.drawText(TextUtilsCompat.ellipsize(label, text, width - 24f * d), width / 2f, height * 0.42f + s / 2f + 30f * d, text)
+        }
+
+        /** Con l'anteprima: l'ultima schermata dell'app riempie la scheda, icona e nome in una pillola in basso. */
+        private fun drawPreview(c: Canvas, rad: Float) {
+            val p = preview ?: return
+            clip.reset(); clip.addRoundRect(r, rad, rad, Path.Direction.CW)
+            c.save(); c.clipPath(clip)
+            c.drawColor(blend(tint, Color.BLACK, 0.6f))
+            val scale = maxOf(width / p.width.toFloat(), height / p.height.toFloat())
+            val dw = p.width * scale; val dh = p.height * scale
+            c.drawBitmap(p, null, RectF((width - dw) / 2f, 0f, (width + dw) / 2f, dh), shot)   // in alto: si vede l'intestazione dell'app
+            val ph = 44f * d; val py = height - ph - 10f * d
+            val pr = RectF(10f * d, py, width - 10f * d, py + ph)
+            c.drawRoundRect(pr, ph / 2, ph / 2, badge)
+            val s = (ph - 14f * d).toInt(); val ix = (pr.left + 8f * d).toInt(); val iy = (py + 7f * d).toInt()
+            icon.setBounds(ix, iy, ix + s, iy + s); icon.draw(c)
+            text.textAlign = Paint.Align.LEFT; text.textSize = 15f * d
+            c.drawText(TextUtilsCompat.ellipsize(label, text, pr.width() - s - 26f * d), ix + s + 8f * d, py + ph / 2 + 5.5f * d, text)
+            text.textAlign = Paint.Align.CENTER; text.textSize = 17f * d
+            c.restore()
+            if (corner > 0f) { val rr = RectF(r); rr.inset(rim.strokeWidth / 2, rim.strokeWidth / 2); c.drawRoundRect(rr, rad, rad, rim) }
         }
 
         companion object {
@@ -378,7 +404,7 @@ internal fun MainActivity.openSwitcher() {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or Intent.FLAG_ACTIVITY_NO_ANIMATION)); true
             } catch (e: Exception) { switcherLaunched = false; snack(UiText.text(this, R.string.ui_f2c6915e4c)); false }
         },
-        onRemove = { a -> forgetRecent(a.pkg) },
+        onRemove = { a -> forgetRecent(a.pkg); PreviewService.forget(this, a.pkg) },
         onClosed = { appSwitcher = null; switcherLaunched = false; stack.lastOrNull()?.view?.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_AUTO })
     appSwitcher = sw
     stack.lastOrNull()?.view?.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS

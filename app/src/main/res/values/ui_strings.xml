@@ -716,6 +716,9 @@
     <string name="ui_26514a5595" formatted="false">"password del backup"</string>
     <string name="ui_00dead5d37" formatted="false">"Il backup è protetto: scrivi la password."</string>
     <string name="ui_2553dd7241" formatted="false">"Senza questa password il file non si potrà più leggere: conservala."</string>
+    <string name="ui_ff65cb979a" formatted="false">"R1 Agents: anteprime del multitasking"</string>
+    <string name="ui_0452cbabe0" formatted="false">"Salva solo su questo telefono un\'immagine piccola dell\'ultima schermata di ogni app, per mostrarla nel multitasking. Le app protette (banche, password) restano nere. Spegnendolo le immagini si cancellano."</string>
+    <string name="ui_748240f22f" formatted="false">"anteprime nel multitasking"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

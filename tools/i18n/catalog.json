@@ -713,5 +713,8 @@
   "esporta con password": "export with password",
   "password del backup": "backup password",
   "Il backup è protetto: scrivi la password.": "This backup is protected: enter the password.",
-  "Senza questa password il file non si potrà più leggere: conservala.": "Without this password the file can't be read again: keep it safe."
+  "Senza questa password il file non si potrà più leggere: conservala.": "Without this password the file can't be read again: keep it safe.",
+  "R1 Agents: anteprime del multitasking": "R1 Agents: multitasking previews",
+  "Salva solo su questo telefono un'immagine piccola dell'ultima schermata di ogni app, per mostrarla nel multitasking. Le app protette (banche, password) restano nere. Spegnendolo le immagini si cancellano.": "Saves, only on this phone, a small picture of each app's last screen to show it in multitasking. Protected apps (banks, passwords) stay black. Turning it off deletes the pictures.",
+  "anteprime nel multitasking": "previews in multitasking"
 }

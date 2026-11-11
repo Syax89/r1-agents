@@ -723,6 +723,9 @@ internal object UiCatalog {
         UiEntry(R.string.ui_26514a5595, "password del backup"),
         UiEntry(R.string.ui_00dead5d37, "Il backup è protetto: scrivi la password."),
         UiEntry(R.string.ui_2553dd7241, "Senza questa password il file non si potrà più leggere: conservala."),
+        UiEntry(R.string.ui_ff65cb979a, "R1 Agents: anteprime del multitasking"),
+        UiEntry(R.string.ui_0452cbabe0, "Salva solo su questo telefono un'immagine piccola dell'ultima schermata di ogni app, per mostrarla nel multitasking. Le app protette (banche, password) restano nere. Spegnendolo le immagini si cancellano."),
+        UiEntry(R.string.ui_748240f22f, "anteprime nel multitasking"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

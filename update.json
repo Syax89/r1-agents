@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 54,
-  "versionName": "0.5.47",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.47/r1agents-release-signed.apk",
-  "sha256": "6a75d3bcaf82b56cb0f1c69e93b88abc965a819828b2da166a1aecd236a9053c",
-  "sizeBytes": 1423687,
-  "notes": "0.5.47 (code 54): gli agenti possono anche regolare volume e luminosità, comandare la musica, mettere un promemoria a un orario e proporre un evento da confermare nel calendario. Routine a evento: partono quando il Rabbit va in carica, si scollega, trova il wifi o si collegano le cuffie. Esportazione con password (AES-256): senza la password il file non si legge. MainActivity più snella (azioni, multitasking, pagina dell agente in file propri).",
+  "versionCode": 55,
+  "versionName": "0.5.48",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.48/r1agents-release-signed.apk",
+  "sha256": "225493bf55e687706ba11071d6406080e91259687755898f77a117d0cb78fe54",
+  "sizeBytes": 1431935,
+  "notes": "0.5.48 (code 55): anteprime vere nel multitasking, se le attivi (Sicurezza, anteprime nel multitasking): l ultima schermata di ogni app, salvata solo sul telefono, con icona e nome in basso; le app protette restano escluse e spegnendo il servizio le immagini si cancellano. Con il servizio attivo anche le app aperte da fuori entrano nei recenti. Nei timer il testo dei promemoria accanto all orario.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

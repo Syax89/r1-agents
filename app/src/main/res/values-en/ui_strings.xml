@@ -716,6 +716,9 @@
     <string name="ui_26514a5595" formatted="false">"backup password"</string>
     <string name="ui_00dead5d37" formatted="false">"This backup is protected: enter the password."</string>
     <string name="ui_2553dd7241" formatted="false">"Without this password the file can\'t be read again: keep it safe."</string>
+    <string name="ui_ff65cb979a" formatted="false">"R1 Agents: multitasking previews"</string>
+    <string name="ui_0452cbabe0" formatted="false">"Saves, only on this phone, a small picture of each app\'s last screen to show it in multitasking. Protected apps (banks, passwords) stay black. Turning it off deletes the pictures."</string>
+    <string name="ui_748240f22f" formatted="false">"previews in multitasking"</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>

@@ -101,5 +101,10 @@
         <service android:name=".RingService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
         <service android:name=".HermesTurnService" android:exported="false" android:foregroundServiceType="dataSync" />
         <service android:name=".RoutineService" android:exported="false" android:foregroundServiceType="dataSync" />
+        <!-- Anteprime del multitasking: facoltativo, lo attiva l'utente da Accessibilità. -->
+        <service android:name=".PreviewService" android:exported="true" android:label="@string/ui_ff65cb979a" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/preview_service" />
+        </service>
     </application>
 </manifest>
