@@ -3,6 +3,7 @@ package dev.r1agents
 import android.content.Context
 import android.view.Choreographer
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewConfiguration
 import android.widget.ScrollView
 import dev.r1os.host.ui.dp
@@ -24,7 +25,50 @@ open class R1ScrollView(context: Context) : ScrollView(context), Choreographer.F
     /** Il buddy compagno della pagina (se c'è) reagisce allo scroll: vedi BuddyScrollFx. */
     val buddyFx by lazy { BuddyScrollFx(this) }
     // Le righe che escono in alto (o in basso) sfumano invece di essere tagliate di netto: sopra si intravede il buddy.
-    init { isVerticalFadingEdgeEnabled = true; setFadingEdgeLength(context.dp(56f).toInt()) }
+    /**
+     * Sfumatura in alto e in basso. Quella di Android (fading edge) disegna ogni fotogramma in due buffer fuori schermo, e
+     * sulla GPU del Rabbit costava metà del fotogramma mentre si scorre (~13 ms contro ~7). Qui, se sotto c'è un fondo in
+     * tinta unita, si dipinge sopra la lista un gradiente di quel colore: stesso aspetto, nessun buffer. Con un fondo non in
+     * tinta unita (foto, gradiente) resta quella di Android.
+     */
+    private val fadeLen = context.dp(56f)
+    private var fadeColor: Int? = null
+    private var fadeChecked = false
+    private val fadePaint = android.graphics.Paint()
+    private var fadeShaderColor = 0
+    init { setFadingEdgeLength(fadeLen.toInt()) }
+    override fun onAttachedToWindow() { super.onAttachedToWindow(); fadeChecked = false; post { resolveFade() } }
+    private fun resolveFade() {
+        if (fadeChecked) return
+        fadeChecked = true
+        var v: View? = this; var c: Int? = null
+        while (v != null && c == null) {
+            when (val bg = v.background) {
+                is android.graphics.drawable.ColorDrawable -> c = bg.color
+                is android.graphics.drawable.GradientDrawable -> c = bg.color?.defaultColor
+                null -> {}
+                else -> v = null
+            }
+            if (c == null) v = v?.parent as? View
+        }
+        fadeColor = c?.takeIf { android.graphics.Color.alpha(it) == 255 }
+        isVerticalFadingEdgeEnabled = fadeColor == null
+        invalidate()
+    }
+    override fun draw(canvas: android.graphics.Canvas) {
+        super.draw(canvas)
+        val color = fadeColor ?: return
+        if (fadeShaderColor != color || fadePaint.shader == null) {
+            fadeShaderColor = color
+            fadePaint.shader = android.graphics.LinearGradient(0f, 0f, 0f, fadeLen, color, color and 0x00FFFFFF, android.graphics.Shader.TileMode.CLAMP)
+        }
+        val top = (scrollY / fadeLen).coerceIn(0f, 1f)
+        val child = getChildAt(0)
+        val bottomSpace = if (child != null) (child.bottom + paddingBottom - (scrollY + height)).toFloat() else 0f
+        val bottom = (bottomSpace / fadeLen).coerceIn(0f, 1f)
+        if (top > 0f) { fadePaint.alpha = (top * 255).toInt(); canvas.save(); canvas.translate(scrollX.toFloat(), (scrollY + paddingTop).toFloat()); canvas.drawRect(0f, 0f, width.toFloat(), fadeLen, fadePaint); canvas.restore() }
+        if (bottom > 0f) { fadePaint.alpha = (bottom * 255).toInt(); canvas.save(); canvas.translate(scrollX.toFloat(), (scrollY + height).toFloat()); canvas.scale(1f, -1f); canvas.drawRect(0f, 0f, width.toFloat(), fadeLen, fadePaint); canvas.restore() }
+    }
     private val wheelReset = Runnable { wheelPull = 0f; buddyFx.calm() }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -72,6 +116,7 @@ open class R1ScrollView(context: Context) : ScrollView(context), Choreographer.F
     private fun stopWheel() { moving = false; previousFrame = 0L; Choreographer.getInstance().removeFrameCallback(this) }
     // Inclinazione 3D: scorrendo veloce le schede dei gruppi si piegano appena nel verso del movimento e una molla le
     // rimette dritte con un piccolo rimbalzo. Lavora solo mentre si scorre.
+    var tiltOnScroll = false
     private val tilt = dev.r1os.host.ui.Spring { v ->
         val col = getChildAt(0) as? android.view.ViewGroup ?: return@Spring
         val cam = 12000f * resources.displayMetrics.density
@@ -83,10 +128,14 @@ open class R1ScrollView(context: Context) : ScrollView(context), Choreographer.F
     }
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
         super.onScrollChanged(l, t, oldl, oldt); buddyFx.onScrolled(t)
-        val dy = (t - oldt).toFloat()
-        if (dy != 0f && !Motion.reduced(context)) {
-            val to = (dy * 0.18f).coerceIn(-6f, 6f)
-            tilt.snapTo(tilt.value + (to - tilt.value) * 0.5f); tilt.animateTo(0f, 160f, 0.5f)
+        // Niente più inclinazione 3D delle schede scorrendo: schede con angoli arrotondati ruotate in prospettiva costringevano
+        // la GPU del Rabbit a ricalcolare le maschere di ritaglio a ogni fotogramma (centinaia di texture, 70-110 ms a fotogramma).
+        if (tiltOnScroll) {
+            val dy = (t - oldt).toFloat()
+            if (dy != 0f && !Motion.reduced(context)) {
+                val to = (dy * 0.18f).coerceIn(-6f, 6f)
+                tilt.snapTo(tilt.value + (to - tilt.value) * 0.5f); tilt.animateTo(0f, 160f, 0.5f)
+            }
         }
     }
     override fun onDetachedFromWindow() { stopWheel(); super.onDetachedFromWindow() }

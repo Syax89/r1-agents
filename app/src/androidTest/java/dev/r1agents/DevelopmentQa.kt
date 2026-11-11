@@ -62,7 +62,14 @@ internal class DevelopmentQa(private val test: Instrumentation) {
             ui { val d = activity!!.window.decorView; fxScroll = views(d).filterIsInstance<R1ScrollView>().first { it.isShown }; fxBuddy = views(d).filterIsInstance<dev.r1os.host.ui.CharacterView>().first { it.isShown && it.tag == "scene-buddy" }
                 check(fxBuddy.alpha > .99f && fxBuddy.scaleX > .99f) { "Buddy non intero in cima" } }
             ui { fxScroll.scrollTo(0, 600) }; Thread.sleep(400)
-            ui { check(fxBuddy.translationY > ctx.resources.displayMetrics.density * 4f && fxBuddy.alpha > .9f) { "Il buddy non affonda a metà scorrendo: ty=${fxBuddy.translationY} alpha=${fxBuddy.alpha}" } }
+            // Conta dove si vede: la lista sale sopra la riga del buddy (non è più la riga a restringersi), quindi il centro del
+            // buddy deve stare più in basso del centro della parte di riga ancora scoperta.
+            ui {
+                val row = fxBuddy.parent as View; val holder = fxScroll.parent as View; val pinned = row.parent as View
+                val visible = holder.top + holder.translationY - pinned.top - row.top
+                val cy = row.height / 2f + fxBuddy.translationY
+                check(cy > visible / 2f + ctx.resources.displayMetrics.density * 4f && fxBuddy.alpha > .9f) { "Il buddy non affonda a metà scorrendo: cy=$cy scoperta=$visible alpha=${fxBuddy.alpha}" }
+            }
             ui { fxScroll.scrollTo(0, 0) }; Thread.sleep(900)
             ui { check(fxBuddy.scaleX > .98f && fxBuddy.alpha > .98f) { "Il buddy non torna intero in cima: ${fxBuddy.scaleX}/${fxBuddy.alpha}" } }
             val pullPx = ctx.resources.displayMetrics.density * 170f

@@ -86,6 +86,7 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
         val newRow = r !== row
         row = r; buddy = r.getChildAt(0) as? CharacterView
         if (newRow || baseH == 0) baseH = ((r.layoutParams?.height ?: 0).takeIf { it > 0 } ?: r.height)   // mai riletto dalla riga già ridotta
+        if (newRow) slideSetup()
         if (scroll.scrollY > 0) scroll.post { applyRest() } // pagina ricostruita già scorsa
         return buddy
     }
@@ -95,22 +96,36 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
     private fun progress(y: Int) = (y.toFloat() / baseH.coerceAtLeast(1)).coerceIn(0f, 1f)
     /** La riga si restringe da piena a 44 dp mentre scorri: il buddy viene "spinto in su" e la lista guadagna spazio. */
     private fun rowHeight(p: Float) = (baseH - (baseH - density * 44f) * p).toInt().coerceAtLeast((density * 44f).toInt())
-    /** Cambia l'altezza della riga (e quindi rifa il layout della pagina) solo a passi di 3 dp, o agli estremi: scorrendo non si rifa un layout per ogni pixel. */
-    private fun fit(r: View, p: Float) {
+    /**
+     * Con la testata fissa la riga del buddy non cambia altezza: è la lista che le scivola sopra (spostamento, nessun layout).
+     * Prima la riga si restringeva a passi di 3 dp e ogni passo rifaceva il layout e il disegno dell'intera pagina: sul
+     * Rabbit lo scorrimento delle impostazioni andava a ~25 ms per fotogramma. Il contenitore della lista sporge di sotto
+     * di quanto la riga "si stringe" (SlideHolder) e la lista ha altrettanto spazio in fondo, così niente resta nascosto.
+     */
+    private var slideExtra = 0
+    private fun slideSetup() {
         if (root == null) return
-        val lp = r.layoutParams ?: return
-        val h = rowHeight(p)
-        val step = (density * 3f).toInt().coerceAtLeast(2)
-        val atEdge = p <= 0f || p >= 1f
-        if (lp.height != h && (atEdge || kotlin.math.abs(lp.height - h) >= step)) { lp.height = h; r.layoutParams = lp }
+        val holder = scroll.parent as? View ?: return
+        val extra = (baseH - density * 44f).toInt().coerceAtLeast(0)
+        if (extra == slideExtra) return
+        val sh = holder as? SlideHolder ?: return; sh.extra = extra
+        scroll.setPadding(scroll.paddingLeft, scroll.paddingTop, scroll.paddingRight, scroll.paddingBottom - slideExtra + extra)
+        scroll.clipToPadding = false   // lo spazio in fondo è solo per poter scorrere: il contenuto ci si disegna sopra
+        slideExtra = extra
+    }
+    private fun fit(@Suppress("UNUSED_PARAMETER") r: View, p: Float) {
+        if (root == null) return
+        (scroll.parent as? View)?.translationY = -(baseH - rowHeight(p)).toFloat()
     }
     /** Centro sul bordo inferiore della riga a fine corsa: resta mezza sfera con gli occhi, il resto è coperto dalle righe. */
     private fun restY(p: Float) = (rowHeight(p) / 2f - (if (root != null) density * 16f else 0f)) * p   // con la testata fissa gli occhi restano sopra il bordo della lista
+    /** Lo spostamento del buddy: come prima rispetto al bordo della lista, ma la riga ora resta alta `baseH`. */
+    private fun buddyY(p: Float) = restY(p) - (if (root != null) (baseH - rowHeight(p)) / 2f else 0f)
     private fun applyRest() {
         val cv = buddy ?: return; val r = row ?: return
         val p = progress(scroll.scrollY)
         fit(r, p)
-        cv.translationY = restY(p); cv.scaleX = 1f - 0.1f * p; cv.scaleY = cv.scaleX; cv.alpha = 1f
+        cv.translationY = buddyY(p); cv.scaleX = 1f - 0.1f * p; cv.scaleY = cv.scaleX; cv.alpha = 1f
     }
 
     /** Falso per le liste dei pannelli (menu, scelte): il buddy lì lo posiziona il pannello, lo scroll non deve né spostarlo né rimetterlo "a riposo". */
@@ -131,7 +146,7 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
             cv.animate().cancel()   // un calm() in corso non deve sovrascrivere la posizione che segue il dito
             cv.pivotX = cv.width / 2f; cv.pivotY = cv.height * 0.75f
             fit(r, p)
-            cv.translationY = restY(p)
+            cv.translationY = buddyY(p)
             cv.scaleX = 1f - 0.1f * p; cv.scaleY = cv.scaleX
             cv.alpha = 1f
             // Affondato: resta mezza sfera con gli occhi e si guarda intorno.
@@ -199,7 +214,7 @@ class BuddyScrollFx(private val scroll: R1ScrollView) {
         val s = 1f - 0.1f * p
         if (r != null) fit(r, p)
         cv.animate().cancel()
-        cv.animate().rotation(0f).scaleX(s).scaleY(s).translationY(if (r == null) 0f else restY(p)).alpha(1f)
+        cv.animate().rotation(0f).scaleX(s).scaleY(s).translationY(if (r == null) 0f else buddyY(p)).alpha(1f)
             .setDuration(Motion.BASE).setInterpolator(Theme.POP).start()
     }
 }

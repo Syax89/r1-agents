@@ -267,7 +267,7 @@ internal fun MainActivity.listPage(title: String, onLeave: (() -> Unit)? = null,
     val scroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(col, -1, -2) }
     val pinned = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
     scroll.buddyFx.root = pinned
-    val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; clipChildren = false; clipToPadding = false; addView(pinned, LinearLayout.LayoutParams(-1, -2)); addView(FrameLayout(this@listPage).apply { clipChildren = true; setBackgroundColor(Theme.BG); addView(scroll, FrameLayout.LayoutParams(-1, -1)) }, LinearLayout.LayoutParams(-1, 0, 1f)) }   /* sfondo opaco: la lista copre la metà bassa del buddy e la sfumatura va verso il colore pagina, non verso il buddy */
+    val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; clipChildren = false; clipToPadding = false; addView(pinned, LinearLayout.LayoutParams(-1, -2)); addView(SlideHolder(this@listPage).apply { clipChildren = true; setBackgroundColor(Theme.BG); addView(scroll, FrameLayout.LayoutParams(-1, -1)) }, LinearLayout.LayoutParams(-1, 0, 1f)) }   /* sfondo opaco: la lista copre la metà bassa del buddy e la sfumatura va verso il colore pagina, non verso il buddy */
     var rendered = false
     fun render() {
         if (rendered && !Motion.reduced(this@listPage)) { scroll.animate().cancel(); scroll.alpha = .55f; scroll.animate().alpha(1f).setDuration(Motion.FAST).setInterpolator(Theme.EASE_OUT).start() } // il contenuto si riassesta invece di tagliare di netto
@@ -325,5 +325,19 @@ internal fun MainActivity.menuSheet(agent: Agent?) {
             tile("sliders", UiText.text(this@menuSheet, R.string.ui_0c375bfee9), UiText.text(this@menuSheet, R.string.ui_6a107bf8d4), Theme.colorOf("blue")) { then { push(settingsScreen()) } },
             tile("recents", UiText.text(this@menuSheet, R.string.ui_950486e052), UiText.text(this@menuSheet, R.string.ui_b106e64b3f), Theme.colorOf("purple")) { then { openSwitcher() } },
         )), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(4f) })
+    }
+}
+
+/**
+ * Il contenitore della lista sotto la testata del buddy (vedi BuddyScrollFx): si misura più alto di `extra` e sporge di
+ * sotto, così scorrendo può salire sopra la riga del buddy con un semplice spostamento, senza rifare il layout.
+ * (Un margine negativo non basta: LinearLayout lo ignora quando divide lo spazio con i pesi.)
+ */
+internal class SlideHolder(ctx: android.content.Context) : FrameLayout(ctx) {
+    var extra = 0
+        set(v) { if (field != v) { field = v; requestLayout() } }
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val h = MeasureSpec.getSize(heightMeasureSpec)
+        super.onMeasure(widthMeasureSpec, if (extra > 0 && MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.UNSPECIFIED) MeasureSpec.makeMeasureSpec(h + extra, MeasureSpec.EXACTLY) else heightMeasureSpec)
     }
 }

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 63,
-  "versionName": "0.5.56",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.56/r1agents-release-signed.apk",
-  "sha256": "b10567b7039df378ca475145193abfc4935d799ca4ef4e7652ddf2cda4add27d",
+  "versionCode": 64,
+  "versionName": "0.5.57",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.57/r1agents-release-signed.apk",
+  "sha256": "261d8e681c8220ae108841c33a10017e6dda47abeb7b8b5c21c0131dae0ae913",
   "sizeBytes": 11889348,
-  "notes": "0.5.56 (code 63): standby. Se lo schermo si spegne mentre sei in R1 Agents, riaccendendolo vedi l orologio sopra il blocco di Android, che resta sotto: toccando o con la rotella Android chiede il suo sblocco e poi torni dov eri; con un altra app in primo piano non cambia nulla. In carica, dopo un minuto senza tocchi, l orologio resta acceso con la luce bassa e si spegne normalmente staccando il cavo. Due interruttori in Aspetto, accesi.",
+  "notes": "0.5.57 (code 64): scorrimento dei menu fluido sul Rabbit. Impostazioni, sicurezza, strumenti e le altre pagine passano da 25-110 ms a circa 9 ms per fotogramma. Le cause erano tre. La sfumatura ai bordi della lista ora è un gradiente dipinto sopra invece della sfumatura di Android, che usava due buffer fuori schermo a ogni fotogramma. La riga del buddy in testa non cambia più altezza mentre scorri: è la lista che le scivola sopra. Infine non c è più la piccola inclinazione 3D delle schede, che costringeva a ricalcolare il ritaglio degli angoli a ogni fotogramma.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }
