@@ -51,6 +51,30 @@ internal class FunctionalUiQa(private val test: Instrumentation) {
         override fun cancel() { cancelled = true }
     }
     fun run(checkCase: (String, () -> Unit) -> Unit) {
+        checkCase("hermes collegato dopo l'apertura: gli agenti compaiono subito nella home") {
+            val prefs = ctx.getSharedPreferences("settings", 0)
+            val before = prefs.all.toMap()
+            val mock = MockHermes().apply { profiles = listOf("collegato-dopo") }
+            val dead = java.net.ServerSocket(0).let { val p = it.localPort; it.close(); p }
+            db.agents().filter { it.profile.isNotEmpty() }.forEach { db.delete(it.id) }
+            prefs.edit().putString("provider", "dashboard").putString("dash_url", "http://127.0.0.1:$dead").putString("dash_user", "qa").putSecret("dash_pass", "qa").commit()
+            try {
+                activity { a ->
+                    Thread.sleep(1500)   // la home prova a leggere gli agenti e fallisce: Hermes non risponde
+                    check(db.agentByProfile("collegato-dopo") == null)
+                    prefs.edit().putString("dash_url", "http://127.0.0.1:${mock.port}").commit()
+                    // Il collegamento torna (come dopo aver sistemato l'indirizzo): Hermes passa a "pronto".
+                    Io.run { runCatching { HermesRuntime.get(ctx).dash.profiles() } }
+                    await("agente di Hermes nella home dopo il collegamento") {
+                        var shown = false; ui { shown = views(a.window.decorView).filterIsInstance<TextView>().any { it.isShown && it.text.toString() == "collegato-dopo" } }; shown
+                    }
+                }
+            } finally {
+                mock.close()
+                prefs.edit().apply { listOf("provider", "dash_url", "dash_user", "dash_pass").forEach { k -> when (val v = before[k]) { is String -> putString(k, v); null -> remove(k); else -> {} } } }.commit()
+                db.agents().filter { it.profile == "collegato-dopo" }.forEach { db.delete(it.id) }
+            }
+        }
         checkCase("file interrotto: nessuna copia parziale resta salvata") {
             val before = File(ctx.filesDir, "attach").listFiles()?.map { it.name }?.toSet().orEmpty()
             var rejected = false

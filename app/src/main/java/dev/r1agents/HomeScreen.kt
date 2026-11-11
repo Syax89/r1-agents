@@ -475,9 +475,15 @@ internal fun MainActivity.home(): Screen {
     // Una volta sola, anche con un agente solo: il carosello laterale e il tocco prolungato non si scoprono da soli.
     if (agents.isNotEmpty() && !packageName.endsWith(".qa") && prefs.getBoolean("hint_home_seen", false) && !prefs.getBoolean("hint_lane_seen", false)) stage.postDelayed({ if (scope.alive && stack.lastOrNull()?.scope === scope) { prefs.edit().putBoolean("hint_lane_seen", true).apply(); snack(UiText.text(this@home, R.string.ui_570d5b3ff8), long = true) } }, 2600L)
     val now = System.currentTimeMillis()
-    if (hermesMode() && (agents.isEmpty() || now - lastProfileSync > 60_000L)) { lastProfileSync = now; syncProfiles(scope,
-        { err -> if (agents.isEmpty()) { emptyNote = err; rebuild() } },
-        { agents = visibleAgents(); emptyNote = null; rebuild() }) }
+    var syncing = false   // una lettura alla volta (al posto di un intervallo minimo, che scartava il collegamento appena riuscito)
+    fun profileSync() { if (syncing) return; syncing = true; lastProfileSync = System.currentTimeMillis(); syncProfiles(scope,
+        { err -> syncing = false; if (agents.isEmpty()) { emptyNote = err; rebuild() } },
+        { syncing = false; agents = visibleAgents(); emptyNote = null; rebuild() }) }
+    if (hermesMode() && (agents.isEmpty() || now - lastProfileSync > 60_000L)) profileSync()
+    // Appena Hermes risulta collegato (nuovo collegamento, o dopo un errore) si rileggono gli agenti se mancano: prima la
+    // home li cercava solo quando veniva costruita, e collegando Hermes dopo restava vuota fino al riavvio o a un minuto dopo.
+    val stopProfileWatch = if (hermesMode()) dash.watchState { st -> if (st == HermesDash.State.READY) runOnUiThread {
+        if (scope.alive && (agents.isEmpty() || emptyNote != null)) profileSync() } } else null
     var centerLong = false
     return Screen(view, { e ->
         // Dentro una funzione: click della rotella = esegui; tenuto premuto = torna all'agente (come il fling verticale col dito).
@@ -495,5 +501,6 @@ internal fun MainActivity.home(): Screen {
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { if (lanePos != 0) laneAction() else open(); true }
             else -> false
         }
-    }, buddyContext = BuddySceneContext.LIVE, scope = scope, isHome = true, onLeave = { stopHomeState?.invoke(); sleeper.stop(); homeLaneBack = null }, onShow = { laneLayer.alpha = 1f; refreshLive(); sleeper.poke(); agents = visibleAgents(); if (signature() != sig || homeIndex != sel) rebuild() else agents.getOrNull(sel)?.let { focusAvatar()?.show(it) } })
+    }, buddyContext = BuddySceneContext.LIVE, scope = scope, isHome = true, onLeave = { stopHomeState?.invoke(); stopProfileWatch?.invoke(); sleeper.stop(); homeLaneBack = null }, onShow = { laneLayer.alpha = 1f; refreshLive(); sleeper.poke(); agents = visibleAgents()
+        if (hermesMode() && agents.isEmpty()) profileSync(); if (signature() != sig || homeIndex != sel) rebuild() else agents.getOrNull(sel)?.let { focusAvatar()?.show(it) } })
 }

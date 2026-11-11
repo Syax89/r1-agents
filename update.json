@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 64,
-  "versionName": "0.5.57",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.57/r1agents-release-signed.apk",
-  "sha256": "261d8e681c8220ae108841c33a10017e6dda47abeb7b8b5c21c0131dae0ae913",
+  "versionCode": 65,
+  "versionName": "0.5.58",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.58/r1agents-release-signed.apk",
+  "sha256": "4823b91fb35b5ea58f40adb62819b016b6502b023ed824837bb91000f516b1fa",
   "sizeBytes": 11889348,
-  "notes": "0.5.57 (code 64): scorrimento dei menu fluido sul Rabbit. Impostazioni, sicurezza, strumenti e le altre pagine passano da 25-110 ms a circa 9 ms per fotogramma. Le cause erano tre. La sfumatura ai bordi della lista ora è un gradiente dipinto sopra invece della sfumatura di Android, che usava due buffer fuori schermo a ogni fotogramma. La riga del buddy in testa non cambia più altezza mentre scorri: è la lista che le scivola sopra. Infine non c è più la piccola inclinazione 3D delle schede, che costringeva a ricalcolare il ritaglio degli angoli a ogni fotogramma.",
+  "notes": "0.5.58 (code 65): collegando Hermes ad app già aperta, gli agenti compaiono subito. Prima la home li cercava solo quando veniva costruita: se in quel momento Hermes non rispondeva, restava vuota fino al riavvio o almeno per un minuto. Ora li rilegge appena Hermes risulta collegato, e anche tornando alla home se mancano. C è un test sul dispositivo che riproduce il caso.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

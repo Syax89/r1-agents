@@ -333,6 +333,8 @@ class RuntimeInstrumentation : Instrumentation() {
 internal class MockHermes {
     private val server = ServerSocket(0, 16, java.net.InetAddress.getByName("127.0.0.1"))
     val port get() = server.localPort
+    /** Profili che Hermes restituisce (diventano agenti nell'app). */
+    @Volatile var profiles: List<String> = emptyList()
     private class Session(val id: String) { @Volatile var live = false; @Volatile var text = ""; @Volatile var active = false; @Volatile var completed = false; @Volatile var interrupted = false }
     private val sessions = ConcurrentHashMap<String, Session>()
     private val sockets = java.util.concurrent.CopyOnWriteArrayList<Socket>()
@@ -485,7 +487,7 @@ internal class MockHermes {
                         result.put("stored_session_id", id)
                     }
                 }
-                "profiles.list" -> result.put("profiles", JSONArray())
+                "profiles.list" -> result.put("profiles", JSONArray().apply { profiles.forEach { put(JSONObject().put("name", it).put("display_name", it).put("description", "")) } })
                 "session.list" -> result.put("sessions", JSONArray())
                 "session.create" -> {
                     val id = "qa-${synchronized(this) { ++nextId }}"; sessions[id] = Session(id).also { it.live = true }
