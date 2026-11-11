@@ -736,5 +736,20 @@
   "da fare: scegli «assistente digitale»": "to do: pick “digital assistant”",
   "Parla: tieni premuto per iniziare ad ascoltare, tieni premuto di nuovo per inviare. Android non comunica alle app quando il tasto viene rilasciato.": "Talk: press and hold to start listening, press and hold again to send. Android doesn't tell apps when the button is released.",
   "parla a %1$s · tieni premuto il tasto o tocca per inviare": "talk to %1$s · hold the button or tap to send",
-  "Sul Rabbit non c'è un riconoscimento vocale di sistema: scegli Groq Whisper in Aspetto e voce e inserisci la chiave.": "There's no system speech recognition on the Rabbit: choose Groq Whisper in Look and voice and enter the key."
+  "Sul Rabbit non c'è un riconoscimento vocale di sistema: scegli Groq Whisper in Aspetto e voce e inserisci la chiave.": "There's no system speech recognition on the Rabbit: choose Groq Whisper in Look and voice and enter the key.",
+  "Scarica prima il modello offline in Aspetto e voce.": "Download the offline model first in Look and voice.",
+  "altro whisper": "other whisper",
+  "offline": "offline",
+  "indirizzo (es. http://192.168.1.10:8000/v1)": "address (e.g. http://192.168.1.10:8000/v1)",
+  "chiave (facoltativa)": "key (optional)",
+  "Qualunque servizio compatibile con OpenAI: OpenAI, o un Whisper sul tuo PC (per esempio speaches o faster-whisper-server). http solo in rete locale.": "Any OpenAI-compatible service: OpenAI, or a Whisper on your PC (for example speaches or faster-whisper-server). http only on the local network.",
+  "Indirizzo non valido: usa https, oppure http solo in rete locale.": "Invalid address: use https, or http only on the local network.",
+  "Sperimentale: il vocale va a Hermes come allegato e l'agente lo trascrive con il Whisper del PC. Più lento, usa un turno del modello e può chiederti un'approvazione.": "Experimental: the voice message goes to Hermes as an attachment and the agent transcribes it with the PC's Whisper. Slower, uses a model turn and may ask for your approval.",
+  "Hermes non è collegato: scegli il dashboard di Hermes come fornitore.": "Hermes isn't connected: choose the Hermes dashboard as provider.",
+  "Offline: l'audio resta sul Rabbit, niente chiavi né Internet. Più lento e meno preciso di Whisper.": "Offline: audio stays on the Rabbit, no keys or Internet. Slower and less accurate than Whisper.",
+  "scarica il modello (%1$s MB)": "download the model (%1$s MB)",
+  "scaricamento… %1$s": "downloading… %1$s",
+  "modello pronto": "model ready",
+  "elimina il modello": "delete the model",
+  "Scaricamento non riuscito: %1$s": "Download failed: %1$s"
 }

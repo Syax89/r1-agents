@@ -72,6 +72,7 @@ fun normalizeOrigin(raw: String): String {
  * non è un'API documentata: può cambiare con le versioni.
  */
 class HermesDash(private val p: SharedPreferences) {
+    companion object { /** Chiave della sessione usa e getta per trascrivere i vocali (nessuna chat ha id negativo). */ const val TRANSCRIBE_KEY = -7700L }
     private val jar = object : CookieJar {
         private val store = ConcurrentHashMap<String, List<Cookie>>()
         override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
@@ -409,6 +410,29 @@ class HermesDash(private val p: SharedPreferences) {
     fun attachPdf(key: Long, profile: String, bytes: ByteArray, name: String) {
         val sid = session(key, profile)
         rpc("pdf.attach", JSONObject().put("session_id", sid).put("content_base64", android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)).put("filename", name), 180, retry = false)
+    }
+
+    /**
+     * Trascrizione del vocale con Hermes (sperimentale): il file va in una sessione usa e getta come allegato
+     * (`file.attach`), l'agente lo trascrive con il Whisper configurato sul PC e risponde solo con il testo.
+     * La sessione si cancella subito dopo. Hermes non ha un comando che trascriva l'audio del client da solo.
+     */
+    fun transcribe(audio: ByteArray, lang: String): String {
+        val key = TRANSCRIBE_KEY
+        try {
+            connect()
+            val sid = session(key, "")
+            val ref = rpc("file.attach", JSONObject().put("session_id", sid).put("name", "vocale.m4a")
+                .put("data_url", "data:audio/mp4;base64," + android.util.Base64.encodeToString(audio, android.util.Base64.NO_WRAP)), 120, retry = false).optString("ref_text")
+            if (ref.isBlank()) throw RuntimeException("Hermes non ha accettato il vocale")
+            val lingua = if (lang == "en") "inglese" else "italiano"
+            val out = turn(key, "", "$ref\nÈ un messaggio vocale registrato sul Rabbit. Trascrivilo parola per parola in $lingua, " +
+                "per esempio con transcribe_audio di tools/transcription_tools.py di Hermes. Rispondi SOLO con il testo trascritto, senza commenti; se non si sente nulla rispondi con una riga vuota.") {}
+            return out.trim().removeSurrounding("\"").trim()
+        } finally {
+            runCatching { stored(key)?.let { delete(it, "") } }
+            sessions.remove(key); p.edit().remove("dash_sid_$key").apply()
+        }
     }
 
     /** Esegue un comando con la barra (es. `/compress`, `/undo`, `/model nome`) nella sessione della chat e ne ritorna l'output. */

@@ -739,6 +739,21 @@
     <string name="ui_4174759ddc" formatted="false">"Talk: press and hold to start listening, press and hold again to send. Android doesn\'t tell apps when the button is released."</string>
     <string name="ui_c07b09985e">"talk to %1$s · hold the button or tap to send"</string>
     <string name="ui_369029220d" formatted="false">"There\'s no system speech recognition on the Rabbit: choose Groq Whisper in Look and voice and enter the key."</string>
+    <string name="ui_934732cd9d" formatted="false">"Download the offline model first in Look and voice."</string>
+    <string name="ui_976e75efae" formatted="false">"other whisper"</string>
+    <string name="ui_d1ffda5dc9" formatted="false">"offline"</string>
+    <string name="ui_d5c892d1a4" formatted="false">"address (e.g. http://192.168.1.10:8000/v1)"</string>
+    <string name="ui_1f042d08d6" formatted="false">"key (optional)"</string>
+    <string name="ui_6ed73af004" formatted="false">"Any OpenAI-compatible service: OpenAI, or a Whisper on your PC (for example speaches or faster-whisper-server). http only on the local network."</string>
+    <string name="ui_3f95a6ee8b" formatted="false">"Invalid address: use https, or http only on the local network."</string>
+    <string name="ui_8a68ece775" formatted="false">"Experimental: the voice message goes to Hermes as an attachment and the agent transcribes it with the PC\'s Whisper. Slower, uses a model turn and may ask for your approval."</string>
+    <string name="ui_e376d3513b" formatted="false">"Hermes isn\'t connected: choose the Hermes dashboard as provider."</string>
+    <string name="ui_adbebd9ed5" formatted="false">"Offline: audio stays on the Rabbit, no keys or Internet. Slower and less accurate than Whisper."</string>
+    <string name="ui_4b25b806c4">"download the model (%1$s MB)"</string>
+    <string name="ui_ce9d757bc7">"downloading… %1$s"</string>
+    <string name="ui_73dc130ca9" formatted="false">"model ready"</string>
+    <string name="ui_b128736752" formatted="false">"delete the model"</string>
+    <string name="ui_fe76631f65">"Download failed: %1$s"</string>
     <string-array name="weekdays_short"><item>mon</item><item>tue</item><item>wed</item><item>thu</item><item>fri</item><item>sat</item><item>sun</item></string-array>
     <string-array name="translation_language_names"><item>English</item><item>Spanish</item><item>French</item><item>German</item><item>Portuguese</item><item>Japanese</item><item>Chinese</item><item>Russian</item><item>Arabic</item><item>Italian</item></string-array>
 </resources>

@@ -88,7 +88,11 @@ class Voice(private val act: Context, private val onPartial: (String) -> Unit, p
  */
 class GroqStt(private val act: Context, private val key: String, private val model: String, private val lang: String,
               private val onStatus: (String) -> Unit, private val onFinal: (String) -> Unit, private val onEnd: (String?) -> Unit,
-              private val autoStop: Boolean = false) : Mic {
+              private val autoStop: Boolean = false,
+              /** Qualunque servizio con `POST <base>/audio/transcriptions` (Groq, OpenAI, un Whisper sul PC di casa). */
+              private val base: String = GROQ_BASE, private val label: String = "Groq",
+              /** Al posto dell'invio a /audio/transcriptions: chi trascrive il file (es. Hermes). Gira fuori dal thread principale. */
+              private val transcriber: ((java.io.File) -> String)? = null) : Mic {
     private var phaseListener: ((MicPhase) -> Unit)? = null
     override fun onPhase(listener: (MicPhase) -> Unit) { phaseListener = listener }
     private var levelListener: ((Float) -> Unit)? = null
@@ -160,7 +164,7 @@ class GroqStt(private val act: Context, private val key: String, private val mod
         onStatus(UiText.text(act, R.string.ui_ac288cfd8d))
         val token = generation
         Io.run {
-            val res = runCatching { upload(f) }
+            val res = runCatching { transcriber?.invoke(f) ?: upload(f) }
             f.delete()
             android.os.Handler(android.os.Looper.getMainLooper()).post { if (token != generation) return@post; res.fold({ if (it.isBlank()) onEnd(null) else onFinal(it) }, { onEnd(it.message) }) }
         }
@@ -174,15 +178,15 @@ class GroqStt(private val act: Context, private val key: String, private val mod
 
     private fun upload(f: java.io.File): String {
         val body = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
-            .addFormDataPart("model", model.ifBlank { "whisper-large-v3-turbo" }).addFormDataPart("response_format", "json").addFormDataPart("temperature", "0")
+            .addFormDataPart("model", model.ifBlank { if (base == GROQ_BASE) "whisper-large-v3-turbo" else "whisper-1" }).addFormDataPart("response_format", "json").addFormDataPart("temperature", "0")
             .apply { if (lang.isNotBlank()) addFormDataPart("language", lang) }
             .addFormDataPart("file", "audio.m4a", f.asRequestBody("audio/mp4".toMediaType())).build()
-        val req = okhttp3.Request.Builder().url("https://api.groq.com/openai/v1/audio/transcriptions").header("Authorization", "Bearer $key").post(body).build()
+        val req = okhttp3.Request.Builder().url(base.trimEnd('/') + "/audio/transcriptions").apply { if (key.isNotBlank()) header("Authorization", "Bearer $key") }.post(body).build()
         http.newCall(req).execute().use { r ->
             val s = r.body?.string().orEmpty()
             if (!r.isSuccessful) {
                 val msg = runCatching { org.json.JSONObject(s).optJSONObject("error")?.optString("message") }.getOrNull()
-                throw RuntimeException(when (r.code) { 401 -> UiText.text(act, R.string.ui_333bdf5763); 429 -> UiText.text(act, R.string.ui_895511bdf5); else -> "Groq: ${msg ?: "HTTP ${r.code}"}" })
+                throw RuntimeException(when (r.code) { 401 -> UiText.text(act, R.string.ui_333bdf5763); 429 -> UiText.text(act, R.string.ui_895511bdf5); else -> "$label: ${msg ?: "HTTP ${r.code}"}" })
             }
             return org.json.JSONObject(s).optString("text").trim()
         }
@@ -190,8 +194,9 @@ class GroqStt(private val act: Context, private val key: String, private val mod
 
     companion object {
         /** Prova la chiave: elenco dei modelli. Ritorna un messaggio. */
-        fun test(ctx: Context, key: String): String = try {
-            val c = Net.base.newCall(okhttp3.Request.Builder().url("https://api.groq.com/openai/v1/models").header("Authorization", "Bearer $key").build()).execute()
+        const val GROQ_BASE = "https://api.groq.com/openai/v1"
+        fun test(ctx: Context, key: String, base: String = GROQ_BASE): String = try {
+            val c = Net.base.newCall(okhttp3.Request.Builder().url(base.trimEnd('/') + "/models").apply { if (key.isNotBlank()) header("Authorization", "Bearer $key") }.build()).execute()
             c.use { if (it.isSuccessful) UiText.text(ctx, R.string.ui_91864135d3) else if (it.code == 401) UiText.text(ctx, R.string.ui_7613169a51) else UiText.text(ctx, R.string.ui_9457120454, it.code) }
         } catch (e: Exception) { UiText.text(ctx, R.string.ui_bfc309c98a, UiText.message(ctx, e.message)) }
     }
@@ -208,17 +213,35 @@ object Mics {
     /** Vero se il riconoscimento vocale di sistema è il servizio vuoto di questa app (vedi AssistRecognition.kt). */
     fun ownRecognizerOnly(ctx: Context): Boolean {
         val set = android.provider.Settings.Secure.getString(ctx.contentResolver, "voice_recognition_service").orEmpty()
-        val others = ctx.packageManager.queryIntentServices(Intent(android.speech.RecognitionService.SERVICE_INTERFACE), 0).any { it.serviceInfo.packageName != ctx.packageName }
+        val others = ctx.packageManager.queryIntentServices(Intent(android.speech.RecognitionService.SERVICE_INTERFACE), 0).any { it.serviceInfo.name != AssistantRecognitionService::class.java.name }   // anche la copia di prova ha lo stesso servizio vuoto
         return set.startsWith(ctx.packageName + "/") || (set.isEmpty() && !others)
     }
 
     fun create(ctx: Context, prefs: android.content.SharedPreferences, onStatus: (String) -> Unit, onFinal: (String) -> Unit, onEnd: (String?) -> Unit, autoStop: Boolean = false): Mic {
-        val key = prefs.secret("groq_key")
-        if (prefs.getString("stt", "device") == "groq" && key.isBlank()) return UnavailableMic(ctx, R.string.ui_9f8232d0cb, onEnd)
-        // Il riconoscimento "del dispositivo" che rimanda a R1 Agents stesso (assistente digitale, nessun motore vero): serve Groq.
-        if (prefs.getString("stt", "device") != "groq" && ownRecognizerOnly(ctx)) return UnavailableMic(ctx, R.string.ui_369029220d, onEnd)
-        return if (prefs.getString("stt", "device") == "groq")
-            GroqStt(ctx, key, prefs.getString("groq_model", "whisper-large-v3-turbo").orEmpty(), prefs.getString("groq_lang", AppLanguage.selected(ctx)).orEmpty(), onStatus, onFinal, onEnd, autoStop)
-        else Voice(ctx, onStatus, onFinal, onEnd)
+        val stt = prefs.getString("stt", "device")
+        val lang = prefs.getString("groq_lang", AppLanguage.selected(ctx)).orEmpty()
+        return when (stt) {
+            "groq" -> {
+                val key = prefs.secret("groq_key")
+                if (key.isBlank()) UnavailableMic(ctx, R.string.ui_9f8232d0cb, onEnd)
+                else GroqStt(ctx, key, prefs.getString("groq_model", "whisper-large-v3-turbo").orEmpty(), lang, onStatus, onFinal, onEnd, autoStop)
+            }
+            // Qualunque /audio/transcriptions compatibile OpenAI (OpenAI, Whisper sul PC di casa...).
+            "openai" -> {
+                val base = prefs.getString("stt_url", "").orEmpty().trim()
+                if (!safeBase(base)) UnavailableMic(ctx, R.string.ui_3f95a6ee8b, onEnd)
+                else GroqStt(ctx, prefs.secret("stt_key"), prefs.getString("stt_model", "whisper-1").orEmpty(), lang, onStatus, onFinal, onEnd, autoStop, base = base, label = "Whisper")
+            }
+            // Sperimentale: il file va a Hermes, che lo trascrive (vedi HermesDash.transcribe).
+            "hermes" -> {
+                if (prefs.getString("provider", "") != "dashboard") UnavailableMic(ctx, R.string.ui_e376d3513b, onEnd)
+                else { val dash = HermesRuntime.get(ctx).dash
+                    GroqStt(ctx, "", "", lang, onStatus, onFinal, onEnd, autoStop, label = "Hermes", transcriber = { f -> dash.transcribe(f.readBytes(), lang) }) }
+            }
+            "offline" -> OfflineStt(ctx, onStatus, onFinal, onEnd)
+            // Il riconoscimento "del dispositivo" che rimanda a R1 Agents stesso (assistente digitale, nessun motore vero).
+            else -> if (ownRecognizerOnly(ctx)) UnavailableMic(ctx, R.string.ui_369029220d, onEnd) else Voice(ctx, onStatus, onFinal, onEnd)
+        }
     }
+
 }

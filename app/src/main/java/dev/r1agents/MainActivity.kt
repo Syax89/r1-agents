@@ -308,6 +308,15 @@ class MainActivity : Activity() {
                 "card" -> if (ag != null) push(listPage(UiText.text(this@MainActivity, R.string.ui_3b225a819e)) { col -> col.addView(cardView(ag, org.json.JSONObject().put("title", UiText.text(this@MainActivity, R.string.ui_0ea049a68d)).put("body", UiText.text(this@MainActivity, R.string.ui_991379a059)))) }); "edit" -> if (ag != null) push(editor(ag)); "dash" -> push(providerScreen()); "jobs" -> push(hermesJobsScreen()); "skills" -> if (ag != null) push(skillsScreen(ag)); "switch" -> push(listPage("interruttori") { col -> col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "acceso" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, true, Theme.colorOf("green")) {}) }); col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "spento" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, false, Theme.colorOf("green")) {}) }) }); "md" -> push(listPage("md") { col -> col.addView(text(16f, 500).keepCase().apply { text = Md.render("# titolo\n1. uno\n2. due\n> citazione\n[link](https://example.org) e **grassetto**\n\n| nome | valore |\n|---|---|\n| alfa | 1 |\n| beta lungo | 22 |\n\n```\nprint(1)\n```", Theme.withAlpha(Theme.FG, 0.14f)); movementMethod = android.text.method.LinkMovementMethod.getInstance() }) }); "about" -> push(aboutScreen()); "side" -> push(sideButtonScreen()); "menu" -> menuSheet(ag); "switcher" -> { if (recentApps().isEmpty()) loadApps().take(4).forEach { noteLaunched(it.pkg) }; root.post { openSwitcher() } }; "shake" -> onShake()
             }
         }
+        i.getStringExtra("debug_stt_wav")?.let { path -> // prova del riconoscimento offline su un file (solo build debuggabili)
+            i.removeExtra("debug_stt_wav")
+            if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) Io.run {
+                val t0 = android.os.SystemClock.uptimeMillis()
+                val r = runCatching { OfflineModels.transcribeWav(this, java.io.File(path)) }
+                android.util.Log.i("R1Stt", "offline ${android.os.SystemClock.uptimeMillis() - t0}ms: ${r.getOrElse { "ERRORE " + it }}")
+                runOnUiThread { snack(r.getOrElse { it.toString() }, long = true) }
+            }
+        }
         i.getStringExtra("debug_do")?.let { spec -> // prova di una direttiva dell'agente da adb (solo build debuggabili): --es debug_do "apri=Calcolatrice"
             i.removeExtra("debug_do")
             if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) spec.split("=", limit = 2).takeIf { it.size == 2 }?.let { snack(if (runDeviceAction(DeviceActions.Action(it[0], it[1]))) "ok" else "no") }

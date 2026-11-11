@@ -7,6 +7,9 @@ dependencies {
     testImplementation("org.json:json:20231013") // org.json reale nei test locali (quello di Android sul JVM è solo uno stub)
     implementation("com.squareup.okhttp3:okhttp:4.12.0") // WebSocket verso il dashboard di Hermes (Apache-2.0)
     implementation("com.google.zxing:core:3.5.3") // solo per il QR del login (Apache-2.0)
+    // Riconoscimento vocale offline (facoltativo: il modello si scarica dalle impostazioni). Apache-2.0 / LGPL-Apache (JNA).
+    implementation("com.alphacephei:vosk-android:0.3.75") { exclude(group = "net.java.dev.jna") }
+    implementation("net.java.dev.jna:jna:5.18.1@aar")
 }
 android {
     namespace = "dev.r1agents"
@@ -14,9 +17,11 @@ android {
     defaultConfig {
         applicationId = "dev.r1agents"
         minSdk = 29          // Android 10+: copre ogni R1 con Android (rabbitOS e ROM di terzi)
+        // Solo ARM a 64 bit (ogni R1): le librerie native di Vosk per le altre architetture pesavano decine di MB in più.
+        ndk { abiFilters += listOf("arm64-v8a") }
         targetSdk = 34
-        versionCode = 60
-        versionName = "0.5.53"
+        versionCode = 61
+        versionName = "0.5.54"
         testInstrumentationRunner = "dev.r1agents.RuntimeInstrumentation"
         manifestPlaceholders["appLabel"] = "R1 Agents"
     }

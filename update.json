@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 60,
-  "versionName": "0.5.53",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.53/r1agents-release-signed.apk",
-  "sha256": "0b023064e2159fda7bc467411202c1bf3e5637c2d7dccd37c8ef495d3dbb3169",
-  "sizeBytes": 1440183,
-  "notes": "0.5.53 (code 60): il tasto laterale funziona davvero. R1 Agents è ora un assistente digitale completo per Android, quindi la scelta resta anche dopo gli aggiornamenti. Con «parla», tenendo premuto si apre il pannello vocale sopra qualunque app; si invia tenendo premuto di nuovo o toccando il pannello, Indietro annulla. Se sul dispositivo non c è un riconoscimento vocale di sistema, l app chiede di usare Groq Whisper.",
+  "versionCode": 61,
+  "versionName": "0.5.54",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.54/r1agents-release-signed.apk",
+  "sha256": "db1fcbe73f77b59c7adc83d7e98de234133deb986378102278ae15dd928b1f8d",
+  "sizeBytes": 11872964,
+  "notes": "0.5.54 (code 61): riconoscimento vocale a scelta in Aspetto e voce. Oltre a Groq ci sono: altro Whisper, cioè qualunque servizio compatibile OpenAI come OpenAI o un Whisper sul tuo PC (indirizzo, chiave facoltativa, modello); Hermes, sperimentale, che riceve il vocale come allegato e lo trascrive con il Whisper del PC; offline con Vosk, senza Internet né chiavi, scaricando una volta il modello della lingua (circa 50 MB), che viene tolto dalla memoria dopo 2 minuti di inattività. Il messaggio sul riconoscimento di sistema mancante ora compare anche con la copia di prova installata.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

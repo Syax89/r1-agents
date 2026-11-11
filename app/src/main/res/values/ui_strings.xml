@@ -739,6 +739,21 @@
     <string name="ui_4174759ddc" formatted="false">"Parla: tieni premuto per iniziare ad ascoltare, tieni premuto di nuovo per inviare. Android non comunica alle app quando il tasto viene rilasciato."</string>
     <string name="ui_c07b09985e">"parla a %1$s · tieni premuto il tasto o tocca per inviare"</string>
     <string name="ui_369029220d" formatted="false">"Sul Rabbit non c\'è un riconoscimento vocale di sistema: scegli Groq Whisper in Aspetto e voce e inserisci la chiave."</string>
+    <string name="ui_934732cd9d" formatted="false">"Scarica prima il modello offline in Aspetto e voce."</string>
+    <string name="ui_976e75efae" formatted="false">"altro whisper"</string>
+    <string name="ui_d1ffda5dc9" formatted="false">"offline"</string>
+    <string name="ui_d5c892d1a4" formatted="false">"indirizzo (es. http://192.168.1.10:8000/v1)"</string>
+    <string name="ui_1f042d08d6" formatted="false">"chiave (facoltativa)"</string>
+    <string name="ui_6ed73af004" formatted="false">"Qualunque servizio compatibile con OpenAI: OpenAI, o un Whisper sul tuo PC (per esempio speaches o faster-whisper-server). http solo in rete locale."</string>
+    <string name="ui_3f95a6ee8b" formatted="false">"Indirizzo non valido: usa https, oppure http solo in rete locale."</string>
+    <string name="ui_8a68ece775" formatted="false">"Sperimentale: il vocale va a Hermes come allegato e l\'agente lo trascrive con il Whisper del PC. Più lento, usa un turno del modello e può chiederti un\'approvazione."</string>
+    <string name="ui_e376d3513b" formatted="false">"Hermes non è collegato: scegli il dashboard di Hermes come fornitore."</string>
+    <string name="ui_adbebd9ed5" formatted="false">"Offline: l\'audio resta sul Rabbit, niente chiavi né Internet. Più lento e meno preciso di Whisper."</string>
+    <string name="ui_4b25b806c4">"scarica il modello (%1$s MB)"</string>
+    <string name="ui_ce9d757bc7">"scaricamento… %1$s"</string>
+    <string name="ui_73dc130ca9" formatted="false">"modello pronto"</string>
+    <string name="ui_b128736752" formatted="false">"elimina il modello"</string>
+    <string name="ui_fe76631f65">"Scaricamento non riuscito: %1$s"</string>
     <string-array name="weekdays_short"><item>lun</item><item>mar</item><item>mer</item><item>gio</item><item>ven</item><item>sab</item><item>dom</item></string-array>
     <string-array name="translation_language_names"><item>inglese</item><item>spagnolo</item><item>francese</item><item>tedesco</item><item>portoghese</item><item>giapponese</item><item>cinese</item><item>russo</item><item>arabo</item><item>italiano</item></string-array>
 </resources>

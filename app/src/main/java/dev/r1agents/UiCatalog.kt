@@ -746,6 +746,21 @@ internal object UiCatalog {
         UiEntry(R.string.ui_4174759ddc, "Parla: tieni premuto per iniziare ad ascoltare, tieni premuto di nuovo per inviare. Android non comunica alle app quando il tasto viene rilasciato."),
         UiEntry(R.string.ui_c07b09985e, "parla a %1\$s · tieni premuto il tasto o tocca per inviare"),
         UiEntry(R.string.ui_369029220d, "Sul Rabbit non c'è un riconoscimento vocale di sistema: scegli Groq Whisper in Aspetto e voce e inserisci la chiave."),
+        UiEntry(R.string.ui_934732cd9d, "Scarica prima il modello offline in Aspetto e voce."),
+        UiEntry(R.string.ui_976e75efae, "altro whisper"),
+        UiEntry(R.string.ui_d1ffda5dc9, "offline"),
+        UiEntry(R.string.ui_d5c892d1a4, "indirizzo (es. http://192.168.1.10:8000/v1)"),
+        UiEntry(R.string.ui_1f042d08d6, "chiave (facoltativa)"),
+        UiEntry(R.string.ui_6ed73af004, "Qualunque servizio compatibile con OpenAI: OpenAI, o un Whisper sul tuo PC (per esempio speaches o faster-whisper-server). http solo in rete locale."),
+        UiEntry(R.string.ui_3f95a6ee8b, "Indirizzo non valido: usa https, oppure http solo in rete locale."),
+        UiEntry(R.string.ui_8a68ece775, "Sperimentale: il vocale va a Hermes come allegato e l'agente lo trascrive con il Whisper del PC. Più lento, usa un turno del modello e può chiederti un'approvazione."),
+        UiEntry(R.string.ui_e376d3513b, "Hermes non è collegato: scegli il dashboard di Hermes come fornitore."),
+        UiEntry(R.string.ui_adbebd9ed5, "Offline: l'audio resta sul Rabbit, niente chiavi né Internet. Più lento e meno preciso di Whisper."),
+        UiEntry(R.string.ui_4b25b806c4, "scarica il modello (%1\$s MB)"),
+        UiEntry(R.string.ui_ce9d757bc7, "scaricamento… %1\$s"),
+        UiEntry(R.string.ui_73dc130ca9, "modello pronto"),
+        UiEntry(R.string.ui_b128736752, "elimina il modello"),
+        UiEntry(R.string.ui_fe76631f65, "Scaricamento non riuscito: %1\$s"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

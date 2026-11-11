@@ -39,7 +39,9 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
                 setOnClickListener { if (!on) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "idle_after") { prefs.edit().putString("idle_after", id).apply(); stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) } }
             }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dpi(6f) })
         }
-        return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(row) }
+        // La scelta attiva resta visibile anche quando è in fondo alla riga (es. "offline" nel riconoscimento vocale).
+        return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(row)
+            post { options.indexOfFirst { it.first == current }.takeIf { it > 0 }?.let { row.getChildAt(it) }?.let { c -> scrollTo((c.right - width + dpi(16f)).coerceAtLeast(0), 0) } } }
     }
     col.addView(groupTitle(UiText.text(this@lookScreen, R.string.ui_147f3d4b53)))
     col.addView(label(UiText.text(this@lookScreen, R.string.ui_1909c29a8f)))
@@ -114,7 +116,8 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
     col.addView(label(getString(R.string.voice_read_fullscreen)))
     col.addView(chips(listOf("off" to getString(R.string.voice_sound_off), "on" to getString(R.string.voice_sound_on)), if (prefs.getBoolean("voice_tts", true)) "on" else "off", "voice_tts"))
     col.addView(hint(getString(if (SpeechSupport.hasEngine(this@lookScreen)) R.string.voice_read_fullscreen_hint else R.string.voice_engine_help)))
-    col.addView(label(UiText.text(this@lookScreen, R.string.ui_5393e82f8d))); col.addView(chips(listOf("device" to UiText.text(this@lookScreen, R.string.ui_843e6206e1), "groq" to "groq whisper"), prefs.getString("stt", "device")!!, "stt"))
+    col.addView(label(UiText.text(this@lookScreen, R.string.ui_5393e82f8d))); col.addView(chips(listOf("device" to UiText.text(this@lookScreen, R.string.ui_843e6206e1), "groq" to "groq whisper", "openai" to UiText.text(this@lookScreen, R.string.ui_976e75efae), "hermes" to "hermes", "offline" to UiText.text(this@lookScreen, R.string.ui_d1ffda5dc9)), prefs.getString("stt", "device")!!, "stt"))
+    sttExtras(col, prefs.getString("stt", "device")!!)
     if (prefs.getString("stt", "device") == "groq") {
         val key = field(UiText.text(this@lookScreen, R.string.ui_6d3fd91ed0), prefs.secret("groq_key"), secret = true)
         val model = field(UiText.text(this@lookScreen, R.string.ui_6bec3945e2), prefs.getString("groq_model", "whisper-large-v3-turbo").orEmpty())
@@ -698,5 +701,48 @@ internal fun MainActivity.downloadUpdate(manifest: UpdateManifest, status: TextV
             Updater.install(this, apk)
             runOnUiThread { status.setTextColor(Theme.colorOf("green")); status.text = UiText.text(this, R.string.ui_eb668afd93) }
         } catch (e: Exception) { runOnUiThread { updateMessage(status, e) } }
+    }
+}
+
+/** Le opzioni del riconoscimento vocale diverse da Groq: altro Whisper (indirizzo, chiave, modello), Hermes, offline. */
+private fun MainActivity.sttExtras(col: LinearLayout, stt: String) {
+    when (stt) {
+        "openai" -> {
+            val url = field(UiText.text(this, R.string.ui_d5c892d1a4), prefs.getString("stt_url", "").orEmpty())
+            val key = field(UiText.text(this, R.string.ui_1f042d08d6), prefs.secret("stt_key"), secret = true)
+            val model = field(UiText.text(this, R.string.ui_6bec3945e2), prefs.getString("stt_model", "whisper-1").orEmpty())
+            val st = text(13f, 600, Theme.MUTED).keepCase().apply { setPadding(dpi(4f), dpi(6f), 0, 0) }
+            col.addView(url, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+            col.addView(key, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
+            col.addView(model, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
+            col.addView(button(UiText.text(this, R.string.ui_41a6b92e3b), toolAccent) {
+                val base = url.text.toString().trim()
+                if (!safeBase(base)) { st.setTextColor(Theme.BAD); st.text = UiText.text(this, R.string.ui_3f95a6ee8b); return@button }
+                prefs.edit().putString("stt_url", base).putSecret("stt_key", key.text.toString().trim()).putString("stt_model", model.text.toString().trim().ifEmpty { "whisper-1" }).apply()
+                st.setTextColor(Theme.MUTED); st.text = UiText.text(this, R.string.ui_369c3bf02a)
+                Io.run { val r = GroqStt.test(this, key.text.toString().trim(), base); runOnUiThread { st.text = UiText.owned(this, r); st.setTextColor(if (r.startsWith("OK")) Theme.colorOf("green") else Theme.BAD) } }
+            }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+            col.addView(st)
+            col.addView(hint(UiText.text(this, R.string.ui_6ed73af004)))
+        }
+        "hermes" -> col.addView(hint(UiText.text(this, if (prefs.getString("provider", "") == "dashboard") R.string.ui_8a68ece775 else R.string.ui_e376d3513b)))
+        "offline" -> {
+            val lang = OfflineModels.lang(this)
+            val st = text(13f, 600, Theme.MUTED).keepCase().apply { setPadding(dpi(4f), dpi(6f), 0, 0) }
+            if (OfflineModels.ready(this, lang)) {
+                st.setTextColor(Theme.colorOf("green")); st.text = UiText.text(this, R.string.ui_73dc130ca9)
+                col.addView(st)
+                col.addView(button(UiText.text(this, R.string.ui_b128736752), Theme.MUTED, primary = false, small = true) { OfflineModels.delete(this, lang); stack.last().onShow?.invoke() }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(6f) })
+            } else {
+                col.addView(button(UiText.text(this, R.string.ui_4b25b806c4, if (lang == "en") "40" else "50"), toolAccent) {
+                    if (OfflineModels.downloading) return@button
+                    OfflineModels.download(this, lang, { pc -> st.text = UiText.text(this, R.string.ui_ce9d757bc7, "$pc%") }) { err ->
+                        if (err != null) { st.setTextColor(Theme.BAD); st.text = UiText.text(this, R.string.ui_fe76631f65, err) } else stack.lastOrNull()?.onShow?.invoke()
+                    }
+                }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+                col.addView(st)
+            }
+            col.addView(hint(UiText.text(this, R.string.ui_adbebd9ed5)))
+        }
     }
 }
