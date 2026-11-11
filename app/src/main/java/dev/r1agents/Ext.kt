@@ -66,6 +66,10 @@ object Shapes {
     const val CARD = 22f
     const val CONTROL = 14f
     const val FOCUS = 16f
+    /** Pillole: pulsante "tieni premuto e parla", pillola della home, campo della chat. */
+    const val PILL = 26f
+    /** Bordo superiore dei fogli che salgono dal basso. */
+    const val SHEET = 28f
 }
 
 object Motion {

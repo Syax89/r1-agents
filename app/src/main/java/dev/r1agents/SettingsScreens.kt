@@ -417,7 +417,6 @@ internal fun MainActivity.nousLogin(startFlow: Boolean = true): Screen {
     val title = text(24f, 800).apply { text = UiText.text(this@nousLogin, R.string.ui_e05f08f5bb); gravity = Gravity.CENTER }
     val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
     val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
-    col.addView(title, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
     col.addView(body, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
     val scroll = R1ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(col, -1, -2) }
 
@@ -468,7 +467,8 @@ internal fun MainActivity.nousLogin(startFlow: Boolean = true): Screen {
     restart = { start() }
     if (startFlow) start() else show(null, false)
     val fixed = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; addView(avatar, LinearLayout.LayoutParams(dpi(96f), dpi(96f))); addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f)) }
-    return Screen(page(fixed), onLeave = { cancelled = true }, buddyContext = BuddySceneContext.LIVE)
+    // Stessa intestazione di tutte le pagine (titolo e indietro in alto); il buddy grande resta nel contenuto.
+    return Screen(page(framed(title.text.toString(), fixed, buddyHeader = false)), onLeave = { cancelled = true }, buddyContext = BuddySceneContext.LIVE)
 }
 
 // ---- impostazioni: fornitore di servizi -----------------------------------------------------

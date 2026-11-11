@@ -335,7 +335,7 @@ internal fun MainActivity.home(): Screen {
     stage.addView(dots, FrameLayout.LayoutParams(-2, -1, Gravity.END or Gravity.CENTER_VERTICAL))
     // In basso un solo gesto: tieni premuto e parla all'agente a fuoco (o, sul cerchio, creane uno).
     val pill = LinearLayout(this).apply {
-        gravity = Gravity.CENTER; setPadding(dpi(22f), dpi(12f), dpi(22f), dpi(12f)); background = roundRect(Theme.FOCUS, dp(26f)); isClickable = true
+        gravity = Gravity.CENTER; setPadding(dpi(22f), dpi(12f), dpi(22f), dpi(12f)); background = roundRect(Theme.FOCUS, dp(Shapes.PILL)); isClickable = true
         addView(IconView(this@home, "mic", Theme.accent, Theme.ON_ACCENT), LinearLayout.LayoutParams(dpi(22f), dpi(22f)).apply { marginEnd = dpi(8f) })
         addView(pillText)
     }

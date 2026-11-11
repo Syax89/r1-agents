@@ -500,7 +500,7 @@ class MainActivity : Activity() {
         val ov = FrameLayout(this).apply { isClickable = true }
         val scrim = View(this).apply { setBackgroundColor(Theme.BG); alpha = 0f }
         ov.addView(scrim, FrameLayout.LayoutParams(-1, -1))
-        val panel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; background = topRoundRect(Theme.mix(Theme.BG, Theme.CARD, 0.62f), dp(28f)); isClickable = true; alpha = 0f }
+        val panel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; background = topRoundRect(Theme.mix(Theme.BG, Theme.CARD, 0.62f), dp(Shapes.SHEET)); isClickable = true; alpha = 0f }
         val peekView = companion(150f, peek ?: companionAgent ?: visibleAgents().firstOrNull() ?: db.agents().firstOrNull())?.apply {
             alpha = 0f
             val role = stack.lastOrNull()?.buddyContext?.takeIf { it != BuddySceneContext.LIVE } ?: BuddySceneContext.READ

@@ -91,7 +91,7 @@ internal class VoiceConversation(
         stop.apply { text = tr(R.string.voice_stop); isFocusable = true; defaultFocusHighlightEnabled = false; gravity = Gravity.CENTER; visibility = View.GONE; setOnClickListener { stopTurn() } }
         column.addView(stop, LinearLayout.LayoutParams(-1, act.dpi(44f)))
         hold.apply {
-            text = tr(R.string.voice_hold); gravity = Gravity.CENTER; background = roundRect(Theme.FOCUS, act.dp(26f)); isClickable = true
+            text = tr(R.string.voice_hold); gravity = Gravity.CENTER; background = roundRect(Theme.FOCUS, act.dp(Shapes.PILL)); isClickable = true
             contentDescription = tr(R.string.voice_hold); isFocusable = true; defaultFocusHighlightEnabled = false
             setOnKeyListener { _, key, event ->
                 if (key != android.view.KeyEvent.KEYCODE_DPAD_CENTER && key != android.view.KeyEvent.KEYCODE_ENTER) false

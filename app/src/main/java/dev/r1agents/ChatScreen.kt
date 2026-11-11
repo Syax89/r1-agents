@@ -55,7 +55,7 @@ internal fun MainActivity.cardView(agent: Agent, c: org.json.JSONObject): View {
     body.addView(text(20f, 800).keepCase().apply { text = c.optString("title"); letterSpacing = -0.01f })
     body.addView(text(16f, 500).keepCase().apply { setLineSpacing(0f, 1.25f); setPadding(0, dpi(6f), 0, 0); text = Md.render(c.optString("body"), Theme.withAlpha(Theme.FG, 0.14f)) })
     return LinearLayout(this).apply {
-        orientation = LinearLayout.HORIZONTAL; background = roundRect(Theme.CARD, dp(20f))
+        orientation = LinearLayout.HORIZONTAL; background = roundRect(Theme.CARD, dp(Shapes.CARD))
         addView(View(this@cardView).apply { background = roundRect(col, dp(2f)) }, LinearLayout.LayoutParams(dpi(5f), -1).apply { setMargins(dpi(10f), dpi(12f), 0, dpi(12f)) })
         addView(body, LinearLayout.LayoutParams(0, -2, 1f))
     }
@@ -81,7 +81,7 @@ internal fun MainActivity.chat(agent: Agent, chatId: Long, say: String? = null, 
             snack(UiText.text(this@chat, R.string.ui_2eba76fd11)); true
         }
         setPadding(dpi(15f), dpi(12f), dpi(15f), dpi(12f)); setLineSpacing(0f, 1.28f)
-        val r = dp(20f); val s = dp(6f)
+        val r = dp(Shapes.CARD); val s = dp(6f)   // le bolle hanno il raggio delle schede, con l'angolo della coda stretto
         background = android.graphics.drawable.GradientDrawable().apply {
             cornerRadii = if (mine) floatArrayOf(r, r, r, r, s, s, r, r) else floatArrayOf(r, r, r, r, r, r, s, s)
             setColor(if (mine) accent else Theme.CARD)
@@ -328,7 +328,7 @@ internal fun MainActivity.chat(agent: Agent, chatId: Long, say: String? = null, 
     }
     val input = field(UiText.text(this@chat, R.string.ui_3265eeab7c), "").apply { inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_AUTO_CORRECT
         setSingleLine(false); setHorizontallyScrolling(false); maxLines = 4   // cresce fino a quattro righe (impostare inputType dopo riporterebbe a una riga sola)
-        imeOptions = EditorInfo.IME_ACTION_SEND or EditorInfo.IME_FLAG_NO_EXTRACT_UI; background = roundRect(Theme.CARD, dp(26f)); setPadding(dpi(18f), dpi(12f), dpi(18f), dpi(12f)) }
+        imeOptions = EditorInfo.IME_ACTION_SEND or EditorInfo.IME_FLAG_NO_EXTRACT_UI; background = roundRect(Theme.CARD, dp(Shapes.PILL)); setPadding(dpi(18f), dpi(12f), dpi(18f), dpi(12f)) }
     fillInput = { t -> input.setText(t); input.setSelection(t.length); input.requestFocus() }
     input.addTextChangedListener(object : android.text.TextWatcher { override fun afterTextChanged(s: android.text.Editable?) {}; override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
         override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) { if (!busy) headChar.lookAt(0f, 9f, 900); updateAction() } })
