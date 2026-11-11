@@ -61,6 +61,13 @@ class Jelly(color: Int, private val radius: Float) : android.graphics.drawable.D
 }
 
 /** Movimento condiviso: tutte le animazioni usano le stesse curve di r1os (SETTLE: parte veloce e si posa piano; POP: piccolo rimbalzo). */
+/** Raggi comuni (dp): tutte le schede uguali, i controlli più stretti, la pillola del fuoco a metà. */
+object Shapes {
+    const val CARD = 22f
+    const val CONTROL = 14f
+    const val FOCUS = 16f
+}
+
 object Motion {
     // Token di movimento (vedi DESIGN.md): nessuna schermata scrive durate a mano.
     const val PRESS = 90L
@@ -72,6 +79,14 @@ object Motion {
     const val LOOP_SLOW = 1100L
     const val LOOP = 1400L
     const val PULSE = 650L
+    /** Acqua e goccia: apertura ad acqua, immersione per aprire un'app, onda al clic, fisarmonica (ritardo tra una voce e l'altra). */
+    const val FLOW = 820L
+    const val FLOW_SHORT = 560L
+    const val SPLASH = 420L
+    const val UNFOLD = 460L
+    const val UNFOLD_STEP = 42L
+    /** Come un liquido: parte morbida, si allarga a lungo e si posa senza fermarsi di colpo. */
+    val LIQUID: android.view.animation.Interpolator = android.view.animation.PathInterpolator(0.33f, 0f, 0.15f, 1f)
     /** Uscite: partono piano e finiscono svelte (durano meno degli ingressi). */
     val EXIT: android.view.animation.Interpolator = android.view.animation.PathInterpolator(0.4f, 0f, 1f, 1f)
     /** Vero se l'utente ha messo a zero la scala delle animazioni del sistema. */
@@ -170,6 +185,9 @@ object Motion {
     /** L'ultimo elemento toccato: la pagina che si apre parte da li' (vedi MainActivity.tapOrigin). */
     var lastTap: java.lang.ref.WeakReference<View>? = null
     var lastTapAt = 0L
+    /** Dove è stato appoggiato il dito (coordinate dello schermo): l'increspatura delle transizioni parte da lì. */
+    var lastTouchX = 0f
+    var lastTouchY = 0f
     /** Chi guarda gli elementi (il buddy compagno dei menu): avvisato a ogni tocco e a ogni cambio di fuoco della rotella. */
     var onAttention: ((View) -> Unit)? = null
     /** Inclinazione massima verso il dito (gradi): la scheda si "affossa" dove la tocchi. */
@@ -185,7 +203,7 @@ object Motion {
         v.animate().rotationX(0f).rotationY(0f).translationX(0f).scaleX(1f).scaleY(1f).setDuration(SLOW).setInterpolator(Theme.EASE_OUT).start()
     }
     fun touch(v: View, e: android.view.MotionEvent) {
-        if (e.action == android.view.MotionEvent.ACTION_DOWN) { onAttention?.invoke(v); lastTap = java.lang.ref.WeakReference(v); lastTapAt = android.os.SystemClock.uptimeMillis() }
+        if (e.action == android.view.MotionEvent.ACTION_DOWN) { onAttention?.invoke(v); lastTap = java.lang.ref.WeakReference(v); lastTapAt = android.os.SystemClock.uptimeMillis(); lastTouchX = e.rawX; lastTouchY = e.rawY }
         when (e.action) {
             android.view.MotionEvent.ACTION_DOWN -> { press(v, true); tilt(v, e); v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP) }
             android.view.MotionEvent.ACTION_MOVE -> tilt(v, e)
@@ -205,16 +223,19 @@ class GroupRow(ctx: Context) : LinearLayout(ctx) {
     var repaint: () -> Unit = {}
     /** Dove parte il divisore sotto la riga (inizio del testo, dopo l'icona). */
     var dividerInset = 70f
+    /** Freccia "si apre" nel gruppo: sì nelle pagine, no nei fogli (lì sono scelte e azioni). */
+    var chevronOn = true
 }
 
 fun Context.row(label: String, accent: Int, bold: Boolean = false, sub: String? = null, raw: Boolean = false, check: Boolean = false, icon: String? = null, onClick: () -> Unit): LinearLayout {
-    val gap = dpi(8f); val r = dp(20f)
+    val gap = dpi(8f); val r = dp(Shapes.CARD)
     val l = GroupRow(this).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; isFocusable = true; isClickable = true; defaultFocusHighlightEnabled = false
         setPadding(dpi(14f), dpi(11f), dpi(14f), dpi(11f) + gap); minimumHeight = dpi(64f) + gap
         setOnClickListener { v -> (v.parent as? GroupCard)?.splash(v); onClick() }
     }
     val chip = icon?.let { chipOf(it, accent, 44f) }
+    l.dividerInset = if (icon != null) 70f else 14f // il divisore parte dove parte il testo
     chip?.let { l.addView(it, LinearLayout.LayoutParams(dpi(44f), dpi(44f)).apply { marginEnd = dpi(12f) }) }
     val texts = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
     val title = text(if (sub != null) 20f else 21f, if (bold || sub != null) 700 else 500).also { if (raw) it.keepCase() }.apply { text = label; maxLines = if (sub != null) 1 else 2; ellipsize = TextUtils.TruncateAt.END }
@@ -237,7 +258,7 @@ fun Context.row(label: String, accent: Int, bold: Boolean = false, sub: String? 
             l.setPadding(dpi(14f), dpi(11f), dpi(14f), dpi(11f) + gap)   // setBackground sostituisce il padding con quello del drawable (qui solo lo spazio sotto)
             l.minimumHeight = dpi(64f) + gap
         }
-        chevron?.visibility = if (l.grouped) View.VISIBLE else View.GONE
+        chevron?.visibility = if (l.grouped && l.chevronOn) View.VISIBLE else View.GONE
         title.setTextColor(if (on) Theme.ON_ACCENT else Theme.FG)
         subView?.setTextColor(if (on) Theme.withAlpha(Theme.ON_ACCENT, 0.7f) else Theme.MUTED)
         chip?.background = roundRect(if (on) Theme.withAlpha(Theme.ON_ACCENT, 0.16f) else Theme.withAlpha(glyph, 0.14f), dp(15f))
@@ -258,8 +279,8 @@ fun Context.row(label: String, accent: Int, bold: Boolean = false, sub: String? 
 fun chipPop(chip: View) {
     if (Motion.reduced(chip.context)) return
     chip.animate().cancel()
-    chip.animate().scaleX(1.16f).scaleY(1.16f).setDuration(110).setInterpolator(Theme.EASE_OUT).withEndAction {
-        chip.animate().scaleX(1f).scaleY(1f).setDuration(320).setInterpolator(android.view.animation.OvershootInterpolator(3.2f)).start()
+    chip.animate().scaleX(1.16f).scaleY(1.16f).setDuration(Motion.PRESS).setInterpolator(Theme.EASE_OUT).withEndAction {
+        chip.animate().scaleX(1f).scaleY(1f).setDuration(Motion.BASE).setInterpolator(android.view.animation.OvershootInterpolator(3.2f)).start()
     }.start()
 }
 
@@ -573,7 +594,7 @@ private fun android.view.View.cardInput(accent: Int, radius: Float, chip: androi
 
 /** Una riga grande per le impostazioni: icona su un tondo colorato, titolo, riga di aiuto e freccia; a fuoco si riempie a gelatina. */
 fun Context.bigRow(icon: String, title: String, sub: String?, accent: Int, onClick: () -> Unit): LinearLayout {
-    val r = dp(22f)
+    val r = dp(Shapes.CARD)
     val l = GroupRow(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; defaultFocusHighlightEnabled = false; dividerInset = 80f
         setPadding(dpi(14f), dpi(12f), dpi(14f), dpi(12f)); minimumHeight = dpi(78f); background = roundRect(Theme.CARD, r) }
     val chip = chipOf(icon, accent, 52f)
@@ -596,7 +617,7 @@ fun Context.bigRow(icon: String, title: String, sub: String?, accent: Int, onCli
 
 /** Una scheda quadrata grande (menu, strumenti): icona in alto, titolo e riga di aiuto in basso. */
 fun Context.tile(icon: String, title: String, sub: String?, accent: Int, onClick: () -> Unit): LinearLayout {
-    val r = dp(24f)
+    val r = dp(Shapes.CARD)
     val l = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; defaultFocusHighlightEnabled = false
         setPadding(dpi(14f), dpi(14f), dpi(14f), dpi(14f)); minimumHeight = dpi(138f); background = roundRect(Theme.CARD, r) }
     val chip = chipOf(icon, accent, 52f)
@@ -770,7 +791,7 @@ class GroupCard(ctx: Context) : LinearLayout(ctx) {
         if (from == to) return
         headerAnim?.cancel()
         if (Motion.reduced(context)) { h.setTextColor(to); return }
-        headerAnim = android.animation.ValueAnimator.ofArgb(from, to).apply { duration = 260; addUpdateListener { h.setTextColor(it.animatedValue as Int) }; start() }
+        headerAnim = android.animation.ValueAnimator.ofArgb(from, to).apply { duration = Motion.BASE; addUpdateListener { h.setTextColor(it.animatedValue as Int) }; start() }
     }
 
     /** Clic su una voce: la goccia si gonfia e ne parte un'onda, un anello di luce che si allarga e svanisce. */
@@ -779,7 +800,7 @@ class GroupCard(ctx: Context) : LinearLayout(ctx) {
         if (target !== v || alphaK < 0.5f) focusTo(v)
         splashAnim?.cancel()
         splashAnim = android.animation.ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 420; interpolator = android.view.animation.DecelerateInterpolator(1.6f)
+            duration = Motion.SPLASH; interpolator = android.view.animation.DecelerateInterpolator(1.6f)
             addUpdateListener { splashK = it.animatedValue as Float; invalidate() }
             addListener(object : android.animation.AnimatorListenerAdapter() { override fun onAnimationEnd(a: android.animation.Animator) { splashK = -1f; invalidate() } })
             start()
@@ -817,13 +838,13 @@ class GroupCard(ctx: Context) : LinearLayout(ctx) {
             val rowH = (target?.height?.takeIf { it > 0 } ?: h.toInt()).toFloat()
             val stretch = (h / rowH - 1f).coerceIn(0f, 1.2f)
             val side = inset + stretch * context.dp(7f)   // allungata = più sottile, come una goccia
-            val r = minOf(context.dp(16f), (h - 2 * inset) / 2f).coerceAtLeast(0f)
+            val r = minOf(context.dp(Shapes.FOCUS), (h - 2 * inset) / 2f).coerceAtLeast(0f)
             // Bordo luminoso: il contorno della scheda si accende all'altezza della goccia e sfuma verso l'alto e il basso.
             val mid = (top + bot) / 2f; val reach = h * 1.6f
             edge.strokeWidth = context.dp(1.5f)
             edge.shader = android.graphics.LinearGradient(0f, mid - reach, 0f, mid + reach,
                 intArrayOf(android.graphics.Color.TRANSPARENT, Theme.withAlpha(Theme.accent, 0.85f * alphaK), android.graphics.Color.TRANSPARENT), null, android.graphics.Shader.TileMode.CLAMP)
-            val cr = context.dp(20f); val e = edge.strokeWidth / 2f
+            val cr = context.dp(Shapes.CARD); val e = edge.strokeWidth / 2f
             c.drawRoundRect(e, e, width - e, height - e, cr, cr, edge)
             paint.color = Theme.accent
             // Clic: la goccia si gonfia un attimo.
@@ -857,11 +878,11 @@ fun unfold(col: ViewGroup) {
         val card = col.getChildAt(k) as? GroupCard ?: continue
         for (j in 0 until card.childCount) {
             val r = card.getChildAt(j); if (r.visibility != View.VISIBLE) continue
-            val delay = 70L + minOf(i++, 9) * 42L
+            val delay = 70L + minOf(i++, 9) * Motion.UNFOLD_STEP
             r.alpha = 0f; r.rotationX = -72f; r.translationY = -6f * d; r.cameraDistance = 9000f * d
             r.post {
                 r.pivotX = r.width / 2f; r.pivotY = 0f
-                r.animate().rotationX(0f).alpha(1f).translationY(0f).setStartDelay(delay).setDuration(460L).setInterpolator(Theme.SETTLE).start()
+                r.animate().rotationX(0f).alpha(1f).translationY(0f).setStartDelay(delay).setDuration(Motion.UNFOLD).setInterpolator(Theme.SETTLE).start()
             }
         }
     }
@@ -870,7 +891,7 @@ fun unfold(col: ViewGroup) {
 /** Una scheda di gruppo vuota, con fondo, angoli e divisori (che partono da `dividerInset` dp). */
 fun Context.groupCard(dividerInset: Float = 14f): GroupCard = GroupCard(this).apply {
     orientation = LinearLayout.VERTICAL
-    background = roundRect(Theme.CARD, dp(20f)); clipToOutline = true
+    background = roundRect(Theme.CARD, dp(Shapes.CARD)); clipToOutline = true
     showDividers = LinearLayout.SHOW_DIVIDER_MIDDLE
     dividerDrawable = android.graphics.drawable.InsetDrawable(android.graphics.drawable.GradientDrawable().apply { setColor(Theme.withAlpha(Theme.FG, 0.08f)); setSize(1, maxOf(1, dpi(0.6f))) }, dpi(dividerInset), 0, dpi(14f), 0)
 }
@@ -878,7 +899,7 @@ fun Context.groupCard(dividerInset: Float = 14f): GroupCard = GroupCard(this).ap
 /** Segno per le schede di contenuto (sveglie, timer, note…) che `groupRows` può unire in un'unica scheda. */
 const val LIST_ITEM = "list-item"
 
-fun Context.groupRows(col: LinearLayout) {
+fun Context.groupRows(col: LinearLayout, chevrons: Boolean = true) {
     val kids = (0 until col.childCount).map { col.getChildAt(it) }
     var run = ArrayList<View>()
     fun flush() {
@@ -890,7 +911,7 @@ fun Context.groupRows(col: LinearLayout) {
         card.header = (col.getChildAt(first - 1) as? android.widget.TextView)?.takeIf { it.tag == "label" || it.tag == "section" }
         run.forEach { r ->
             col.removeView(r)
-            if (r is GroupRow) r.grouped = true
+            if (r is GroupRow) { r.chevronOn = chevrons; r.grouped = true }
             else {
                 // Voce di lista (sveglia, timer, nota…): perde il fondo proprio e, a fuoco, mostra la stessa pillola delle righe.
                 r.background = null

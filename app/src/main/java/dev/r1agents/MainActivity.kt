@@ -439,7 +439,10 @@ class MainActivity : Activity() {
             if (under != null && source != null && buddy != null && source.width > 0) {
                 modalFlight(under, ov, source, buddy, 0f) { }.animateTo(1f)
             }
-            Motion.enter(ov, dy = dp(36f), dur = Motion.SLOW)
+            // Aperta con un tocco reale: affiora nell'acqua dal punto del dito, come le pagine. Altrimenti sale come sempre.
+            val touch = touchOrigin()
+            if (touch != null) ContainerReveal.open(ov, touch, root.width.toFloat(), root.height.toFloat())
+            else Motion.enter(ov, dy = dp(36f), dur = Motion.SLOW)
         }
     }
 
@@ -596,7 +599,12 @@ class MainActivity : Activity() {
                 addTextChangedListener(object : android.text.TextWatcher {
                     override fun afterTextChanged(e: android.text.Editable?) {
                         val q = e?.toString()?.trim()?.lowercase().orEmpty()
-                        for (i in 0 until col.childCount) col.getChildAt(i).let { v -> val t = v.tag as? String; if (t != null) v.visibility = if (q.isEmpty() || (!t.startsWith("§") && t.contains(q))) View.VISIBLE else View.GONE }
+                        // Le voci possono stare dentro una scheda di gruppo: si filtrano lì e la scheda sparisce se resta vuota.
+                        fun match(v: View) { val t = v.tag as? String; if (t != null) v.visibility = if (q.isEmpty() || (!t.startsWith("§") && t.contains(q))) View.VISIBLE else View.GONE }
+                        for (i in 0 until col.childCount) col.getChildAt(i).let { v ->
+                            if (v is GroupCard) { for (j in 0 until v.childCount) match(v.getChildAt(j)); v.visibility = if ((0 until v.childCount).any { v.getChildAt(it).visibility == View.VISIBLE }) View.VISIBLE else View.GONE }
+                            else match(v)
+                        }
                     }
                     override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
                     override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
@@ -619,6 +627,7 @@ class MainActivity : Activity() {
         ov.addView(panel, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
         peekView?.let { ov.addView(it, FrameLayout.LayoutParams(dpi(150f), dpi(150f), Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL)) }
         build(col, { close() }, { then -> close(then) })
+        groupRows(col, chevrons = false) // anche nei fogli le voci vicine stanno in una scheda sola, con la pillola liquida
         root.addView(ov, ViewGroup.LayoutParams(-1, -1)); overlays[id] = ov; overlayBack[id] = { close() }; sheetClosers[id] = { close() }
         pinGate?.bringToFront()
         overlayRotations[id] = {
@@ -1151,7 +1160,7 @@ class MainActivity : Activity() {
         return first(view)
     }
 
-    internal fun prepareBuddyFlight(chat: Screen, home: Screen, initial: Float): BuddyFlight? {
+    internal fun prepareBuddyFlight(chat: Screen, home: Screen, initial: Float, fadePages: Boolean = true): BuddyFlight? {
         if (flightChat === chat && flightHome === home) return buddyFlight
         cancelBuddyFlight()
         modalBuddyFlight?.takeIf { it.isActive && carriedBuddy == null }?.let { cancelModalBuddyFlight(restoreSource = false) }   // un solo clone in volo
@@ -1168,7 +1177,7 @@ class MainActivity : Activity() {
         val source = carriedBuddy ?: sceneAvatar(home.view, origin.agent.id) ?: return null
         val target = sceneAvatar(chat.view, origin.agent.id) ?: return null
         characters(home.view) { it.setActive(false) }
-        val flight = BuddyFlight(root, home.view, chat.view, source, target, initial,
+        val flight = BuddyFlight(root, home.view, chat.view, source, target, initial, fadePages = fadePages,
             resolveHome = { sceneAvatar(home.view, origin.agent.id) }, resolveChat = { sceneAvatar(chat.view, origin.agent.id) }) { completed, destination ->
             if (buddyFlight === completed) {
                 completed.dispose(); buddyFlight = null; flightChat = null; flightHome = null
@@ -1186,11 +1195,22 @@ class MainActivity : Activity() {
 
     /** Il rettangolo (nel root) dell'elemento appena toccato, se appartiene alla schermata in cima e il tocco e' recente: la nuova pagina nasce da li'. */
     internal fun tapOrigin(): android.graphics.RectF? {
-        val v = Motion.lastTap?.get() ?: return null
         val top = stack.lastOrNull()?.view ?: return null
-        if (android.os.SystemClock.uptimeMillis() - Motion.lastTapAt > 900 || !v.isAttachedToWindow || v.width == 0 || !isDescendant(top, v)) return null
+        // Solo un tocco reale e recente sullo schermo: con la rotella le pagine si aprono come sempre.
+        val v = Motion.lastTap?.get()?.takeIf { android.os.SystemClock.uptimeMillis() - Motion.lastTapAt <= 900 } ?: return null
+        if (!v.isAttachedToWindow || v.width == 0 || !isDescendant(top, v)) return null
         val l = IntArray(2); v.getLocationInWindow(l); val r = IntArray(2); root.getLocationInWindow(r)
         return android.graphics.RectF((l[0] - r[0]).toFloat(), (l[1] - r[1]).toFloat(), (l[0] - r[0] + v.width).toFloat(), (l[1] - r[1] + v.height).toFloat())
+    }
+
+    /** Il punto del tocco reale appena fatto (nel root), come piccolo rettangolo: da lì parte l'acqua. Null con la rotella o se il tocco è vecchio. */
+    internal fun touchOrigin(): android.graphics.RectF? {
+        if (Motion.reduced(this) || android.os.SystemClock.uptimeMillis() - Motion.lastTapAt > 900) return null
+        val r = IntArray(2); root.getLocationOnScreen(r)
+        val x = Motion.lastTouchX - r[0]; val y = Motion.lastTouchY - r[1]
+        if (x < 0 || y < 0 || x > root.width || y > root.height) return null
+        val h = dp(24f)
+        return android.graphics.RectF(x - h, y - h, x + h, y + h)
     }
 
     /** Scala (uniforme: il testo non si deforma) con cui una pagina intera si riduce per coincidere con l'elemento da cui nasce. */
@@ -1211,17 +1231,28 @@ class MainActivity : Activity() {
         val sourceBuddy = carriedBuddy ?: prev?.let { sceneAvatar(it.view, selected?.id) }
         val flying = prev != null && sourceBuddy != null && sceneAvatar(s.view, selected?.id) != null && selected != null
         val fadeIn = fade || flying
+        // Dalla voce toccata (o a fuoco con la rotella): va letta PRIMA di mettere in cima la pagina nuova, che non la contiene.
+        // Anche da un foglio o da una finestra sopra la pagina: in mancanza della voce, il punto del dito.
+        val origin = if (prev != null && !fade && !Motion.reduced(this)) tapOrigin() ?: touchOrigin() else null
         stack.add(s); root.addView(s.view, ViewGroup.LayoutParams(-1, -1)); pinGate?.bringToFront(); runtimeVisibility()
         if (chatLocked(s.chatKey)) { pinUnlocked = false; root.post { if (stack.lastOrNull() === s) showPinGate(false) } }   // chat bloccata: chiede il PIN
         if (prev == null) return
         if (flying) {
             s.heroOrigin = hero ?: Hero(0f, 0f, sourceBuddy!!.width, selected!!); hero = null
-            s.view.alpha = 0f
+            // Con una voce d'origine: il buddy vola come sempre, ma la pagina non sfuma, nasce dalla voce (trasformazione del contenitore).
+            if (origin != null) s.origin = origin
+            s.view.alpha = if (origin != null) 1f else 0f
             val entry = object : android.view.ViewTreeObserver.OnPreDrawListener {
                 override fun onPreDraw(): Boolean {
                     s.view.viewTreeObserver.removeOnPreDrawListener(this); s.pendingEntry = null
-                    if (stack.lastOrNull() === s) prepareBuddyFlight(s, prev, 0f)?.animateTo(1f)
-                        ?: run { s.view.alpha = 1f; detach(prev.view); clearCarriedBuddy() }
+                    val flight = if (stack.lastOrNull() === s) prepareBuddyFlight(s, prev, 0f, fadePages = origin == null) else null
+                    if (flight != null) {
+                        if (origin != null) {
+                            ContainerReveal.open(s.view, origin, root.width.toFloat(), root.height.toFloat())
+                            prev.view.animate().alpha(dimmed).scaleX(0.96f).scaleY(0.96f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start()
+                        }
+                        flight.animateTo(1f)
+                    } else { s.view.alpha = 1f; detach(prev.view); clearCarriedBuddy() }
                     return true
                 }
             }
@@ -1245,14 +1276,12 @@ class MainActivity : Activity() {
             })
             return
         }
-        val origin = tapOrigin()
         if (origin != null) {
             // La pagina nasce dall'elemento toccato (riga, scheda, pulsante): parte piccola dov'era e si espande; quella sotto si allontana appena.
+            // Trasformazione del contenitore: la voce si allarga e diventa la pagina (ritaglio con la sua forma, velo dell'accento che svanisce).
             s.origin = origin
-            val k = originScale(origin); val h = root.height.toFloat().coerceAtLeast(dp(400f))
-            s.view.scaleX = k; s.view.scaleY = k; s.view.translationX = origin.centerX() - w / 2f; s.view.translationY = origin.centerY() - h / 2f; s.view.alpha = 0f
-            s.view.animate().scaleX(1f).scaleY(1f).translationX(0f).translationY(0f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start()
-            android.animation.ObjectAnimator.ofFloat(s.view, View.ALPHA, 0f, 1f).setDuration(Motion.BASE).start()
+            if (Motion.reduced(this)) { s.view.alpha = 0f; s.view.animate().alpha(1f).setDuration(Motion.BASE).start() }
+            else ContainerReveal.open(s.view, origin, root.width.toFloat(), root.height.toFloat())
             prev.view.animate().scaleX(0.94f).scaleY(0.94f).alpha(dimmed).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).withEndAction { if (stack.lastOrNull() !== prev) detach(prev.view) }.start()
             return
         }
@@ -1280,11 +1309,20 @@ class MainActivity : Activity() {
         }
         if (s.heroOrigin != null) {
             if (buddyFlight == null) showScreen(back)
-            val flight = prepareBuddyFlight(s, back, 1f)
-            if (flight != null) { runtimeVisibility(); flight.animateTo(0f); return }
+            val into: android.graphics.RectF? = null // l'acqua solo all'apertura: chiudendo il volo del buddy come sempre
+            val flight = prepareBuddyFlight(s, back, 1f, fadePages = into == null)
+            if (flight != null) {
+                if (into != null) {
+                    // Il buddy torna in volo e la pagina si richiude nella voce da cui era nata; quella sotto si riaccende.
+                    back.view.animate().cancel()
+                    back.view.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start()
+                    ContainerReveal.close(s.view, into, root.width.toFloat(), root.height.toFloat()) {}
+                }
+                runtimeVisibility(); flight.animateTo(0f); return
+            }
         }
         val w = pageWidth()
-        val origin = if (fromDrag) null else s.origin
+        val origin: android.graphics.RectF? = null // l'acqua solo all'apertura: chiudendo la pagina scorre via come sempre
         if (!fromDrag || back.view.parent == null) {
             detach(back.view)
             if (origin != null) { back.view.scaleX = 0.94f; back.view.scaleY = 0.94f; back.view.alpha = dimmed } else { back.view.translationX = -w * parallax; back.view.alpha = dimmed }
@@ -1295,9 +1333,9 @@ class MainActivity : Activity() {
         s.view.animate().cancel()
         if (origin != null) {
             // Torna nell'elemento da cui era nata: si rimpicciolisce verso di esso e sfuma.
-            val k = originScale(origin); val h = root.height.toFloat().coerceAtLeast(dp(400f))
-            s.view.animate().scaleX(k).scaleY(k).alpha(0f).translationX(origin.centerX() - w / 2f).translationY(origin.centerY() - h / 2f).setDuration(Motion.BASE).setInterpolator(Motion.EXIT)
-                .withEndAction { root.removeView(s.view); s.view.scaleX = 1f; s.view.scaleY = 1f; s.view.translationX = 0f; s.view.translationY = 0f; s.view.alpha = 1f }.start()
+            // Si richiude dentro la voce da cui era nata, che riprende il colore della goccia mentre si stringe.
+            if (Motion.reduced(this)) s.view.animate().alpha(0f).setDuration(Motion.BASE).withEndAction { root.removeView(s.view); s.view.alpha = 1f }.start()
+            else ContainerReveal.close(s.view, origin, root.width.toFloat(), root.height.toFloat()) { root.removeView(s.view) }
         } else {
             s.view.animate().translationX(w).setDuration(Motion.BASE).setInterpolator(Motion.EXIT).withEndAction { root.removeView(s.view); s.view.translationX = 0f }.start()
         }
@@ -1504,7 +1542,7 @@ class MainActivity : Activity() {
 
     override fun onStart() { super.onStart(); watchPackages(true) }
     override fun onStop() { watchPackages(false); super.onStop() }
-    override fun onResume() { super.onResume(); startShake(); visible = true; root.removeCallbacks(buddyReaper); root.postDelayed(buddyReaper, 1200L); dev.r1os.host.ui.Spring.reduced = Motion.reduced(this); runtimeVisibility()
+    override fun onResume() { super.onResume(); LiquidLaunch.clear(root); startShake(); visible = true; root.removeCallbacks(buddyReaper); root.postDelayed(buddyReaper, 1200L); dev.r1os.host.ui.Spring.reduced = Motion.reduced(this); runtimeVisibility()
         hermesRuntime.requestListener = { request -> runOnUiThread { if (visible) showRequest(request) } }
         hermesRuntime.requestCancelListener = { id -> runOnUiThread { closeOverlay("req-$id") } }
         hermesRuntime.requests.values.forEach { showRequest(it) }
@@ -2004,8 +2042,18 @@ class MainActivity : Activity() {
 
     internal fun launchApp(a: AppEntry) {
         noteLaunched(a.pkg)
-        try { startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setClassName(a.pkg, a.cls).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)) }
-        catch (e: Exception) { snack(UiText.text(this@MainActivity, R.string.ui_f2c6915e4c)) }
+        // La goccia della voce si gonfia fino a riempire lo schermo e l'app compare da lì, in dissolvenza.
+        val from = tapOrigin()
+        LiquidLaunch.start(root, from) {
+            try {
+                // Android 17 decide da solo come entra un'app esterna (scorrendo da destra) e ignora le animazioni personalizzate
+                // e la rivelazione a ritaglio. Senza animazione di sistema l'app compare quando il fluido ha già coperto lo schermo:
+                // l'unico movimento che si vede è il nostro.
+                // Il ritorno dall'app resta quello di sistema: su Android 17 l'uscita di un'altra app non si può sfumare né cambiare.
+                val flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or (if (from != null && !Motion.reduced(this)) Intent.FLAG_ACTIVITY_NO_ANIMATION else 0)
+                startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setClassName(a.pkg, a.cls).addFlags(flags)); true
+            } catch (e: Exception) { snack(UiText.text(this@MainActivity, R.string.ui_f2c6915e4c)); false }
+        }
     }
     /** Dopo il tasto home (quando siamo la schermata iniziale): chiude fogli e pagine e torna alla prima schermata, una alla volta. */
     @JvmName("goHome") internal fun goHome() {

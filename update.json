@@ -1,10 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 49,
-  "versionName": "0.5.42",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.42/r1agents-release-signed.apk",
-  "sha256": "bbd08d74c860e3cc278c953c0a0f79d9f9d56f9d89330276835757c19719de10",
-  "sizeBytes": 1378631,
-  "notes": "0.5.42 (code 49): al clic la goccia si gonfia e ne parte un onda di luce; il bordo della scheda si illumina all altezza della goccia e la segue; il titolo della sezione si accende quando la goccia entra nella sua scheda; scorrendo veloce le schede si inclinano appena in 3D e tornano dritte con un rimbalzo; col dito la goccia compare solo se la voce resta premuta, non durante gli scorrimenti."
+  "versionCode": 50,
+  "versionName": "0.5.43",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.43/r1agents-release-signed.apk",
+  "sha256": "c0b829c1b57372aa5a0025f152be5cfe1297d930dce4a8991bea0102704d7453",
+  "sizeBytes": 1390919,
+  "notes": "0.5.43 (code 50): transizioni ad acqua, delicate: toccando una voce sullo schermo, dal punto del dito parte un onda leggera e trasparente che increspa appena lo schermo (shader su Android 13 e successivi), senza colore, e il sotto menu affiora dentro l onda: vale per tutte le pagine, per quelle aperte da un foglio e per le finestre sopra la pagina (come il PIN). Le app toccate si aprono allo stesso modo, senza lo scorrimento laterale. Solo per i tocchi reali: con la rotella e chiudendo le transizioni restano quelle di sempre. Aggiornamenti: l indirizzo non compare più (è fisso nell app), il controllo parte da solo aprendo la pagina e una scheda dice se sei aggiornato, quale versione è disponibile con le sue note, o perché non si può installare (per esempio una firma diversa, segnalata prima di scaricare). Design uniforme: un solo raggio per tutte le schede e durate e curve comuni anche per goccia e acqua; anche i fogli hanno le voci raggruppate con la pillola liquida (senza frecce), la ricerca filtra dentro i gruppi; la scheda aggiornamenti e il traduttore cambiano in dissolvenza. Corretto: nella home l etichetta «lavora» poteva sparire dopo una ricostruzione.",
+  "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

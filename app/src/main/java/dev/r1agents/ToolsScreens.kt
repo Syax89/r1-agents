@@ -34,7 +34,7 @@ internal fun MainActivity.translator(): Screen {
     fun target() = UiText.translationLanguage(this@translator, prefs.getString("tr_lang", "en").orEmpty())
     fun run(t: String) {
         if (running || t.isBlank()) return
-        running = true; status.setTextColor(Theme.MUTED); status.text = UiText.text(this@translator, R.string.ui_2a5a02c2b8); result.visibility = View.VISIBLE; result.text = ""; trResult = ""; cue(null, -14f, 10f, force = true)
+        running = true; status.setTextColor(Theme.MUTED); status.text = UiText.text(this@translator, R.string.ui_2a5a02c2b8); result.text = ""; Motion.show(result); trResult = ""; cue(null, -14f, 10f, force = true)
         val turnEngine = localEngine(); translationEngine = turnEngine
         val language = target()
         Io.run {
@@ -44,7 +44,7 @@ internal fun MainActivity.translator(): Screen {
                 val chat = db.newChat(-1)
                 try { turnEngine.turn(ag, chat, t) { d -> sb.append(d); runOnUiThread { if (translationScope.alive) { result.text = sb.toString(); cue(null, -18f + 36f * ((sb.length % 40) / 40f), 12f) } } } } finally { db.deleteChat(chat); localTurns.remove(turnEngine) }
                 runOnUiThread { if (translationScope.alive) { trResult = sb.toString().trim(); status.text = ""; cue("nod", force = true) } }
-            } catch (e: Exception) { runOnUiThread { if (!translationScope.alive) return@runOnUiThread; cue("surprised", force = true); status.setTextColor(Theme.BAD); status.text = errorText(e); if (sb.isEmpty()) result.visibility = View.GONE } }
+            } catch (e: Exception) { runOnUiThread { if (!translationScope.alive) return@runOnUiThread; cue("surprised", force = true); status.setTextColor(Theme.BAD); status.text = errorText(e); if (sb.isEmpty()) Motion.hide(result) } }
             runOnUiThread { running = false }
         }
     }

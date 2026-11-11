@@ -15,7 +15,9 @@ import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 /** Descrizione di una versione, come la scrive tools/publish-update.py. */
-data class UpdateManifest(val versionCode: Long, val versionName: String, val apkUrl: String, val sha256: String, val sizeBytes: Long, val notes: String)
+data class UpdateManifest(val versionCode: Long, val versionName: String, val apkUrl: String, val sha256: String, val sizeBytes: Long, val notes: String,
+                          /** Impronta SHA-256 del certificato che firma l'APK (vuota nei manifest vecchi): si confronta prima di scaricare. */
+                          val signerSha256: String = "")
 
 /** Un errore da mostrare all'utente: `resource` e' un testo del catalogo (it/en), `arg` il suo eventuale segnaposto. */
 class UpdateError(val resource: Int, val arg: String? = null) : Exception(arg)
@@ -28,6 +30,8 @@ class UpdateError(val resource: Int, val arg: String? = null) : Exception(arg)
 object Updater {
     const val MAX_MANIFEST_BYTES = 64 * 1024
     const val MAX_APK_BYTES = 200L * 1024 * 1024
+    /** Da dove arrivano gli aggiornamenti: fisso nell'app, non si mostra né si modifica (solo le build di prova possono cambiarlo). */
+    const val DEFAULT_URL = "https://raw.githubusercontent.com/Syax89/r1-agents/main/update.json"
     private val hex64 = Regex("^[0-9a-fA-F]{64}$")
 
     /** True se l'indirizzo e' un URL https senza credenziali ne' frammento. */
@@ -44,7 +48,8 @@ object Updater {
         val code = o.optLong("versionCode", 0); val size = o.optLong("sizeBytes", 0)
         val sha = o.optString("sha256"); val url = o.optString("apkUrl"); val notes = o.optString("notes")
         if (code <= 0 || size <= 0 || size > MAX_APK_BYTES || !hex64.matches(sha) || !(httpsUrl(url) || (allowLoopbackHttp && url.trim().startsWith("http://127.0.0.1"))) || notes.length > 12000) throw UpdateError(R.string.ui_f0e07e26a5)
-        return UpdateManifest(code, o.optString("versionName").take(40), url.trim(), sha.lowercase(), size, notes)
+        val signer = o.optString("signerSha256").lowercase().takeIf { hex64.matches(it) }.orEmpty()
+        return UpdateManifest(code, o.optString("versionName").take(40), url.trim(), sha.lowercase(), size, notes, signer)
     }
 
     fun isNewer(manifest: UpdateManifest, installedCode: Long) = manifest.versionCode > installedCode
@@ -111,6 +116,16 @@ object Updater {
 
     private fun signers(info: android.content.pm.PackageInfo): Set<String> =
         (info.signingInfo?.apkContentsSigners ?: emptyArray()).map { toHex(MessageDigest.getInstance("SHA-256").digest(it.toByteArray())) }.toSet()
+
+    /**
+     * L'aggiornamento potrà installarsi sopra questa app? Null se il manifest non dice chi lo firma (si scopre solo dopo il download).
+     * Serve a spiegare subito il caso "firma diversa" invece di scaricare l'APK per poi rifiutarlo.
+     */
+    fun signerMatches(ctx: Context, manifest: UpdateManifest): Boolean? {
+        if (manifest.signerSha256.isEmpty()) return null
+        val installed = ctx.packageManager.getPackageInfo(ctx.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        return manifest.signerSha256 in signers(installed)
+    }
 
     fun canInstall(ctx: Context) = ctx.packageManager.canRequestPackageInstalls()
 

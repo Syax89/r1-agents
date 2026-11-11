@@ -418,6 +418,8 @@ internal fun MainActivity.home(): Screen {
     stage.post { layout(pos.value); stage.post { layout(pos.value) } }
     // Hermes dal vivo: chi sta lavorando o ti aspetta lo dice sotto il nome e assume la posa giusta.
     val liveStates = HashMap<Long, String>()
+    // La riga dello stato dal vivo entra morbida o cambia in dissolvenza, invece di comparire a scatti.
+    fun liveLine(v: TextView, text: String) { if (v.visibility != View.VISIBLE) { v.text = text; Motion.show(v) } else Motion.crossfade(v, text) }
     fun refreshLive() {
         if (!hermesMode() || !scope.alive) return
         Io.run {
@@ -429,12 +431,15 @@ internal fun MainActivity.home(): Screen {
                 slides.forEach { (i, sl) ->
                     val a = agents.getOrNull(i) ?: return@forEach
                     val now = states[a.id]; val was = liveStates[a.id]
-                    if (now == was) return@forEach
                     val roleV = sl.v.getChildAt(1) as? TextView
+                    // Si confronta anche con quello che la scheda mostra: dopo una ricostruzione della home le schede sono nuove e,
+                    // con lo stato invariato, "lavora" non tornava più (lo segnalava anche il test della home).
+                    val wanted = when (now) { "working" -> UiText.text(this@home, R.string.ui_9449f5bbc8); "waiting" -> UiText.text(this@home, R.string.ui_70ac6d7132); else -> "" }
+                    if (now == was && roleV?.text?.toString().orEmpty() == wanted) return@forEach
                     when (now) {
-                        "working" -> { roleV?.text = UiText.text(this@home, R.string.ui_9449f5bbc8); roleV?.visibility = View.VISIBLE; sl.avatar?.setScenePose("working", "search") }
-                        "waiting" -> { roleV?.text = UiText.text(this@home, R.string.ui_70ac6d7132); roleV?.visibility = View.VISIBLE; sl.avatar?.setScenePose("waiting"); if (!Motion.reduced(this@home)) sl.avatar?.react("surprised") }
-                        else -> { roleV?.text = ""; roleV?.visibility = View.GONE; sl.avatar?.setScenePose("idle") }
+                        "working" -> { roleV?.let { liveLine(it, wanted) }; sl.avatar?.setScenePose("working", "search") }
+                        "waiting" -> { roleV?.let { liveLine(it, wanted) }; sl.avatar?.setScenePose("waiting"); if (!Motion.reduced(this@home)) sl.avatar?.react("surprised") }
+                        else -> { roleV?.let { r -> Motion.hide(r) { r.text = "" } }; sl.avatar?.setScenePose("idle") }
                     }
                 }
                 liveStates.clear(); liveStates.putAll(states)

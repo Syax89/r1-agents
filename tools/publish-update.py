@@ -55,7 +55,9 @@ digest = hashlib.sha256()
 with args.apk.open('rb') as stream:
     for block in iter(lambda: stream.read(1024 * 1024), b''):
         digest.update(block)
-manifest = {'schema': 1, 'packageName': package[1], 'versionCode': int(package[2]), 'versionName': package[3], 'apkUrl': args.url, 'sha256': digest.hexdigest(), 'sizeBytes': args.apk.stat().st_size, 'notes': notes}
+signer = re.findall(r'certificate SHA-256 digest: ([0-9a-f]{64})', certs)
+manifest = {'schema': 1, 'packageName': package[1], 'versionCode': int(package[2]), 'versionName': package[3], 'apkUrl': args.url, 'sha256': digest.hexdigest(), 'sizeBytes': args.apk.stat().st_size, 'notes': notes,
+            'signerSha256': signer[0] if len(signer) == 1 else ''}
 args.output.parent.mkdir(parents=True, exist_ok=True)
 args.output.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 print(args.output.resolve())

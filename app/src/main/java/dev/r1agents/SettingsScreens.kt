@@ -623,13 +623,27 @@ internal fun MainActivity.aboutScreen(): Screen = listPage(UiText.text(this@abou
         addView(text(14f, 600, Theme.MUTED).apply { text = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty(); gravity = Gravity.CENTER })
     })
     col.addView(intro(UiText.text(this@aboutScreen, R.string.ui_391553b02f)))
-    // Aggiornamenti: solo su richiesta, da un indirizzo https scelto dall'utente (il file update.json prodotto da tools/publish-update.py).
+    // Aggiornamenti: l'indirizzo è fisso nell'app (non si mostra). Aprendo la pagina il controllo parte da solo e la scheda dice
+    // in parole semplici com'è la situazione: aggiornata, nuova versione con le note e un solo pulsante, oppure perché non si può.
     col.addView(label(UiText.text(this@aboutScreen, R.string.ui_f43d53399f)))
-    val address = field(UiText.text(this@aboutScreen, R.string.ui_e438a6ee2f), prefs.getString("update_url", "").orEmpty().ifBlank { "https://raw.githubusercontent.com/Syax89/r1-agents/main/update.json" }).apply { setSingleLine(true); inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI }
-    val status = text(14f, 600, Theme.MUTED).keepCase().apply { setPadding(dpi(4f), dpi(8f), dpi(4f), 0) }
-    col.addView(address)
-    col.addView(button(UiText.text(this@aboutScreen, R.string.ui_56169e629e), toolAccent) { checkUpdates(address.text.toString().trim(), status) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
-    col.addView(status)
+    val card = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; background = roundRect(Theme.CARD, dp(Shapes.CARD)); setPadding(dpi(16f), dpi(14f), dpi(16f), dpi(16f)) }
+    val status = text(18f, 700).keepCase()
+    val detail = text(14f, 500, Theme.MUTED).keepCase().apply { setPadding(0, dpi(4f), 0, 0); maxLines = 10; ellipsize = android.text.TextUtils.TruncateAt.END; visibility = View.GONE }
+    val action = button(UiText.text(this@aboutScreen, R.string.ui_922654d58f), toolAccent) {}.apply { visibility = View.GONE }
+    card.addView(status); card.addView(detail); card.addView(action, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(12f) })
+    col.addView(card, LinearLayout.LayoutParams(-1, -2))
+    val ui = UpdateUi(status, detail, action)
+    col.addView(button(UiText.text(this@aboutScreen, R.string.ui_56169e629e), Theme.MUTED, primary = false, small = true) { checkUpdates(ui) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
+    checkUpdates(ui)
+}
+
+/** Gli elementi della scheda aggiornamenti. */
+internal class UpdateUi(val status: TextView, val detail: TextView, val action: TextView)
+
+/** Da dove si legge il manifest: fisso; solo le build di prova possono indicarne un altro (`update_url`). */
+internal fun MainActivity.updateUrl(): String {
+    val debuggable = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    return prefs.getString("update_url", null)?.takeIf { debuggable && it.isNotBlank() } ?: Updater.DEFAULT_URL
 }
 
 internal fun MainActivity.updateMessage(status: TextView, e: Exception) {
@@ -637,22 +651,34 @@ internal fun MainActivity.updateMessage(status: TextView, e: Exception) {
     status.setTextColor(Theme.BAD); status.text = text
 }
 
-internal fun MainActivity.checkUpdates(address: String, status: TextView) {
-    if (!Updater.httpsUrl(address)) { status.setTextColor(Theme.BAD); status.text = UiText.text(this, R.string.ui_1320f7c837); return }
-    prefs.edit().putString("update_url", address).apply()
-    status.setTextColor(Theme.MUTED); status.text = UiText.text(this, R.string.ui_bc1ba41905)
+internal fun MainActivity.checkUpdates(ui: UpdateUi) {
+    ui.status.setTextColor(Theme.MUTED); ui.status.text = UiText.text(this, R.string.ui_bc1ba41905)
+    ui.detail.visibility = View.GONE; ui.action.visibility = View.GONE
     Io.run {
         try {
-            val manifest = Updater.fetchManifest(this, address)
+            val manifest = Updater.fetchManifest(this, updateUrl())
             val installed = packageManager.getPackageInfo(packageName, 0)
+            val signer = runCatching { Updater.signerMatches(this, manifest) }.getOrNull()
             runOnUiThread {
-                if (!Updater.isNewer(manifest, installed.longVersionCode)) { status.setTextColor(Theme.colorOf("green")); status.text = UiText.text(this, R.string.ui_3d49cf80ba, installed.versionName) }
-                else {
-                    status.setTextColor(Theme.MUTED); status.text = manifest.notes.take(400)
-                    sheet(UiText.text(this, R.string.ui_5fe0888cab, manifest.versionName), listOf(UiText.text(this, R.string.ui_922654d58f) to { downloadUpdate(manifest, status) }))
+                whenAttached(ui.status) {
+                    // Lo stato cambia in dissolvenza e i dettagli entrano morbidi: niente scatti nella scheda.
+                    if (!Updater.isNewer(manifest, installed.longVersionCode)) {
+                        ui.status.setTextColor(Theme.colorOf("green")); Motion.crossfade(ui.status, UiText.text(this, R.string.ui_3d49cf80ba, installed.versionName))
+                        return@whenAttached
+                    }
+                    ui.status.setTextColor(Theme.FG); Motion.crossfade(ui.status, UiText.text(this, R.string.ui_5fe0888cab, manifest.versionName))
+                    Motion.show(ui.detail)
+                    if (signer == false) {
+                        // Firma diversa: lo si dice subito, invece di scaricare l'APK per poi rifiutarlo.
+                        ui.detail.setTextColor(Theme.BAD); ui.detail.text = UiText.text(this, R.string.ui_4b07cc5415)
+                    } else {
+                        ui.detail.setTextColor(Theme.MUTED); ui.detail.text = manifest.notes.take(600)
+                        Motion.show(ui.action)
+                        ui.action.setOnClickListener { downloadUpdate(manifest, ui.status) }
+                    }
                 }
             }
-        } catch (e: Exception) { runOnUiThread { updateMessage(status, e) } }
+        } catch (e: Exception) { runOnUiThread { updateMessage(ui.status, e) } }
     }
 }
 
