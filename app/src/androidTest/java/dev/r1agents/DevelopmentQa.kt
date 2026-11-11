@@ -428,10 +428,10 @@ internal class DevelopmentQa(private val test: Instrumentation) {
                 }
                 ui { a.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
                 test.waitForIdleSync(); Thread.sleep(450)
-                for (screen in listOf("settings", "dash", "translator", "look")) {
+                for (screen in listOf("settings", "dash", "translator", "look", "voice")) {
                     ui { test.callActivityOnNewIntent(a, Intent(ctx, MainActivity::class.java).putExtra("debug_screen", screen)) }
                     test.waitForIdleSync(); Thread.sleep(450)
-                    if (screen == "look") {
+                    if (screen == "voice") {
                         ui {
                             val scroll = views(a.window.decorView).filterIsInstance<R1ScrollView>().first { it.isShown }
                             scroll.fullScroll(View.FOCUS_DOWN)

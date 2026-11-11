@@ -28,7 +28,12 @@ import android.content.Context.CLIPBOARD_SERVICE
 
 internal fun MainActivity.applyLook(key: String, value: String) { prefs.edit().putString(key, value).putString("reopen", "look").apply(); if (key == "app_language") { prefs.edit().remove("w_at").remove("w_text").apply(); Sched.channels(this); hermesRuntime.refreshChannels() }; lookSnapshot = runCatching { android.graphics.Bitmap.createBitmap(root.width, root.height, android.graphics.Bitmap.Config.ARGB_8888).also { root.draw(android.graphics.Canvas(it)) } }.getOrNull(); recreate(); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
 
-internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookScreen, R.string.ui_20d6155d10), context = BuddySceneContext.CONFIGURE) { col ->
+internal fun MainActivity.lookScreen(): Screen = lookScreen(voice = false)
+
+/** «voce e audio»: le scelte della voce (lettura, riconoscimento) in una pagina loro, prima in fondo ad Aspetto senza titolo. */
+internal fun MainActivity.voiceScreen(): Screen = lookScreen(voice = true)
+
+internal fun MainActivity.lookScreen(voice: Boolean): Screen = listPage(UiText.text(this@lookScreen, if (voice) R.string.ui_efb328b323 else R.string.ui_20d6155d10), context = BuddySceneContext.CONFIGURE) { col ->
     /** Applica una scelta (stessa logica per righe, interruttori e chip). */
     fun choose(key: String, id: String) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "idle_after") { prefs.edit().putString("idle_after", id).apply(); stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts" || key == "standby_lock" || key == "standby_charge") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) }
     /** Scelta a testo: riga con il valore a destra; il tocco apre il foglio con le opzioni (spuntata quella attiva). */
@@ -52,6 +57,7 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
         return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(row)
             post { options.indexOfFirst { it.first == current }.takeIf { it > 0 }?.let { row.getChildAt(it) }?.let { c -> scrollTo((c.right - width + dpi(16f)).coerceAtLeast(0), 0) } } }
     }
+    if (!voice) {
     col.addView(groupTitle(UiText.text(this@lookScreen, R.string.ui_147f3d4b53)))
     col.addView(pick(UiText.text(this@lookScreen, R.string.ui_1909c29a8f), listOf("it" to "Italiano", "en" to "English"), AppLanguage.selected(this), "app_language"))
     col.addView(hint(UiText.text(this@lookScreen, R.string.ui_7df11394ff)))
@@ -113,6 +119,8 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
     col.addView(switch(UiText.text(this@lookScreen, R.string.ui_cef9ee7fad), prefs.getBoolean("standby_lock", true), "standby_lock"))
     col.addView(switch(UiText.text(this@lookScreen, R.string.ui_2c060da90b), prefs.getBoolean("standby_charge", true), "standby_charge"))
     col.addView(hint(UiText.text(this@lookScreen, R.string.ui_1abf09acd4)))
+    }
+    if (voice) {
     col.addView(switch(getString(R.string.voice_read_chat), prefs.getBoolean("tts", false), "tts"))
     col.addView(switch(getString(R.string.voice_read_fullscreen), prefs.getBoolean("voice_tts", true), "voice_tts"))
     col.addView(hint(getString(if (SpeechSupport.hasEngine(this@lookScreen)) R.string.voice_read_fullscreen_hint else R.string.voice_engine_help)))
@@ -135,6 +143,7 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
         col.addView(hint(UiText.text(this@lookScreen, R.string.ui_08e8413321)))
     }
     if (prefs.getString("stt", "device") == "device") col.addView(hint(UiText.text(this@lookScreen, R.string.ui_c3c6e6b033)))
+    }
     cardify(col)
 }
 
@@ -604,6 +613,7 @@ internal fun MainActivity.settingsScreen(): Screen = listPage(UiText.text(this@s
         tile("look", UiText.text(this@settingsScreen, R.string.ui_20d6155d10), UiText.text(this@settingsScreen, R.string.ui_b2a183c667), Theme.colorOf("purple")) { push(lookScreen()) },
         tile("data", UiText.text(this@settingsScreen, R.string.ui_2953d06507), UiText.text(this@settingsScreen, R.string.ui_2cddbe429a), Theme.colorOf("teal")) { sheet(UiText.text(this@settingsScreen, R.string.ui_2953d06507), listOf(UiText.text(this@settingsScreen, R.string.ui_273893985c) to { startExport() }, UiText.text(this@settingsScreen, R.string.ui_77c7dfe5ae) to { startProtectedExport() }, UiText.text(this@settingsScreen, R.string.ui_26962ddc5b) to { startImport() })) },
     )))
+    col.addView(row(UiText.text(this@settingsScreen, R.string.ui_efb328b323), Theme.accent, sub = UiText.text(this@settingsScreen, R.string.ui_4963571d41, when (prefs.getString("stt", "device")) { "groq" -> "groq whisper"; "openai" -> UiText.text(this@settingsScreen, R.string.ui_976e75efae); "hermes" -> "hermes"; "offline" -> UiText.text(this@settingsScreen, R.string.ui_d1ffda5dc9); else -> UiText.text(this@settingsScreen, R.string.ui_843e6206e1) }), icon = "mic") { push(voiceScreen()) })
     col.addView(row(UiText.text(this@settingsScreen, R.string.ui_addbf9ddc4), Theme.accent, sub = sideButtonSummary(), icon = "power") { push(sideButtonScreen()) })
     col.addView(row(UiText.text(this@settingsScreen, R.string.ui_9729d2de44), Theme.accent, sub = if (pinEnabled()) UiText.text(this@settingsScreen, R.string.ui_c10e8db395) else UiText.text(this@settingsScreen, R.string.ui_db99ab2043), icon = "lock") { push(securityScreen()) })
     col.addView(label(UiText.text(this@settingsScreen, R.string.ui_03b76df6e0)))

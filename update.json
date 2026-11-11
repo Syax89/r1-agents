@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 65,
-  "versionName": "0.5.58",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.58/r1agents-release-signed.apk",
-  "sha256": "4823b91fb35b5ea58f40adb62819b016b6502b023ed824837bb91000f516b1fa",
+  "versionCode": 66,
+  "versionName": "0.5.59",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.59/r1agents-release-signed.apk",
+  "sha256": "49e2b94fad765ccdaf88a02421e834b317b538d228a9b2f04ae01559f7e0b4fb",
   "sizeBytes": 11889348,
-  "notes": "0.5.58 (code 65): collegando Hermes ad app già aperta, gli agenti compaiono subito. Prima la home li cercava solo quando veniva costruita: se in quel momento Hermes non rispondeva, restava vuota fino al riavvio o almeno per un minuto. Ora li rilegge appena Hermes risulta collegato, e anche tornando alla home se mancano. C è un test sul dispositivo che riproduce il caso.",
+  "notes": "0.5.59 (code 66): nuova pagina «voce e audio» nelle Impostazioni, accanto a tasto laterale e sicurezza, con la lettura delle risposte e il riconoscimento vocale. Prima queste scelte stavano in fondo ad Aspetto senza titolo. La riga mostra il riconoscimento in uso.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }
