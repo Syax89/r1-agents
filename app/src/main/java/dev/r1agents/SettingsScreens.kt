@@ -30,7 +30,7 @@ internal fun MainActivity.applyLook(key: String, value: String) { prefs.edit().p
 
 internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookScreen, R.string.ui_20d6155d10), context = BuddySceneContext.CONFIGURE) { col ->
     /** Applica una scelta (stessa logica per righe, interruttori e chip). */
-    fun choose(key: String, id: String) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "idle_after") { prefs.edit().putString("idle_after", id).apply(); stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) }
+    fun choose(key: String, id: String) { if (key == "dev_actions") { prefs.edit().putString("dev_actions", id).apply(); DeviceActions.mode = id; stack.last().onShow?.invoke() } else if (key == "idle_after") { prefs.edit().putString("idle_after", id).apply(); stack.last().onShow?.invoke() } else if (key == "wheel_flip") { prefs.edit().putBoolean("wheel_flip_land", id == "flip").apply(); r1WheelLandscapeFlip = id == "flip"; stack.last().onShow?.invoke() } else if (key == "tts" || key == "voice_tts" || key == "standby_lock" || key == "standby_charge") { prefs.edit().putBoolean(key, id == "on").apply(); stack.last().onShow?.invoke() } else if (key == "stt") { prefs.edit().putString("stt", id).apply(); stack.last().onShow?.invoke() } else if (key == "clock" || key == "clock_align") { prefs.edit().putString(key, id).apply(); stack.last().onShow?.invoke() } else applyLook(key, id) }
     /** Scelta a testo: riga con il valore a destra; il tocco apre il foglio con le opzioni (spuntata quella attiva). */
     fun pick(title: String, options: List<Pair<String, String>>, current: String, key: String): View =
         settingRow(title, options.firstOrNull { it.first == current }?.second ?: current) {
@@ -110,6 +110,9 @@ internal fun MainActivity.lookScreen(): Screen = listPage(UiText.text(this@lookS
     }
     col.addView(pick(UiText.text(this@lookScreen, R.string.ui_3d9a5cdfac), listOf("bold", "light", "condensed", "stacked", "serif", "mono", "words", "dial").map { it to it }, prefs.getString("clock", "bold")!!, "clock"))
     col.addView(pick(UiText.text(this@lookScreen, R.string.ui_41b75bd493), listOf("left" to UiText.text(this@lookScreen, R.string.ui_3b72eca895), "center" to UiText.text(this@lookScreen, R.string.ui_d6b2c56f12)), prefs.getString("clock_align", "left")!!, "clock_align"))
+    col.addView(switch(UiText.text(this@lookScreen, R.string.ui_cef9ee7fad), prefs.getBoolean("standby_lock", true), "standby_lock"))
+    col.addView(switch(UiText.text(this@lookScreen, R.string.ui_2c060da90b), prefs.getBoolean("standby_charge", true), "standby_charge"))
+    col.addView(hint(UiText.text(this@lookScreen, R.string.ui_1abf09acd4)))
     col.addView(switch(getString(R.string.voice_read_chat), prefs.getBoolean("tts", false), "tts"))
     col.addView(switch(getString(R.string.voice_read_fullscreen), prefs.getBoolean("voice_tts", true), "voice_tts"))
     col.addView(hint(getString(if (SpeechSupport.hasEngine(this@lookScreen)) R.string.voice_read_fullscreen_hint else R.string.voice_engine_help)))

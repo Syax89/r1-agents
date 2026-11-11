@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 62,
-  "versionName": "0.5.55",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.55/r1agents-release-signed.apk",
-  "sha256": "b65e0402924b58d69a88cf06c91672cec4ae229cec3ff7c6cc72754102b02d98",
-  "sizeBytes": 11872964,
-  "notes": "0.5.55 (code 62): impostazioni più ordinate. Le scelte a testo sono righe con il valore a destra, e il tocco apre il foglio con le opzioni (spuntata quella attiva); le scelte sì/no e quelle multiple sono interruttori; colori, caratteri e palette restano anteprime. Le righe vicine stanno nella stessa scheda, separate da un divisore. Vale per Aspetto e per il tasto laterale.",
+  "versionCode": 63,
+  "versionName": "0.5.56",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.56/r1agents-release-signed.apk",
+  "sha256": "b10567b7039df378ca475145193abfc4935d799ca4ef4e7652ddf2cda4add27d",
+  "sizeBytes": 11889348,
+  "notes": "0.5.56 (code 63): standby. Se lo schermo si spegne mentre sei in R1 Agents, riaccendendolo vedi l orologio sopra il blocco di Android, che resta sotto: toccando o con la rotella Android chiede il suo sblocco e poi torni dov eri; con un altra app in primo piano non cambia nulla. In carica, dopo un minuto senza tocchi, l orologio resta acceso con la luce bassa e si spegne normalmente staccando il cavo. Due interruttori in Aspetto, accesi.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

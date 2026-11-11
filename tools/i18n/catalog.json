@@ -753,5 +753,8 @@
   "elimina il modello": "delete the model",
   "Scaricamento non riuscito: %1$s": "Download failed: %1$s",
   "tipo di sfondo": "background type",
-  "scurisci la foto": "darken the photo"
+  "scurisci la foto": "darken the photo",
+  "orologio sopra il blocco": "clock over the lock screen",
+  "sempre acceso in carica": "always on while charging",
+  "Se lo schermo si spegne mentre sei in R1 Agents, riaccendendolo vedi l'orologio; per entrare serve lo sblocco di Android. In carica, dopo un minuto senza tocchi, l'orologio resta acceso con la luce bassa.": "If the screen turns off while you're in R1 Agents, you'll see the clock when you wake it; Android's unlock is still needed to get in. While charging, after a minute without touches, the clock stays on with low light."
 }

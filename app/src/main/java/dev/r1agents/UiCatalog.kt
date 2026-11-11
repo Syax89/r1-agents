@@ -763,6 +763,9 @@ internal object UiCatalog {
         UiEntry(R.string.ui_fe76631f65, "Scaricamento non riuscito: %1\$s"),
         UiEntry(R.string.ui_90cbd0f729, "tipo di sfondo"),
         UiEntry(R.string.ui_d084e1da9a, "scurisci la foto"),
+        UiEntry(R.string.ui_cef9ee7fad, "orologio sopra il blocco"),
+        UiEntry(R.string.ui_2c060da90b, "sempre acceso in carica"),
+        UiEntry(R.string.ui_1abf09acd4, "Se lo schermo si spegne mentre sei in R1 Agents, riaccendendolo vedi l'orologio; per entrare serve lo sblocco di Android. In carica, dopo un minuto senza tocchi, l'orologio resta acceso con la luce bassa."),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

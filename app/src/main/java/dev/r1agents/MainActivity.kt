@@ -214,6 +214,7 @@ class MainActivity : Activity() {
         Engine.deviceExec = deviceExec
         if (android.os.Build.VERSION.SDK_INT >= 33) (backCallback as? android.window.OnBackInvokedCallback)?.let { onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, it) }
         NetworkMonitor.start(this)
+        powerReceiver = powerWatcher()
         RoutineEvents.start(this)
         DeviceActions.hasFlash = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_CAMERA_FLASH)
         Theme.setLook(prefs.getString("look_mode", "dark") == "light", prefs.getString("look_accent", "orange") ?: "orange", prefs.getString("look_font", "rubik") ?: "rubik")
@@ -1218,7 +1219,7 @@ class MainActivity : Activity() {
     internal var pttLastUp = 0L
     override fun dispatchKeyEvent(e: KeyEvent): Boolean {
         if (pinGate != null) return super.dispatchKeyEvent(e)
-        Dim.poke()
+        Dim.poke(); if (e.action == KeyEvent.ACTION_DOWN) armStandbyIdle()
         appSwitcher?.let { sw -> if (e.keyCode == KeyEvent.KEYCODE_BACK) return super.dispatchKeyEvent(e); if (e.keyCode == KeyEvent.KEYCODE_BUTTON_1 || e.keyCode == KeyEvent.KEYCODE_HEADSETHOOK) return true; if (sw.key(e)) return true }
         val ptt = e.keyCode == KeyEvent.KEYCODE_BUTTON_1 || e.keyCode == KeyEvent.KEYCODE_HEADSETHOOK
         val modal = overlays.isNotEmpty() || voiceConversation != null || carriedBuddy != null || modalBuddyFlight != null
@@ -1368,6 +1369,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        powerReceiver?.let { runCatching { unregisterReceiver(it) } }; powerReceiver = null
         pttClose(immediate = true); cancelLocalTurns(); cancelBuddyFlight(); cancelModalBuddyFlight(); clearCarriedBuddy(); Motion.onAttention = null
         stack.forEach { it.scope.alive = false; it.onLeave?.invoke() }
         if (Engine.deviceExec === deviceExec) Engine.deviceExec = null
@@ -1375,6 +1377,12 @@ class MainActivity : Activity() {
     }
     /** Schermata dell'app in primo piano: con l'app in secondo piano o lo schermo spento i tick (orologio, widget) saltano il lavoro. */
     @Volatile internal var visible = true
+    // Standby (Standby.kt): l'orologio sopra il blocco e sempre acceso in carica.
+    internal var standbyScreen: Screen? = null
+    internal var aodOn = false
+    internal var pluggedIn = false
+    internal var powerReceiver: android.content.BroadcastReceiver? = null
+    internal val standbyIdle = Runnable { if (visible && pluggedIn && Standby.chargeOn(this)) enterStandby(aod = true) }
     internal fun characters(v: View, f: (CharacterView) -> Unit) { if (v is CharacterView) f(v) else if (v is ViewGroup) for (i in 0 until v.childCount) characters(v.getChildAt(i), f) }
     // ---- scossa: scuotendo il dispositivo i buddy si confondono (giro su se' stessi con la faccia stordita) ----------
     internal var shakeListener: android.hardware.SensorEventListener? = null
@@ -1382,13 +1390,16 @@ class MainActivity : Activity() {
     // startShake(), stopShake(), onShake(): BackupUi.kt (in fondo)
     override fun onStart() { super.onStart(); watchPackages(true); if (::dash.isInitialized) dash.background(false) }
     override fun onStop() { if (switcherLaunched) appSwitcher?.dismissNow(); watchPackages(false); if (::dash.isInitialized) dash.background(true); super.onStop() }
-    override fun onResume() { super.onResume(); LiquidLaunch.clear(root); startShake(); visible = true; root.removeCallbacks(buddyReaper); root.postDelayed(buddyReaper, 1200L); dev.r1os.host.ui.Spring.reduced = Motion.reduced(this); runtimeVisibility()
+    override fun onResume() { super.onResume(); LiquidLaunch.clear(root); startShake(); visible = true; armStandbyIdle(); root.removeCallbacks(buddyReaper); root.postDelayed(buddyReaper, 1200L); dev.r1os.host.ui.Spring.reduced = Motion.reduced(this); runtimeVisibility()
         hermesRuntime.requestListener = { request -> runOnUiThread { if (visible) showRequest(request) } }
         hermesRuntime.requestCancelListener = { id -> runOnUiThread { closeOverlay("req-$id") } }
         hermesRuntime.requests.values.forEach { showRequest(it) }
         if (hermesMode()) hermesRuntime.ensureRecoveryService()
          if (::prefs.isInitialized && gateWanted()) showPinGate(); Dim.on(this); characters(root) { it.setActive(true) }; heldBuddies.forEach { it.setActive(false) }; stack.lastOrNull()?.onResume?.invoke() }
-    override fun onPause() { root.removeCallbacks(buddyReaper); stopShake(); stack.forEach { it.onSuspend?.invoke() }; pttClose(immediate = true); cancelBuddyFlight(); cancelModalBuddyFlight(restoreSource = overlays.isEmpty()); clearCarriedBuddy(restore = overlays.isEmpty()); if (::prefs.isInitialized && gateWanted()) { cancelActiveMic?.invoke(); tts?.stop(); pinUnlocked = false; showPinGate() }; visible = false; runtimeVisibility(); hermesRuntime.requestListener = null; hermesRuntime.requestCancelListener = null; characters(root) { it.setActive(false) }; Dim.off(); super.onPause() }
+    override fun onPause() { root.removeCallbacks(buddyReaper); root.removeCallbacks(standbyIdle)
+        // Lo schermo si spegne mentre l'app è in primo piano: orologio sopra il blocco (Standby.kt).
+        if (::prefs.isInitialized && Standby.lockOn(this) && getSystemService(android.os.PowerManager::class.java)?.isInteractive == false) enterStandby(aod = false)
+        stopShake(); stack.forEach { it.onSuspend?.invoke() }; pttClose(immediate = true); cancelBuddyFlight(); cancelModalBuddyFlight(restoreSource = overlays.isEmpty()); clearCarriedBuddy(restore = overlays.isEmpty()); if (::prefs.isInitialized && gateWanted()) { cancelActiveMic?.invoke(); tts?.stop(); pinUnlocked = false; showPinGate() }; visible = false; runtimeVisibility(); hermesRuntime.requestListener = null; hermesRuntime.requestCancelListener = null; characters(root) { it.setActive(false) }; Dim.off(); super.onPause() }
     internal val KEYCODE_NAV_NEXT = 261   // KEYCODE_NAVIGATE_NEXT
     internal val KEYCODE_NAV_PREV = 260   // KEYCODE_NAVIGATE_PREVIOUS
 
@@ -1493,6 +1504,7 @@ class MainActivity : Activity() {
 
     override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
         Dim.poke()
+        if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) armStandbyIdle()
         if (homeVoiceGesture && ev.actionMasked != android.view.MotionEvent.ACTION_DOWN) {
             when (ev.actionMasked) {
                 android.view.MotionEvent.ACTION_MOVE -> if (homeVoiceStartY - ev.rawY > dp(64f)) { voiceConversation?.cancelRecording(); pttClose() }

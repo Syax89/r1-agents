@@ -26,7 +26,10 @@ import android.content.Context.CLIPBOARD_SERVICE
 
 // ---- glance: l'orologio (da Glance di r1os, in versione semplice) ---------------------------
 
-internal fun MainActivity.glance(): Screen {
+/** `standby`: l'orologio di riposo (Standby.kt), messo sopra la pagina in cui eri; toccandolo si torna lì, dopo lo sblocco di Android. */
+internal fun MainActivity.glance(): Screen = glanceScreen(false)   // nome e firma usati dai test per riflessione
+
+internal fun MainActivity.glanceScreen(standby: Boolean): Screen {
     val agent = visibleAgents().getOrNull(homeIndex.coerceAtLeast(0)) ?: neutralBuddy
     val frame = FrameLayout(this)
     val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dpi(6f), dpi(12f), 0, 0) }
@@ -53,10 +56,10 @@ internal fun MainActivity.glance(): Screen {
             val apps = (appCache ?: loadApps().also { appCache = it }).filter { it.pkg in favs }.take(5)
             runOnUiThread {
                 dock.removeAllViews()
-                apps.forEach { a -> dock.addView(android.widget.ImageView(this@glance).apply {
+                apps.forEach { a -> dock.addView(android.widget.ImageView(this@glanceScreen).apply {
                     setImageDrawable(a.icon); contentDescription = a.label; isClickable = true; isFocusable = true; defaultFocusHighlightEnabled = false
                     setPadding(dpi(4f), dpi(4f), dpi(4f), dpi(4f))
-                    setOnClickListener { launchApp(a) }; setOnTouchListener { v, e -> Motion.touch(v, e); false }
+                    setOnClickListener { unlockThen { launchApp(a) } }; setOnTouchListener { v, e -> Motion.touch(v, e); false }
                 }, LinearLayout.LayoutParams(dpi(56f), dpi(56f)).apply { marginEnd = dpi(8f) }) }
                 if (dock.childCount > 0) Motion.stagger(dock, dp(8f))
             }
@@ -85,7 +88,7 @@ internal fun MainActivity.glance(): Screen {
         BuddyCuriosity.start(peek, 4f) { sleeper?.asleep != true && !morphing }
         val lifter = object : Runnable { override fun run() {
             if (!peek.isAttachedToWindow) return
-            if (sleeper?.asleep != true && !morphing && !Motion.reduced(this@glance)) {
+            if (sleeper?.asleep != true && !morphing && !Motion.reduced(this@glanceScreen)) {
                 peek.animate().translationY(size * 0.22f).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).withEndAction { peek.animate().translationY(size * 0.32f).setStartDelay(1400L).setDuration(Motion.SLOW).setInterpolator(Theme.SETTLE).start() }.start()
             }
             peek.postDelayed(this, 9000L + (Math.random() * 7000).toLong())
@@ -93,28 +96,35 @@ internal fun MainActivity.glance(): Screen {
         peek.postDelayed(lifter, 4000L)
     }
     frame.setOnTouchListener { _, e -> if (e.action == android.view.MotionEvent.ACTION_DOWN) sleeper?.poke(); false }
+    lateinit var self: Screen
     fun toHome() {
-        sleeper?.stop()
-        if (morphing) return
-        morphing = true
-        push(home(), fade = true)
+        // Sopra il blocco (standby): prima lo sblocco di Android; nessuna pagina dell'app si apre sopra il blocco.
+        unlockThen {
+            if (stack.lastOrNull() !== self) return@unlockThen
+            standbyGone(self)
+            if (standby) { if (stack.size > 1) pop() else push(home(), fade = true); return@unlockThen }
+            sleeper?.stop()
+            if (morphing) return@unlockThen
+            morphing = true
+            push(home(), fade = true)
+        }
     }
     var prevCharging: Boolean? = null; var prevMinute = -1; var lowAlerted = false
     fun update() {
         val now = java.time.ZonedDateTime.now()
-        date.text = now.format(java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM", AppLanguage.locale(this@glance)))
+        date.text = now.format(java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM", AppLanguage.locale(this@glanceScreen)))
         val b = registerReceiver(null, android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val lvl = b?.let { it.getIntExtra("level", -1) * 100 / maxOf(it.getIntExtra("scale", 100), 1) } ?: -1
         val charging = (b?.getIntExtra("plugged", 0) ?: 0) != 0
-        if (peek != null && sleeper?.asleep != true && !morphing && !Motion.reduced(this@glance)) { // piccole reazioni, rare
+        if (peek != null && sleeper?.asleep != true && !morphing && !Motion.reduced(this@glanceScreen)) { // piccole reazioni, rare
             if (prevCharging == false && charging) peek.react("bounce")
             if (lvl in 0..14 && !charging && !lowAlerted) { lowAlerted = true; peek.react("shiver") }
             if (now.minute == 0 && prevMinute > 0) peek.react("nod")
         }
         prevCharging = charging; prevMinute = now.minute
-        status.text = if (lvl >= 0) "$lvl%" + if (charging) UiText.text(this@glance, R.string.ui_c167ec74e0) else "" else ""
+        status.text = if (lvl >= 0) "$lvl%" + if (charging) UiText.text(this@glanceScreen, R.string.ui_c167ec74e0) else "" else ""
         val al = db.alarms().filter { it.on }.minByOrNull { Sched.next(it.hour, it.minute, it.days) }
-        alarm.text = al?.let { UiText.text(this@glance, R.string.ui_c1f893519d, Sched.time(it.hour, it.minute)) }.orEmpty()
+        alarm.text = al?.let { UiText.text(this@glanceScreen, R.string.ui_c1f893519d, Sched.time(it.hour, it.minute)) }.orEmpty()
     }
     fun widgetsUpdate() {
         widgets.removeAllViews()
@@ -123,7 +133,7 @@ internal fun MainActivity.glance(): Screen {
             Io.run { // dal vivo: chat in corso e prossima attività pianificata
                 val running = dash.live().values.count { it == "working" || it == "waiting" }
                 val next = runCatching { dash.cronJobs() }.getOrNull()?.filter { it.enabled && it.nextRun > 0 }?.minByOrNull { it.nextRun }
-                val line = "hermes · " + (if (running > 0) UiText.text(this@glance, R.string.ui_c7c47efe18, running) else UiText.text(this@glance, R.string.ui_a6c333ad12)) + (next?.let { " · " + UiText.text(this@glance, R.string.ui_d54c848c40, next.name, relativeIn(next.nextRun - System.currentTimeMillis())) } ?: "")
+                val line = "hermes · " + (if (running > 0) UiText.text(this@glanceScreen, R.string.ui_c7c47efe18, running) else UiText.text(this@glanceScreen, R.string.ui_a6c333ad12)) + (next?.let { " · " + UiText.text(this@glanceScreen, R.string.ui_d54c848c40, next.name, relativeIn(next.nextRun - System.currentTimeMillis())) } ?: "")
                 runOnUiThread { if (card.isAttachedToWindow) card.text = line }
             }
         }
@@ -138,7 +148,7 @@ internal fun MainActivity.glance(): Screen {
                 // al massimo una richiesta ogni 30 minuti, e solo con il glance in vista
                 if (System.currentTimeMillis() - prefs.getLong("w_at", 0) > 30 * 60_000L || prefs.getString("w_city", "") != city) {
                     prefs.edit().putLong("w_at", System.currentTimeMillis()).putString("w_city", city).apply()
-                    Io.run { runCatching { Weather.fetch(city, AppLanguage.selected(this@glance)) }.onSuccess { r -> prefs.edit().putString("w_text", r).apply(); runOnUiThread { if (frame.isAttachedToWindow) widgetsUpdate() } } }
+                    Io.run { runCatching { Weather.fetch(city, AppLanguage.selected(this@glanceScreen)) }.onSuccess { r -> prefs.edit().putString("w_text", r).apply(); runOnUiThread { if (frame.isAttachedToWindow) widgetsUpdate() } } }
                 }
             }
         }
@@ -147,6 +157,7 @@ internal fun MainActivity.glance(): Screen {
     // Un solo tick al minuto, e solo con la schermata visibile (regola batteria di r1os).
     ViewTicker(frame, 60_000L, { visible && isCurrentSurface(frame) }) { update(); widgetsUpdate() }
     frame.setOnClickListener { toHome() }
-    return Screen(page(frame).also { it.background = bgDrawable("glance") }, { e -> if (e.action == KeyEvent.ACTION_DOWN && (e.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || e.keyCode == KeyEvent.KEYCODE_ENTER || e.keyCode == KeyEvent.KEYCODE_DPAD_UP || e.keyCode == KeyEvent.KEYCODE_DPAD_DOWN)) { toHome(); true } else false },
-        buddyContext = BuddySceneContext.LIVE, onLeave = { sleeper?.stop() }, onShow = { morphing = false; peek?.translationY = size * .32f; col.alpha = 1f; col.translationY = 0f; sleeper?.poke(); update(); widgetsUpdate() }, onResume = { update(); widgetsUpdate() })
+    self = Screen(page(frame).also { it.background = bgDrawable("glance"); it.tag = "glance" }, { e -> if (e.action == KeyEvent.ACTION_DOWN && (e.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || e.keyCode == KeyEvent.KEYCODE_ENTER || e.keyCode == KeyEvent.KEYCODE_DPAD_UP || e.keyCode == KeyEvent.KEYCODE_DPAD_DOWN)) { toHome(); true } else false },
+        buddyContext = BuddySceneContext.LIVE, onLeave = { sleeper?.stop(); standbyGone(self) }, onShow = { if (standbyScreen === self) setShowWhenLocked(true); morphing = false; peek?.translationY = size * .32f; col.alpha = 1f; col.translationY = 0f; sleeper?.poke(); update(); widgetsUpdate() }, onResume = { update(); widgetsUpdate() })
+    return self
 }

@@ -30,6 +30,8 @@ class RuntimeInstrumentation : Instrumentation() {
         try { body() } catch (e: Throwable) { finish(Activity.RESULT_CANCELED, Bundle().apply { putString("stream", "${prefix}_QA_RESULT=FAIL\n" + android.util.Log.getStackTraceString(e)) }) } finally { watchdog.cancel() }
     }
     override fun onStart() {
+        // Lo standby (orologio sopra il blocco, sempre acceso in carica) coprirebbe le pagine durante prove lunghe: spento nella copia QA.
+        targetContext.getSharedPreferences("settings", 0).edit().putBoolean("standby_lock", false).putBoolean("standby_charge", false).commit()
         if (functionalSuite) { suite("FUNCTIONAL", 300_000) { FunctionalQa(this).run() }; return }
         if (sceneSuite) { suite("SCENE", 300_000) { SceneQa(this, sceneEdgesOnly).run() }; return }
         if (developmentSuite) { suite("DEVELOPMENT", 400_000) { DevelopmentQa(this).run() }; return }
