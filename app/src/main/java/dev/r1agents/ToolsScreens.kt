@@ -342,7 +342,7 @@ internal fun MainActivity.timersScreen(): Screen {
             ticking.add(v to t)
             card.addView(LinearLayout(this).apply { orientation = LinearLayout.VERTICAL
                 addView(v)
-                addView(text(13f, 500, Theme.MUTED).apply { text = UiText.text(this@timersScreen, R.string.ui_2b804594a6, java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT, AppLanguage.locale(this@timersScreen)).format(java.util.Date(t.endAt))) }) }, LinearLayout.LayoutParams(0, -2, 1f))
+                addView(text(13f, 500, Theme.MUTED).apply { text = UiText.text(this@timersScreen, R.string.ui_2b804594a6, java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT, AppLanguage.locale(this@timersScreen)).format(java.util.Date(t.endAt))) + (if (t.label.isNotBlank()) " · ${t.label}" else "") }) }, LinearLayout.LayoutParams(0, -2, 1f))   // promemoria: il testo accanto all'orario
             card.addView(button(UiText.text(this@timersScreen, R.string.ui_9cb9b85e99), Theme.BAD, small = true) { Motion.dismiss(card) { cue("shiver"); db.deleteTimer(t.id); Sched.cancel(this, Sched.KIND_TIMER, t.id); stack.last().onShow?.invoke() } })
             col.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(8f) })
         }
