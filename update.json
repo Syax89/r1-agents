@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 51,
-  "versionName": "0.5.44",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.44/r1agents-release-signed.apk",
-  "sha256": "844e8dcda81e4266e40b979221a3c8ef62d4f9081a65cbf6e83b6239906b9238",
-  "sizeBytes": 1390919,
-  "notes": "0.5.44 (code 51): design uniforme anche fuori dai menu: la pagina di accesso a Nous ha l intestazione di tutte le altre, bolle e schede della chat hanno il raggio delle schede, pillole e fogli raggi comuni. Verificate tutte le schermate in tema scuro e chiaro.",
+  "versionCode": 52,
+  "versionName": "0.5.45",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.45/r1agents-release-signed.apk",
+  "sha256": "12987312c11dc9674732ddf7e85d4a7645c577bf104c5282a9a792b55c42e759",
+  "sizeBytes": 1386823,
+  "notes": "0.5.45 (code 52): anche la recitazione del buddy (occhiate, bocca, cuori) usa i tempi comuni dell app: tutte le animazioni ora parlano lo stesso linguaggio.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

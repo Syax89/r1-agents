@@ -89,6 +89,10 @@ object Motion {
     const val SPLASH = 420L
     const val UNFOLD = 460L
     const val UNFOLD_STEP = 42L
+    /** Recitazione del buddy: un'occhiata rapida, un gesto lungo (bocca, sorpresa), i cuori che salgono e svaniscono. */
+    const val GLANCE = 180L
+    const val ACT = 500L
+    const val FLOAT = 900L
     /** Come un liquido: parte morbida, si allarga a lungo e si posa senza fermarsi di colpo. */
     val LIQUID: android.view.animation.Interpolator = android.view.animation.PathInterpolator(0.33f, 0f, 0.15f, 1f)
     /** Uscite: partono piano e finiscono svelte (durano meno degli ingressi). */

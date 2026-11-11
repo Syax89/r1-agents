@@ -276,8 +276,8 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
             "yawn" -> {
                 face = "sleepy"; ms = 1600
                 mouth.animate().cancel()
-                mouth.animate().alpha(1f).scaleY(1.7f).setDuration(500).withEndAction {
-                    mouth.animate().alpha(if (state == "speaking") 1f else 0f).scaleY(if (state == "speaking") 1f else 0.4f).setStartDelay(500).setDuration(400).start()
+                mouth.animate().alpha(1f).scaleY(1.7f).setDuration(dev.r1agents.Motion.ACT).withEndAction {
+                    mouth.animate().alpha(if (state == "speaking") 1f else 0f).scaleY(if (state == "speaking") 1f else 0.4f).setStartDelay(dev.r1agents.Motion.ACT).setDuration(dev.r1agents.Motion.SLOW).start()
                 }.start()
                 arrayOf(kf(View.SCALE_Y, 0f to 1f, 0.4f to 1.07f, 0.7f to 1.07f, 1f to 1f), kf(View.ROTATION, 0f to 0f, 0.4f to -3f, 1f to 0f))
             }
@@ -328,8 +328,8 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
     fun glanceAt(dy: Float, hold: Long = 900) {
         if (!isAttachedToWindow) return
         eyes.animate().cancel()
-        eyes.animate().translationY(dy * k).setStartDelay(0).setDuration(180).setInterpolator(Theme.EASE_OUT).withEndAction {
-            eyes.animate().translationY(0f).setStartDelay(hold).setDuration(260).start()
+        eyes.animate().translationY(dy * k).setStartDelay(0).setDuration(dev.r1agents.Motion.GLANCE).setInterpolator(Theme.EASE_OUT).withEndAction {
+            eyes.animate().translationY(0f).setStartDelay(hold).setDuration(dev.r1agents.Motion.BASE).start()
         }.start()
     }
 
@@ -342,13 +342,13 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
         if (!isAttachedToWindow) return
         eyes.animate().cancel()
         val a = eyes.animate().translationX(dx * k).translationY(dy * k).setStartDelay(0).setDuration(dur).setInterpolator(Theme.EASE_OUT)
-        if (hold >= 0) a.withEndAction { eyes.animate().translationX(0f).translationY(0f).setStartDelay(hold).setDuration(280).start() }
+        if (hold >= 0) a.withEndAction { eyes.animate().translationX(0f).translationY(0f).setStartDelay(hold).setDuration(dev.r1agents.Motion.BASE).start() }
         a.start()
     }
 
     fun lookBack() {
         if (!isAttachedToWindow) return
-        eyes.animate().cancel(); eyes.animate().translationX(0f).translationY(0f).setStartDelay(0).setDuration(280).start()
+        eyes.animate().cancel(); eyes.animate().translationX(0f).translationY(0f).setStartDelay(0).setDuration(dev.r1agents.Motion.BASE).start()
     }
 
     /** A pet's hearts, floating up from its head. */
@@ -365,8 +365,8 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
                 topMargin = (44 * k).toInt()
             })
             h.alpha = 0f
-            h.animate().alpha(1f).translationY(-44 * k).setStartDelay(i * 160L).setDuration(900).setInterpolator(Theme.EASE_OUT).withEndAction {
-                h.animate().alpha(0f).setStartDelay(0).setDuration(250).withEndAction { removeView(h) }.start()
+            h.animate().alpha(1f).translationY(-44 * k).setStartDelay(i * 160L).setDuration(dev.r1agents.Motion.FLOAT).setInterpolator(Theme.EASE_OUT).withEndAction {
+                h.animate().alpha(0f).setStartDelay(0).setDuration(dev.r1agents.Motion.BASE).withEndAction { removeView(h) }.start()
             }.start()
         }
     }
@@ -491,7 +491,7 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
         unreadView.visibility = VISIBLE
         if (appearing) {
             unreadView.scaleX = 0f; unreadView.scaleY = 0f
-            unreadView.animate().scaleX(1f).scaleY(1f).setDuration(300).setInterpolator(Theme.POP).start()
+            unreadView.animate().scaleX(1f).scaleY(1f).setDuration(dev.r1agents.Motion.BASE).setInterpolator(Theme.POP).start()
         }
     }
 
@@ -805,7 +805,7 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
             }
             "error" -> {
                 val a = ObjectAnimator.ofPropertyValuesHolder(float, kf(View.TRANSLATION_X, 0f to 0f, 0.25f to -6 * k, 0.75f to 6 * k, 1f to 0f))
-                a.duration = 500
+                a.duration = dev.r1agents.Motion.ACT
                 a.repeatCount = 1
                 anims += a
                 a.start()
@@ -833,7 +833,7 @@ class CharacterView(context: Context, private val sizePx: Int) : FrameLayout(con
         icon.scaleX = 0f; icon.scaleY = 0f
         for (v in listOf(badge, icon)) {
             val pop = ObjectAnimator.ofPropertyValuesHolder(v, scale(0f to 0f, 1f to 1f, ease = null))
-            pop.duration = 260
+            pop.duration = dev.r1agents.Motion.BASE
             pop.interpolator = Theme.POP
             anims += pop
             pop.start()
