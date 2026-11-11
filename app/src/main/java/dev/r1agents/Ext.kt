@@ -416,6 +416,9 @@ class IconView(ctx: Context, private val kind: String, private val color: Int, p
             "data" -> { path.moveTo(12f, 4f); path.lineTo(12f, 14f); path.moveTo(8f, 10f); path.lineTo(12f, 14f); path.lineTo(16f, 10f); path.moveTo(5f, 18f); path.lineTo(19f, 18f) }
             "spark" -> { path.moveTo(12f, 3f); path.lineTo(14.2f, 9.8f); path.lineTo(21f, 12f); path.lineTo(14.2f, 14.2f); path.lineTo(12f, 21f); path.lineTo(9.8f, 14.2f); path.lineTo(3f, 12f); path.lineTo(9.8f, 9.8f); path.close() }
             "agent" -> { path.addCircle(12f, 12f, 8.5f, android.graphics.Path.Direction.CW); path.moveTo(9f, 10f); path.lineTo(9f, 11.5f); path.moveTo(15f, 10f); path.lineTo(15f, 11.5f); path.moveTo(9f, 15f); path.arcTo(android.graphics.RectF(9f, 12.5f, 15f, 17f), 160f, -140f, false) }
+            "recents" -> { // schede affiancate: quella al centro più grande
+                path.addRoundRect(android.graphics.RectF(8f, 5f, 16f, 19f), 2.2f, 2.2f, android.graphics.Path.Direction.CW)
+                path.moveTo(5f, 7.5f); path.lineTo(5f, 16.5f); path.moveTo(19f, 7.5f); path.lineTo(19f, 16.5f) }
             "info" -> { path.addCircle(12f, 12f, 9f, android.graphics.Path.Direction.CW); path.moveTo(12f, 11f); path.lineTo(12f, 17f); path.addCircle(12f, 7.6f, 0.4f, android.graphics.Path.Direction.CW) }
             "sliders" -> { path.moveTo(4f, 7f); path.lineTo(13f, 7f); path.moveTo(19f, 7f); path.lineTo(20f, 7f); path.addCircle(16f, 7f, 2.6f, android.graphics.Path.Direction.CW)
                 path.moveTo(4f, 17f); path.lineTo(5f, 17f); path.moveTo(11f, 17f); path.lineTo(20f, 17f); path.addCircle(8f, 17f, 2.6f, android.graphics.Path.Direction.CW) }

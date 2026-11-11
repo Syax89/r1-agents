@@ -691,5 +691,10 @@
   "indirizzo non valido: controlla le impostazioni": "invalid address: check the settings",
   "stato Hermes": "Hermes status",
   "File non accettato.": "File not accepted.",
-  "Sei kiwi, un assistente amichevole e conciso. Rispondi nella lingua dell'utente.": "You are kiwi, a friendly and concise assistant. Reply in the user's language."
+  "Sei kiwi, un assistente amichevole e conciso. Rispondi nella lingua dell'utente.": "You are kiwi, a friendly and concise assistant. Reply in the user's language.",
+  "Risposta non inviata: Hermes non è collegato. Riprova quando torna in linea.": "Reply not sent: Hermes isn't connected. Try again when it's back online.",
+  "nessuna rete: lo invio appena torna": "no network: I'll send it as soon as it's back",
+  "di nuovo in linea": "back online",
+  "app aperte di recente": "recently opened apps",
+  "Nessuna app recente: aprine una dal cassetto.": "No recent apps: open one from the drawer."
 }

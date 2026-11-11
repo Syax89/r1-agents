@@ -111,3 +111,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.44 (code 51): design uniforme anche fuori dai menu: la pagina di accesso a Nous ha l intestazione di tutte le altre, bolle e schede della chat hanno il raggio delle schede, pillole e fogli raggi comuni. Verificate tutte le schermate in tema scuro e chiaro.
 
 0.5.45 (code 52): anche la recitazione del buddy (occhiate, bocca, cuori) usa i tempi comuni dell app: tutte le animazioni ora parlano lo stesso linguaggio.
+
+0.5.46 (code 53): multitasking: dal fondo dello schermo scorri in alto e tieni (o menu, recenti) e le app aperte di recente fluttuano come schede su sfondo nero; rotella o dito per scegliere, tocco per aprirla a tutto schermo con l acqua, colpo in alto per toglierla. Senza rete il messaggio resta pronto e parte da solo quando torna; con Claude il prompt resta in cache (meno costi e attese); le azioni sul telefono dicono all agente se sono riuscite; Hermes si riposa in background e non perde messaggi o approvazioni dopo una riconnessione.

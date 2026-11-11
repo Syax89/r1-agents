@@ -155,6 +155,10 @@ class HermesDash(private val p: SharedPreferences) {
     private val ids = AtomicLong(1)
     private val pending = ConcurrentHashMap<Long, CompletableFuture<JSONObject>>()
     private val sessions = ConcurrentHashMap<Long, String>() // chat locale -> session_id di runtime (valido per questa connessione)
+    /** Cresce a ogni connessione: un session_id preso con una connessione non vale su quella dopo. */
+    @Volatile private var generation = 0
+    /** La connessione è cambiata tra la scelta della sessione e l'invio: il session_id non vale più. */
+    class StaleSession : java.io.IOException("sessione di una connessione precedente")
 
     /** Un turno di chat in corso: ogni sessione ha la sua coda, così più chat possono rispondere insieme. */
     private class Turn(val sid: String) {
@@ -175,7 +179,8 @@ class HermesDash(private val p: SharedPreferences) {
     /** Risposta a un'approvazione. */
     fun forgetRequest(id: String) { seenRequests.remove(id) }
 
-    fun answerApproval(id: Any, choice: String) { ws?.send(approvalReply(id, choice)) }
+    /** Falso se la risposta non è partita (socket chiuso): il chiamante lo dice all'utente invece di perderla in silenzio. */
+    fun answerApproval(id: Any, choice: String): Boolean = synchronized(this) { ws }?.send(approvalReply(id, choice)) == true
 
     /** Risposta a una domanda di un chiarimento (`null` = salta). Con l'ultima risposta Hermes chiude la richiesta. */
     fun answerClarify(requestId: String, questionId: String, answer: Any?) {
@@ -197,6 +202,25 @@ class HermesDash(private val p: SharedPreferences) {
     private fun stored(a: Long) = p.getString("dash_sid_$a", null)?.let { Vault.open(it) }?.takeIf { it.isNotEmpty() }
     fun needsIntro(a: Long) = stored(a) == null
     fun forget(a: Long) { p.edit().remove("dash_sid_$a").apply(); sessions.remove(a) }
+
+    // ---- riposo: con l'app in background e nessun turno, il socket si chiude dopo un minuto (meno radio e batteria) ----
+    private val idleSched = java.util.concurrent.Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "hermes-idle").apply { isDaemon = true } }
+    private var idleTask: java.util.concurrent.ScheduledFuture<*>? = null
+    @Volatile private var idleClosed = false
+
+    /** Chiamata dall'activity: `true` quando va in background, `false` quando torna (e si ricollega se era stato chiuso per riposo). */
+    @Synchronized fun background(bg: Boolean) {
+        idleTask?.cancel(false); idleTask = null
+        if (bg) idleTask = idleSched.scheduleWithFixedDelay({ closeIfIdle() }, 60, 60, TimeUnit.SECONDS)
+        else if (idleClosed) { idleClosed = false; Io.run { runCatching { connect() } } }
+    }
+
+    private fun closeIfIdle() {
+        val w = synchronized(this) { ws } ?: return
+        if (turns.isNotEmpty() || pending.isNotEmpty()) return
+        idleClosed = true
+        w.close(1000, "riposo"); closed(w, "riposo")
+    }
 
     /** Un solo collegamento alla volta, con un lock suo: login e ticket fanno rete e prima, tenendo `this`, bloccavano anche `closed()`. */
     private val connectLock = Any()
@@ -247,7 +271,7 @@ class HermesDash(private val p: SharedPreferences) {
         ready.await(6, TimeUnit.SECONDS) // alcune versioni non annunciano gateway.ready: si prosegue comunque
         // Diciamo a Hermes che sappiamo rispondere alle sue domande (approvazioni, chiarimenti): senza questo le scarta.
         socket.send(JSONObject().put("jsonrpc", "2.0").put("id", ids.getAndIncrement()).put("method", "client.capabilities").put("params", JSONObject().put("server_requests", true)).toString() + "\n")
-        if (synchronized(this) { ws } === socket) setState(State.READY)
+        if (synchronized(this) { if (ws === socket) { generation++; true } else false }) setState(State.READY)
         else throw java.io.IOException("connessione persa durante l'avvio")
     }
 
@@ -282,10 +306,11 @@ class HermesDash(private val p: SharedPreferences) {
     }
 
     /** Una chiamata JSON-RPC. Se la connessione cade prima della risposta la riprova una volta (`retry`), tranne per l'invio dei messaggi. */
-    private fun rpc(method: String, params: JSONObject, timeoutS: Long = 30, retry: Boolean = true): JSONObject {
+    private fun rpc(method: String, params: JSONObject, timeoutS: Long = 30, retry: Boolean = true, gen: Int? = null): JSONObject {
         var attempt = 0
         while (true) {
             connect()
+            if (gen != null && generation != gen) throw StaleSession()
             val id = ids.getAndIncrement()
             val f = CompletableFuture<JSONObject>(); pending[id] = f
             val w = ws
@@ -404,7 +429,13 @@ class HermesDash(private val p: SharedPreferences) {
 
     /** Un turno di chat. Ritorna il testo completo della risposta. Più chat possono avere un turno insieme (uno per sessione). */
     fun turn(key: Long, profile: String, text: String, onActivity: ((String) -> Unit)? = null, onText: (String) -> Unit): String {
-        val sid = try { session(key, profile) } catch (e: java.io.IOException) { synchronized(this) { ws }?.let { drop(it, e.message ?: "connessione persa") }; throw e }
+        // Se il socket cade e si ricollega tra la scelta della sessione e l'invio, il vecchio session_id non vale più: si riprende la sessione una volta.
+        try { return turnOnce(key, profile, text, onActivity, onText) } catch (e: StaleSession) { }
+        return turnOnce(key, profile, text, onActivity, onText)
+    }
+
+    private fun turnOnce(key: Long, profile: String, text: String, onActivity: ((String) -> Unit)?, onText: (String) -> Unit): String {
+        val sid = try { connect(); session(key, profile) } catch (e: java.io.IOException) { synchronized(this) { ws }?.let { drop(it, e.message ?: "connessione persa") }; throw e }
         val t = Turn(sid); val acc = StringBuilder()
         t.onEvent = { ev ->
             when (ev.optString("type")) {
@@ -424,7 +455,7 @@ class HermesDash(private val p: SharedPreferences) {
         }
         turns[sid] = t
         try {
-            rpc("prompt.submit", JSONObject().put("session_id", sid).put("text", text), retry = false)
+            rpc("prompt.submit", JSONObject().put("session_id", sid).put("text", text), retry = false, gen = generation.also { if (sessions[key] != sid) throw StaleSession() })
             val deadline = System.currentTimeMillis() + 15 * 60_000
             while (System.currentTimeMillis() < deadline) {
                 val (kind, s) = t.inbox.poll(1, TimeUnit.SECONDS) ?: continue

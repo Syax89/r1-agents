@@ -77,7 +77,11 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
     /** Quanti agenti si sono passati la parola: gli strumenti di messaggio funzionano solo al primo livello. */
     var depth = 0
     /** Fornisce il testo di PhoneContext (impostato dall'activity solo se l'utente ha acconsentito). */
-    companion object { @Volatile var phoneContext: (() -> String)? = null }
+    companion object {
+        @Volatile var phoneContext: (() -> String)? = null
+        /** Esegue un'azione sul telefono e dice se è riuscita (impostato dall'activity, sul thread principale). */
+        @Volatile var deviceExec: ((DeviceActions.Action) -> Boolean)? = null
+    }
 
     /** Dove finiscono le direttive delle azioni sul telefono: il testo della risposta (poi gestite da DeviceActions: pulsanti o esecuzione automatica). */
     private var emit: ((String) -> Unit)? = null
@@ -223,15 +227,22 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
         return if (start < 0) emptyList() else all.drop(start)
     }
 
-    private fun system(a: Agent): String = buildString {
+    private fun system(a: Agent): String = systemStable(a) + systemLive()
+
+    /** La parte del prompt di sistema che non cambia da un turno all'altro: con Anthropic resta in cache (vedi `cachedSystem`). */
+    private fun systemStable(a: Agent): String = buildString {
         append(a.prompt.ifBlank { "Sei un assistente utile e conciso." })
         append("\n\nParli su un piccolo schermo (240x282): risposte brevi, senza tabelle.")
-        append("\nOra locale: ").append(ZonedDateTime.now().format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy HH:mm")))
         val others = db.agents().filter { it.id != a.id }.map { it.name }
         if (others.isNotEmpty() && depth == 0) append("\nAltri agenti con cui puoi parlare (strumento message_agent): ").append(others.joinToString())
-        if (depth == 0) phoneContext?.invoke()?.takeIf { it.isNotBlank() }?.let { append("\n").append(it) }
         val mem = db.memories(a.id)
         if (mem.isNotEmpty()) append("\n\nMemoria (cose che ti ha chiesto di ricordare):\n").append(mem.joinToString("\n") { "- " + it.second })
+    }
+
+    /** La parte che cambia a ogni minuto (ora, stato del telefono): dopo il punto di cache, così non lo invalida. */
+    private fun systemLive(): String = buildString {
+        append("\n\nOra locale: ").append(ZonedDateTime.now().format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy HH:mm")))
+        if (depth == 0) phoneContext?.invoke()?.takeIf { it.isNotBlank() }?.let { append("\n").append(it) }
     }
 
     // ---- Anthropic ------------------------------------------------------------------------------
@@ -248,8 +259,9 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
             if (clean.length() > 0) msgs.put(JSONObject().put("role", role).put("content", clean))
         }
         val toolDefs = JSONArray().also { arr -> activeTools().forEach { (n, d, s) -> arr.put(JSONObject().put("name", n).put("description", d).put("input_schema", s)) } }
+        markCache(toolDefs, msgs)
         val body = JSONObject().put("model", settings.model(pr)).put("max_tokens", 2048).put("stream", true)
-            .put("system", system(a)).put("messages", msgs).put("tools", toolDefs)
+            .put("system", cachedSystem(systemStable(a), systemLive())).put("messages", msgs).put("tools", toolDefs)
         val blocks = sortedMapOf<Int, JSONObject>()
         val partial = HashMap<Int, StringBuilder>()
         var stop = "end_turn"
@@ -394,8 +406,15 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
             "phone_action" -> {
                 val kind = input.optString("kind").trim().lowercase(); val arg = input.optString("arg").trim()
                 DeviceActions.validate(kind, arg) ?: run {
-                    emit?.invoke("\n[[r1:$kind=$arg]]\n")
-                    if (DeviceActions.mode == "auto") "eseguita sul telefono" else "mostrata all'utente come pulsante da confermare; non è ancora stata eseguita"
+                    val exec = deviceExec
+                    if (DeviceActions.mode == "auto" && exec != null) {
+                        // Esecuzione subito, con l'esito vero: l'agente sa se l'app non esiste o la torcia non c'è, invece di "eseguita" alla cieca.
+                        val ok = runOnMain { exec(DeviceActions.Action(kind, arg)) }
+                        when (ok) { true -> "eseguita sul telefono"; false -> "non riuscita sul telefono (app, permesso o funzione non disponibili): dillo all'utente"; null -> "esito sconosciuto (il telefono non ha risposto in tempo)" }
+                    } else {
+                        emit?.invoke("\n[[r1:$kind=$arg]]\n")
+                        if (DeviceActions.mode == "auto") "eseguita sul telefono" else "mostrata all'utente come pulsante da confermare; non è ancora stata eseguita"
+                    }
                 }
             }
             "add_note" -> { db.addNote(input.optString("text")); "nota salvata" }
@@ -448,6 +467,29 @@ class Engine(private val db: Db, private val settings: Settings, private val nou
 }
 
 /** Toglie i blocchi tool_use: si salvano solo quando seguono i loro tool_result. */
+/** Esegue sul thread principale e aspetta il risultato (al massimo 10 s; `null` se non arriva). */
+private fun <T> runOnMain(work: () -> T): T? {
+    val main = android.os.Looper.getMainLooper()
+    if (android.os.Looper.myLooper() == main) return work()
+    val latch = java.util.concurrent.CountDownLatch(1); var out: T? = null
+    android.os.Handler(main).post { try { out = work() } finally { latch.countDown() } }
+    return if (latch.await(10, java.util.concurrent.TimeUnit.SECONDS)) out else null
+}
+
+private fun ephemeral() = JSONObject().put("type", "ephemeral")
+
+/** Prompt di sistema in due blocchi: quello stabile con il punto di cache, quello che cambia (ora) dopo. */
+internal fun cachedSystem(stable: String, live: String): JSONArray = JSONArray()
+    .put(JSONObject().put("type", "text").put("text", stable).put("cache_control", ephemeral()))
+    .apply { if (live.isNotBlank()) put(JSONObject().put("type", "text").put("text", live.trim())) }
+
+/** Punti di cache Anthropic: fine degli strumenti (sempre uguali) e ultimo blocco della conversazione, così il turno dopo rilegge dalla cache tutta la storia. */
+internal fun markCache(tools: JSONArray, msgs: JSONArray) {
+    if (tools.length() > 0) tools.getJSONObject(tools.length() - 1).put("cache_control", ephemeral())
+    val last = msgs.optJSONObject(msgs.length() - 1)?.optJSONArray("content") ?: return
+    last.optJSONObject(last.length() - 1)?.put("cache_control", ephemeral())
+}
+
 internal fun withoutToolUse(content: JSONArray): JSONArray {
     val out = JSONArray()
     for (i in 0 until content.length()) content.optJSONObject(i)?.takeIf { it.optString("type") != "tool_use" }?.let { out.put(it) }

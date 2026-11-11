@@ -701,6 +701,11 @@ internal object UiCatalog {
         UiEntry(R.string.ui_62db8301e1, "stato Hermes"),
         UiEntry(R.string.ui_8e646d7747, "File non accettato."),
         UiEntry(R.string.ui_8c29b079b8, "Sei kiwi, un assistente amichevole e conciso. Rispondi nella lingua dell'utente."),
+        UiEntry(R.string.ui_7343aee34f, "Risposta non inviata: Hermes non è collegato. Riprova quando torna in linea."),
+        UiEntry(R.string.ui_22eb1786dc, "nessuna rete: lo invio appena torna"),
+        UiEntry(R.string.ui_c23a024853, "di nuovo in linea"),
+        UiEntry(R.string.ui_b106e64b3f, "app aperte di recente"),
+        UiEntry(R.string.ui_110d1350b1, "Nessuna app recente: aprine una dal cassetto."),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

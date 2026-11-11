@@ -206,6 +206,8 @@ class MainActivity : Activity() {
         Vault.migrate(prefs) // cifra nel Keystore i segreti salvati in chiaro dalle versioni precedenti
         r1WheelLandscapeFlip = prefs.getBoolean("wheel_flip_land", true)
         DeviceActions.mode = prefs.getString("dev_actions", "ask") ?: "ask"; applyPhoneContext()
+        Engine.deviceExec = deviceExec
+        NetworkMonitor.start(this)
         DeviceActions.hasFlash = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_CAMERA_FLASH)
         Theme.setLook(prefs.getString("look_mode", "dark") == "light", prefs.getString("look_accent", "orange") ?: "orange", prefs.getString("look_font", "rubik") ?: "rubik")
         db = Db.get(this)
@@ -294,7 +296,7 @@ class MainActivity : Activity() {
                 "security" -> push(securityScreen()); "actionlog" -> push(actionLogScreen()); "glance" -> push(glance())
                 "settings" -> push(settingsScreen()); "tools" -> push(tools()); "agent_new" -> push(editor(null))
                 "space" -> if (ag != null) push(space(ag)); "manage" -> if (ag != null) push(manageChats(ag)); "memory" -> if (ag != null) push(memoryScreen(ag))
-                "card" -> if (ag != null) push(listPage(UiText.text(this@MainActivity, R.string.ui_3b225a819e)) { col -> col.addView(cardView(ag, org.json.JSONObject().put("title", UiText.text(this@MainActivity, R.string.ui_0ea049a68d)).put("body", UiText.text(this@MainActivity, R.string.ui_991379a059)))) }); "edit" -> if (ag != null) push(editor(ag)); "dash" -> push(providerScreen()); "jobs" -> push(hermesJobsScreen()); "skills" -> if (ag != null) push(skillsScreen(ag)); "switch" -> push(listPage("interruttori") { col -> col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "acceso" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, true, Theme.colorOf("green")) {}) }); col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "spento" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, false, Theme.colorOf("green")) {}) }) }); "md" -> push(listPage("md") { col -> col.addView(text(16f, 500).keepCase().apply { text = Md.render("# titolo\n1. uno\n2. due\n> citazione\n[link](https://example.org) e **grassetto**\n\n| nome | valore |\n|---|---|\n| alfa | 1 |\n| beta lungo | 22 |\n\n```\nprint(1)\n```", Theme.withAlpha(Theme.FG, 0.14f)); movementMethod = android.text.method.LinkMovementMethod.getInstance() }) }); "about" -> push(aboutScreen()); "menu" -> menuSheet(ag); "shake" -> onShake()
+                "card" -> if (ag != null) push(listPage(UiText.text(this@MainActivity, R.string.ui_3b225a819e)) { col -> col.addView(cardView(ag, org.json.JSONObject().put("title", UiText.text(this@MainActivity, R.string.ui_0ea049a68d)).put("body", UiText.text(this@MainActivity, R.string.ui_991379a059)))) }); "edit" -> if (ag != null) push(editor(ag)); "dash" -> push(providerScreen()); "jobs" -> push(hermesJobsScreen()); "skills" -> if (ag != null) push(skillsScreen(ag)); "switch" -> push(listPage("interruttori") { col -> col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "acceso" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, true, Theme.colorOf("green")) {}) }); col.addView(LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(text(20f, 700).apply { text = "spento" }, LinearLayout.LayoutParams(0, -2, 1f)); addView(SwitchView(this@MainActivity, false, Theme.colorOf("green")) {}) }) }); "md" -> push(listPage("md") { col -> col.addView(text(16f, 500).keepCase().apply { text = Md.render("# titolo\n1. uno\n2. due\n> citazione\n[link](https://example.org) e **grassetto**\n\n| nome | valore |\n|---|---|\n| alfa | 1 |\n| beta lungo | 22 |\n\n```\nprint(1)\n```", Theme.withAlpha(Theme.FG, 0.14f)); movementMethod = android.text.method.LinkMovementMethod.getInstance() }) }); "about" -> push(aboutScreen()); "menu" -> menuSheet(ag); "switcher" -> { if (recentApps().isEmpty()) loadApps().take(4).forEach { noteLaunched(it.pkg) }; root.post { openSwitcher() } }; "shake" -> onShake()
             }
         }
         i.getStringExtra("debug_do")?.let { spec -> // prova di una direttiva dell'agente da adb (solo build debuggabili): --es debug_do "apri=Calcolatrice"
@@ -681,20 +683,23 @@ class MainActivity : Activity() {
         }
     }
 
+    /** Le richieste di prova (`debug-…`, solo build di debug) non vengono da Hermes: nessun avviso. */
+    private fun approvalNotSent(r: HermesDash.SrvRequest) = runOnUiThread { if (!isDestroyed && !r.id.toString().startsWith("debug-")) snack(UiText.text(this@MainActivity, R.string.ui_7343aee34f), long = true) }
+
     /** Una domanda di Hermes: consenti o nega un comando (`approval`), oppure una o più domande dell'agente (`clarify`). */
     @JvmName("showRequest") internal fun showRequest(r: HermesDash.SrvRequest) {
         voiceConversation?.pauseForDialog()
         val id = "req-" + r.id
         root.postDelayed({ cue("surprised", force = true) }, Motion.SLOW * 2) // chiede attenzione
         when (r.method) {
-            "approval" -> overlay(id, UiText.text(this@MainActivity, R.string.ui_74be1d4823), { Io.run { dash.answerApproval(r.id, "deny") }; closeOverlay(id) }, context = BuddySceneContext.SECURITY) { col, close ->
+            "approval" -> overlay(id, UiText.text(this@MainActivity, R.string.ui_74be1d4823), { Io.run { if (!dash.answerApproval(r.id, "deny")) approvalNotSent(r) }; closeOverlay(id) }, context = BuddySceneContext.SECURITY) { col, close ->
                 col.addView(text(15f, 500, Theme.MUTED).keepCase().apply { text = r.params.optString("description").ifBlank { UiText.text(this@MainActivity, R.string.ui_76522a8687) }; setPadding(0, 0, 0, dpi(8f)) })
                 val cmd = r.params.optString("command")
                 if (cmd.isNotBlank()) col.addView(text(14f, 500).keepCase().apply {
                     text = cmd.take(1200); typeface = android.graphics.Typeface.MONOSPACE; background = roundRect(Theme.CARD, dp(14f)); setPadding(dpi(12f), dpi(10f), dpi(12f), dpi(10f)) })
                 val choices = r.params.optJSONArray("choices")?.let { a -> (0 until a.length()).map { a.getString(it) } } ?: listOf("once", "deny")
                 val labels = mapOf("once" to UiText.text(this@MainActivity, R.string.ui_9522540105), "session" to UiText.text(this@MainActivity, R.string.ui_f0a1e830c8), "always" to UiText.text(this@MainActivity, R.string.ui_2818f5e9df), "deny" to UiText.text(this@MainActivity, R.string.ui_fb80edc0ec))
-                for (c in choices) col.addView(button(labels[c] ?: c, if (c == "deny") Theme.BAD else if (c == "always") Theme.colorOf("amber") else Theme.colorOf("green"), filled = c == "once") { Io.run { dash.answerApproval(r.id, c) }; close() },
+                for (c in choices) col.addView(button(labels[c] ?: c, if (c == "deny") Theme.BAD else if (c == "always") Theme.colorOf("amber") else Theme.colorOf("green"), filled = c == "once") { Io.run { if (!dash.answerApproval(r.id, c)) approvalNotSent(r) }; close() },
                     LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(10f) })
             }
             "clarify" -> {
@@ -1346,6 +1351,7 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (pinGate != null) { if (gateWanted()) leaveLockedChat() else if (!isDefaultLauncher()) finish(); return }
+        appSwitcher?.let { it.close(); return }
         overlays.keys.lastOrNull()?.let { overlayBack[it]?.invoke(); return }   // prima le finestre sopra tutto (permessi, menu)
         if (pttView != null) { pttClose(); return }
         // Anche quando la radice è la glance e la home le sta sopra: Indietro prima riporta il carosello all'agente.
@@ -1361,6 +1367,7 @@ class MainActivity : Activity() {
     override fun dispatchKeyEvent(e: KeyEvent): Boolean {
         if (pinGate != null) return super.dispatchKeyEvent(e)
         Dim.poke()
+        appSwitcher?.let { sw -> if (e.keyCode == KeyEvent.KEYCODE_BACK) return super.dispatchKeyEvent(e); if (e.keyCode == KeyEvent.KEYCODE_BUTTON_1 || e.keyCode == KeyEvent.KEYCODE_HEADSETHOOK) return true; if (sw.key(e)) return true }
         val ptt = e.keyCode == KeyEvent.KEYCODE_BUTTON_1 || e.keyCode == KeyEvent.KEYCODE_HEADSETHOOK
         val modal = overlays.isNotEmpty() || voiceConversation != null || carriedBuddy != null || modalBuddyFlight != null
         // Una sola consegna: prima lo stesso evento veniva passato due volte al carosello.
@@ -1511,6 +1518,7 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         pttClose(immediate = true); cancelLocalTurns(); cancelBuddyFlight(); cancelModalBuddyFlight(); clearCarriedBuddy(); Motion.onAttention = null
         stack.forEach { it.scope.alive = false; it.onLeave?.invoke() }
+        if (Engine.deviceExec === deviceExec) Engine.deviceExec = null
         tts?.shutdown(); super.onDestroy()
     }
     /** Schermata dell'app in primo piano: con l'app in secondo piano o lo schermo spento i tick (orologio, widget) saltano il lavoro. */
@@ -1540,8 +1548,8 @@ class MainActivity : Activity() {
     internal fun stopShake() { shakeListener?.let { (getSystemService(SENSOR_SERVICE) as? android.hardware.SensorManager)?.unregisterListener(it) }; shakeListener = null }
     internal fun onShake() = runOnUiThread { root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS); characters(root) { it.react("spin") } }
 
-    override fun onStart() { super.onStart(); watchPackages(true) }
-    override fun onStop() { watchPackages(false); super.onStop() }
+    override fun onStart() { super.onStart(); watchPackages(true); if (::dash.isInitialized) dash.background(false) }
+    override fun onStop() { if (switcherLaunched) appSwitcher?.dismissNow(); watchPackages(false); if (::dash.isInitialized) dash.background(true); super.onStop() }
     override fun onResume() { super.onResume(); LiquidLaunch.clear(root); startShake(); visible = true; root.removeCallbacks(buddyReaper); root.postDelayed(buddyReaper, 1200L); dev.r1os.host.ui.Spring.reduced = Motion.reduced(this); runtimeVisibility()
         hermesRuntime.requestListener = { request -> runOnUiThread { if (visible) showRequest(request) } }
         hermesRuntime.requestCancelListener = { id -> runOnUiThread { closeOverlay("req-$id") } }
@@ -1668,7 +1676,10 @@ class MainActivity : Activity() {
             }
             return true
         }
+        if (swSwallow && ev.actionMasked != android.view.MotionEvent.ACTION_DOWN) { if (ev.actionMasked == android.view.MotionEvent.ACTION_UP || ev.actionMasked == android.view.MotionEvent.ACTION_CANCEL) swSwallow = false; return true }   // resto del gesto che ha aperto il selettore
+        if (appSwitcher != null) return super.dispatchTouchEvent(ev)   // il selettore gestisce da sé dito e rotella
         val wheel = ev.device?.name?.contains("wheel", ignoreCase = true) == true
+        if (!wheel && switcherGesture(ev)) return true
         if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
             wheelSurface = if (wheel) firstScroll() as? R1ScrollView else null
             wheelLastX = ev.x; wheelLastY = ev.y
@@ -1701,6 +1712,46 @@ class MainActivity : Activity() {
             }
         }
         return super.dispatchTouchEvent(ev)
+    }
+
+    // Multitasking col dito: dal fondo dello schermo scorri in alto e tieni fermo un attimo (come i recenti di sistema).
+    private var swStartY = -1f
+    private var swStartX = 0f
+    private var swSwallow = false
+    private val swHold = Runnable {
+        if (swStartY < 0f || appSwitcher != null) return@Runnable
+        swStartY = -1f; swSwallow = true
+        // Le pagine sotto smettono di seguire il dito: il gesto ora è del selettore.
+        val now = android.os.SystemClock.uptimeMillis()
+        val cancel = android.view.MotionEvent.obtain(now, now, android.view.MotionEvent.ACTION_CANCEL, 0f, 0f, 0)
+        try { super.dispatchTouchEvent(cancel) } finally { cancel.recycle() }
+        openSwitcher()
+    }
+
+    /** Vero se l'evento è stato preso dal gesto del multitasking. */
+    private fun switcherGesture(ev: android.view.MotionEvent): Boolean {
+        when (ev.actionMasked) {
+            android.view.MotionEvent.ACTION_DOWN -> {
+                swSwallow = false; root.removeCallbacks(swHold)
+                val h = window.decorView.height   // coordinate della finestra, come quelle dell'evento
+                swStartY = if (pinGate == null && pttView == null && voiceConversation == null && h > 0 && ev.y > h - dp(96f) && ev.y < h - dp(18f)) ev.y else -1f
+                swStartX = ev.x
+            }
+            android.view.MotionEvent.ACTION_MOVE -> {
+                if (swSwallow) return true
+                if (swStartY >= 0f) {
+                    val up = swStartY - ev.y; val side = Math.abs(ev.x - swStartX)
+                    if (up < -dp(12f) || (side > dp(28f) && side > up)) { swStartY = -1f; root.removeCallbacks(swHold) }
+                    else if (up > dp(72f)) { root.removeCallbacks(swHold); root.postDelayed(swHold, 260L) }   // si apre quando il dito si ferma
+                    else root.removeCallbacks(swHold)
+                }
+            }
+            android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                root.removeCallbacks(swHold); swStartY = -1f
+                if (swSwallow) { swSwallow = false; return true }
+            }
+        }
+        return swSwallow
     }
 
     @Deprecated("Deprecated in Java")
@@ -1945,6 +1996,7 @@ class MainActivity : Activity() {
                 tile("timer", UiText.text(this@MainActivity, R.string.ui_6bceb5c35b), UiText.text(this@MainActivity, R.string.ui_fa1f94b99f), Theme.colorOf("amber")) { then { push(tools()) } },
                 tile("data", UiText.text(this@MainActivity, R.string.ui_7d1043473d), UiText.text(this@MainActivity, R.string.ui_be6f615b92), Theme.colorOf("teal")) { then { push(appsScreen()) } },
                 tile("sliders", UiText.text(this@MainActivity, R.string.ui_0c375bfee9), UiText.text(this@MainActivity, R.string.ui_6a107bf8d4), Theme.colorOf("blue")) { then { push(settingsScreen()) } },
+                tile("recents", UiText.text(this@MainActivity, R.string.ui_950486e052), UiText.text(this@MainActivity, R.string.ui_b106e64b3f), Theme.colorOf("purple")) { then { openSwitcher() } },
             )), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dpi(4f) })
         }
     }
@@ -1995,6 +2047,12 @@ class MainActivity : Activity() {
             else -> false
         }
     }.getOrDefault(false)
+    /** Azioni chieste da un agente con lo strumento phone_action in modalità automatica: esito vero all'agente, avviso all'utente. */
+    private val deviceExec: (DeviceActions.Action) -> Boolean = { a ->
+        val ok = !isDestroyed && runDeviceAction(a)
+        if (!isDestroyed) snack(if (ok) UiText.text(this@MainActivity, R.string.ui_dab426e957, describeAction(a)) else UiText.text(this@MainActivity, R.string.ui_606d15c3e0, describeAction(a)), long = !ok)
+        ok
+    }
     internal fun reportAction(a: DeviceActions.Action) {
         val ok = runDeviceAction(a)
         snack(if (ok) UiText.text(this@MainActivity, R.string.ui_dab426e957, describeAction(a)) else UiText.text(this@MainActivity, R.string.ui_606d15c3e0, describeAction(a)), long = !ok)
@@ -2023,7 +2081,33 @@ class MainActivity : Activity() {
         else runCatching { unregisterReceiver(packageWatcher) }
     }
     internal fun recentApps(): List<String> = prefs.getString("recent_apps", "").orEmpty().split(",").filter { it.isNotEmpty() }
-    internal fun noteLaunched(pkg: String) { prefs.edit().putString("recent_apps", (listOf(pkg) + recentApps().filter { it != pkg }).take(5).joinToString(",")).apply() }
+    internal fun noteLaunched(pkg: String) { prefs.edit().putString("recent_apps", (listOf(pkg) + recentApps().filter { it != pkg }).take(8).joinToString(",")).apply() }
+    internal fun forgetRecent(pkg: String) { prefs.edit().putString("recent_apps", recentApps().filter { it != pkg }.joinToString(",")).apply() }
+
+    // ---- multitasking (AppSwitcher): app recenti come schede che fluttuano --------------------------------
+    internal var appSwitcher: AppSwitcher? = null
+    internal var switcherLaunched = false
+
+    @JvmName("openSwitcher") internal fun openSwitcher() {
+        if (appSwitcher != null || pinGate != null) return
+        if (pttView != null) pttClose()
+        val apps = appCache ?: loadApps().also { appCache = it }
+        val recent = recentApps().mapNotNull { p -> apps.firstOrNull { it.pkg == p } }
+        val sw = AppSwitcher(this, recent, UiText.text(this@MainActivity, R.string.ui_950486e052), UiText.text(this@MainActivity, R.string.ui_110d1350b1),
+            onPick = { a ->
+                try {
+                    noteLaunched(a.pkg); switcherLaunched = true
+                    startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setClassName(a.pkg, a.cls)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or Intent.FLAG_ACTIVITY_NO_ANIMATION)); true
+                } catch (e: Exception) { switcherLaunched = false; snack(UiText.text(this@MainActivity, R.string.ui_f2c6915e4c)); false }
+            },
+            onRemove = { a -> forgetRecent(a.pkg) },
+            onClosed = { appSwitcher = null; switcherLaunched = false; stack.lastOrNull()?.view?.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_AUTO })
+        appSwitcher = sw
+        stack.lastOrNull()?.view?.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        root.addView(sw, ViewGroup.LayoutParams(-1, -1)); sw.bringToFront(); pinGate?.bringToFront()
+        root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+    }
     /** «apri calendario»: se il testo è un comando e un'app corrisponde in modo certo, la apre e non manda nulla all'agente. */
     internal fun tryOpenApp(t: String): Boolean {
         val c = t.trim()

@@ -293,6 +293,20 @@ internal fun MainActivity.chat(agent: Agent, chatId: Long, say: String? = null, 
         }
         previousConnection = state
     }
+    var queuedText: String? = null   // messaggio scritto senza rete: parte da solo quando torna
+    var sendQueued: (String) -> Unit = {}   // assegnata dopo submit()
+    fun networkChanged(on: Boolean) {
+        if (!connectionAlive) return
+        if (!on) {
+            if (buddyStage.mode == "idle" || buddyStage.mode == "reconnect") buddyStage.show("offline", UiText.text(this@chat, R.string.ui_22eb1786dc))
+            return
+        }
+        if (buddyStage.mode == "offline") buddyStage.flash("connected", UiText.text(this@chat, R.string.ui_c23a024853))
+        val q = queuedText ?: return
+        queuedText = null
+        buddyStage.postDelayed({ if (connectionAlive && !busy) sendQueued(q) }, Motion.SLOW)
+    }
+    val stopNetWatch = NetworkMonitor.watch { on -> runOnUiThread { networkChanged(on) } }
     val stopConnectionWatch = if (hermesMode()) dash.watchState { state -> runOnUiThread { if (state != previousConnection) connectionChanged(state) } } else ({})
     buddyStage.post { if (dash.state != HermesDash.State.READY) connectionChanged(dash.state) }
     var updateAction: () -> Unit = {}
@@ -352,6 +366,10 @@ internal fun MainActivity.chat(agent: Agent, chatId: Long, say: String? = null, 
     fun submit(t: String, retry: Boolean = false) {
         if (busy || (t.isBlank() && pending.isEmpty() && !retry)) return
         if (!retry && pending.isEmpty() && tryOpenApp(t)) { input.setText(""); return }
+        if (!NetworkMonitor.online) {
+            queuedText = t; if (input.text.isBlank() && t.isNotBlank()) { input.setText(t); input.setSelection(t.length) }
+            buddyStage.show("offline", UiText.text(this@chat, R.string.ui_22eb1786dc)); headChar.react("surprised"); return
+        }
         if (hermesRuntime.isConfiguring()) { snack(UiText.text(this@chat, R.string.ui_b121797238)); return }
         if (hermesRuntime.active(chatId) != null) { snack(UiText.text(this@chat, R.string.ui_c723f3fd80)); openChat(agent, chatId); return }
         val atts = if (retry) lastAtts else pending.toList()
@@ -433,6 +451,7 @@ internal fun MainActivity.chat(agent: Agent, chatId: Long, say: String? = null, 
     // Gli agganci di QUESTA chat: quando una chat viene sostituita (rilettura da Hermes) o ne copre un'altra, la vecchia azzerava
     // quelli della nuova (PTT, voce, allegati morti). Ora ognuna toglie solo i suoi e li rimette quando torna in cima.
     val myVoice = onVoice; val myMic = cancelActiveMic; val myPtt = pttHandler; val myAttach = attachHook
+    sendQueued = { q -> submit(input.text.toString().ifBlank { q }) }
     fun restoreHooks() { onVoice = myVoice; cancelActiveMic = myMic; pttHandler = myPtt; attachHook = myAttach }
     openAttach = { headChar.lookAt(-10f, 10f, 1200); sheet(UiText.text(this@chat, R.string.ui_0fd7b04a53), listOf(UiText.text(this@chat, R.string.ui_aaa045009b) to { pickPhoto() }, UiText.text(this@chat, R.string.ui_9ef61a89bf) to { pickFile(true) }, UiText.text(this@chat, R.string.ui_7656d6d3ad) to { pickFile(false) }), mapOf(UiText.text(this@chat, R.string.ui_aaa045009b) to "attach", UiText.text(this@chat, R.string.ui_9ef61a89bf) to "look", UiText.text(this@chat, R.string.ui_7656d6d3ad) to "note")) }
     val attachBtn = iconButton("attach", accent, filled = false, size = 48f) { openAttach() }
@@ -583,5 +602,5 @@ internal fun MainActivity.chat(agent: Agent, chatId: Long, say: String? = null, 
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { input.requestFocus(); true }
             else -> false
         }
-    }, scope = chatScope, onShow = { restoreHooks() }, onHandOff = { chatHandoff = Triple(chatId, input.text.toString(), pending.toList()); pending.clear() }, onLeave = { prefs.edit().apply { val d = input.text.toString(); if (d.isBlank() || busy) remove("draft_$chatId") else putString("draft_$chatId", d) }.apply(); stopSmooth(); connectionAlive = false; stopConnectionWatch(); buddyStage.dismiss(); avatarSlot.removeCallbacks(collapseAvatar); avatarMotion?.cancel(); engine?.let { it.cancel(); localTurns.remove(it) }; stopTaskWatch?.invoke(); if (onVoice === myVoice) onVoice = null; if (cancelActiveMic === myMic) cancelActiveMic = null; if (pttHandler === myPtt) pttHandler = null; if (attachHook === myAttach) attachHook = null; pending.forEach { it.file.delete() }; pending.clear(); voiceCancelled = true; voice.cancel(); tts?.stop() }, isChat = true, chatKey = chatId, onSuspend = { if (voiceActive) suspendVoice() }, leaveGuard = { if (busy && !hermesMode()) { val now = android.os.SystemClock.uptimeMillis(); if (armedKey == "leave" && now - armedAt < 4000) false else { armedKey = "leave"; armedAt = now; val m = UiText.text(this@chat, R.string.ui_8cec984fbd); snack(m); buddyStage.flash("cancel", m, 3000); true } } else false })
+    }, scope = chatScope, onShow = { restoreHooks() }, onHandOff = { chatHandoff = Triple(chatId, input.text.toString(), pending.toList()); pending.clear() }, onLeave = { prefs.edit().apply { val d = input.text.toString(); if (d.isBlank() || busy) remove("draft_$chatId") else putString("draft_$chatId", d) }.apply(); stopSmooth(); connectionAlive = false; stopConnectionWatch(); stopNetWatch(); buddyStage.dismiss(); avatarSlot.removeCallbacks(collapseAvatar); avatarMotion?.cancel(); engine?.let { it.cancel(); localTurns.remove(it) }; stopTaskWatch?.invoke(); if (onVoice === myVoice) onVoice = null; if (cancelActiveMic === myMic) cancelActiveMic = null; if (pttHandler === myPtt) pttHandler = null; if (attachHook === myAttach) attachHook = null; pending.forEach { it.file.delete() }; pending.clear(); voiceCancelled = true; voice.cancel(); tts?.stop() }, isChat = true, chatKey = chatId, onSuspend = { if (voiceActive) suspendVoice() }, leaveGuard = { if (busy && !hermesMode()) { val now = android.os.SystemClock.uptimeMillis(); if (armedKey == "leave" && now - armedAt < 4000) false else { armedKey = "leave"; armedAt = now; val m = UiText.text(this@chat, R.string.ui_8cec984fbd); snack(m); buddyStage.flash("cancel", m, 3000); true } } else false })
 }
