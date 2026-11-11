@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 56,
-  "versionName": "0.5.49",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.49/r1agents-release-signed.apk",
-  "sha256": "c2c3d899375faee2e726d07fecd4184ffb566389610a74824ccd3bd62253d18d",
+  "versionCode": 57,
+  "versionName": "0.5.50",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.50/r1agents-release-signed.apk",
+  "sha256": "667f58eb04838fd3358745f202e462d93b512682f4425ab6cf2cc9b8f271731e",
   "sizeBytes": 1431935,
-  "notes": "0.5.49 (code 56): Indietro passa dal nuovo sistema di Android (OnBackInvokedCallback), pronto per le prossime versioni; esportazione, importazione e scossa in file propri, MainActivity sotto le 2100 righe.",
+  "notes": "0.5.50 (code 57): MainActivity sotto le 1800 righe: sfondi, fogli, messaggi brevi, allegati e strumenti in ActivityParts.kt; restano nell activity solo navigazione, volo del buddy e ciclo di vita. Nessun cambiamento visibile.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }

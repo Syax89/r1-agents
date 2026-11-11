@@ -119,3 +119,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.48 (code 55): anteprime vere nel multitasking, se le attivi (Sicurezza, anteprime nel multitasking): l ultima schermata di ogni app, salvata solo sul telefono, con icona e nome in basso; le app protette restano escluse e spegnendo il servizio le immagini si cancellano. Con il servizio attivo anche le app aperte da fuori entrano nei recenti. Nei timer il testo dei promemoria accanto all orario.
 
 0.5.49 (code 56): Indietro passa dal nuovo sistema di Android (OnBackInvokedCallback), pronto per le prossime versioni; esportazione, importazione e scossa in file propri, MainActivity sotto le 2100 righe.
+
+0.5.50 (code 57): MainActivity sotto le 1800 righe: sfondi, fogli, messaggi brevi, allegati e strumenti in ActivityParts.kt; restano nell activity solo navigazione, volo del buddy e ciclo di vita. Nessun cambiamento visibile.
