@@ -48,6 +48,9 @@ It works with your own API keys (Anthropic, OpenAI, Groq, any OpenAI-compatible 
 
 ## Install
 
+> [!TIP]
+> **Recommended base: the [haretic](https://github.com/haretic) firmware.** It is a LineageOS build for the Rabbit R1 on a mainline kernel, with its own [installer](https://github.com/haretic/installer) and [flashable images](https://github.com/haretic/release). It's an excellent foundation, and it's the Android build we develop and test R1 Agents on.
+
 1. Download `r1agents-release-signed.apk` from the [latest release](https://github.com/Syax89/r1-agents/releases/latest).
 2. Install it on the Rabbit (`adb install r1agents-release-signed.apk`, or open the file on the device).
 3. Optional: choose **R1 Agents** as the home app when Android asks. It never sets itself as the home app.
