@@ -104,7 +104,7 @@ object OfflineModels {
 }
 
 class OfflineStt(private val ctx: Context, private val onStatus: (String) -> Unit, private val onFinal: (String) -> Unit,
-                 private val onEnd: (String?) -> Unit) : Mic {
+                 private val onEnd: (String?) -> Unit, private val autoStop: Boolean = false) : Mic {
     private var phaseListener: ((MicPhase) -> Unit)? = null
     override fun onPhase(listener: (MicPhase) -> Unit) { phaseListener = listener }
     private var levelListener: ((Float) -> Unit)? = null
@@ -128,7 +128,8 @@ class OfflineStt(private val ctx: Context, private val onStatus: (String) -> Uni
             service = org.vosk.android.SpeechService(rec, 16000f).also { s ->
                 s.startListening(object : org.vosk.android.RecognitionListener {
                     override fun onPartialResult(h: String?) { if (token == generation) text(h, "partial")?.let { onStatus(it) } }
-                    override fun onResult(h: String?) { if (token == generation) text(h, "text")?.let { heard = (heard + " " + it).trim(); onStatus(heard) } }
+                    // Vosk chiude una frase a ogni pausa: con autoStop (tasto laterale) la prima frase detta basta per inviare.
+                    override fun onResult(h: String?) { if (token == generation) text(h, "text")?.let { heard = (heard + " " + it).trim(); onStatus(heard); if (autoStop) stop() } }
                     override fun onFinalResult(h: String?) {
                         if (token != generation) return
                         text(h, "text")?.let { heard = (heard + " " + it).trim() }
@@ -140,6 +141,8 @@ class OfflineStt(private val ctx: Context, private val onStatus: (String) -> Uni
             }
             phaseListener?.invoke(MicPhase.LISTENING)
             onStatus(UiText.text(ctx, R.string.ui_77cfbcff1e))
+            // Con l'invio automatico, se non dici niente per 8 secondi l'ascolto si chiude (come con Whisper).
+            if (autoStop) main.postDelayed({ if (token == generation && heard.isBlank()) { cancel(); onEnd(null) } }, 8_000L)
             true
         } catch (e: Throwable) {   // anche UnsatisfiedLinkError (architettura senza libreria nativa)
             release(); startFailed = true

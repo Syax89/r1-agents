@@ -23,6 +23,10 @@ internal var lookSnapshot: android.graphics.Bitmap? = null
 class Share(val text: String, val files: List<Attachment>, val voiceDraft: Boolean = false)
 
 class MainActivity : Activity() {
+    companion object {
+        /** L'attività in primo piano, per il pannello dell'assistente (AssistSession). */
+        @Volatile var current: java.lang.ref.WeakReference<MainActivity>? = null
+    }
     internal lateinit var db: Db
     internal lateinit var settings: Settings
     internal val localTurns = java.util.concurrent.ConcurrentHashMap.newKeySet<Engine>()
@@ -254,7 +258,7 @@ class MainActivity : Activity() {
             runCatching { Pairing.parse(uri.toString()) }.onSuccess { confirmPairing(it) }.onFailure { snack(UiText.message(this@MainActivity, it.message) ?: UiText.text(this@MainActivity, R.string.ui_4bd3645750), long = true) }
         }
         // Tasto laterale tenuto premuto: Android apre l'assistente digitale (questa app, se scelta) con ACTION_ASSIST.
-        if (i.action == Intent.ACTION_ASSIST) { i.action = Intent.ACTION_MAIN; root.post { runSideAction() } }
+        if (i.action == Intent.ACTION_ASSIST) { i.action = Intent.ACTION_MAIN; root.post { unlockThen { runSideAction() } } }
         val debuggable = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
         // Suoneria e bozza vocale solo se l'intent viene da questa app (token privato): l'activity e' esportata.
         if (i.hasExtra("ring_kind") && !InternalIntent.ok(i, this)) i.removeExtra("ring_kind")
@@ -1299,7 +1303,7 @@ class MainActivity : Activity() {
     internal var qaMicrophone: (((String) -> Unit, (String) -> Unit, (String?) -> Unit) -> Mic)? = null
     internal fun newMic(onStatus: (String) -> Unit, onFinal: (String) -> Unit, onEnd: (String?) -> Unit): Mic {
         if (packageName.endsWith(".qa") && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) qaMicrophone?.let { return it(onStatus, onFinal, onEnd) }
-        return Mics.create(this, prefs, onStatus, onFinal, onEnd)
+        return Mics.create(this, prefs, onStatus, onFinal, onEnd, autoStop = pttAutoStop)
     }
 
     // ---- pannello vocale (VoiceOverlay di r1os, semplificato): tieni premuto il pulsante e parla -----
@@ -1319,6 +1323,7 @@ class MainActivity : Activity() {
             if (hermesMode() && agent.profile.isNotEmpty()) syncSessions(agent)
             db.lastChat(agent.id) ?: db.newChat(agent.id)
         }, microphone = { status, final, end -> newMic(status, final, end) }, onChatVisible = { runtimeVisibility() }, close = { pttClose() })
+        mode.autoSend = pttAutoStop
         presentVoice(mode)
     }
 
@@ -1335,6 +1340,7 @@ class MainActivity : Activity() {
     internal fun pttStop() { voiceConversation?.release() }
 
     internal fun pttClose(immediate: Boolean = false) {
+        pttAutoStop = false
         val mode = pttView ?: return
         if (closingVoice) return
         closingVoice = true; drainingHomeVoiceTouch = true
@@ -1377,6 +1383,9 @@ class MainActivity : Activity() {
     }
     /** Schermata dell'app in primo piano: con l'app in secondo piano o lo schermo spento i tick (orologio, widget) saltano il lavoro. */
     @Volatile internal var visible = true
+    /** Ascolto partito dal tasto laterale: si invia da solo quando smetti di parlare (il rilascio del tasto non arriva). */
+    internal var pttAutoStop = false
+    internal fun voiceRecording() = voiceConversation?.isRecording == true
     // Standby (Standby.kt): l'orologio sopra il blocco e sempre acceso in carica.
     internal var standbyScreen: Screen? = null
     internal var aodOn = false
@@ -1390,7 +1399,7 @@ class MainActivity : Activity() {
     // startShake(), stopShake(), onShake(): BackupUi.kt (in fondo)
     override fun onStart() { super.onStart(); watchPackages(true); if (::dash.isInitialized) dash.background(false) }
     override fun onStop() { if (switcherLaunched) appSwitcher?.dismissNow(); watchPackages(false); if (::dash.isInitialized) dash.background(true); super.onStop() }
-    override fun onResume() { super.onResume(); LiquidLaunch.clear(root); startShake(); visible = true; armStandbyIdle(); root.removeCallbacks(buddyReaper); root.postDelayed(buddyReaper, 1200L); dev.r1os.host.ui.Spring.reduced = Motion.reduced(this); runtimeVisibility()
+    override fun onResume() { super.onResume(); current = java.lang.ref.WeakReference(this); LiquidLaunch.clear(root); startShake(); visible = true; armStandbyIdle(); root.removeCallbacks(buddyReaper); root.postDelayed(buddyReaper, 1200L); dev.r1os.host.ui.Spring.reduced = Motion.reduced(this); runtimeVisibility()
         hermesRuntime.requestListener = { request -> runOnUiThread { if (visible) showRequest(request) } }
         hermesRuntime.requestCancelListener = { id -> runOnUiThread { closeOverlay("req-$id") } }
         hermesRuntime.requests.values.forEach { showRequest(it) }

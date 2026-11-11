@@ -57,7 +57,7 @@ internal fun MainActivity.runSideAction() {
         // Push-to-talk col tasto di accensione: Android dà all'app il "tenuto premuto" ma non il rilascio. Quindi:
         // tieni premuto = inizia ad ascoltare, tieni premuto di nuovo = smette e invia (come la doppia pressione di BUTTON_1).
         else -> if (voiceConversation?.isRecording == true) { pttLatched = false; pttIgnoreUp = false; pttStop() }
-                else { pttLatched = true; pttIgnoreUp = false; pttStart() }
+                else { pttLatched = true; pttIgnoreUp = false; pttAutoStop = true; pttStart() }
     }
 }
 

@@ -238,7 +238,7 @@ object Mics {
                 else { val dash = HermesRuntime.get(ctx).dash
                     GroqStt(ctx, "", "", lang, onStatus, onFinal, onEnd, autoStop, label = "Hermes", transcriber = { f -> dash.transcribe(f.readBytes(), lang) }) }
             }
-            "offline" -> OfflineStt(ctx, onStatus, onFinal, onEnd)
+            "offline" -> OfflineStt(ctx, onStatus, onFinal, onEnd, autoStop)
             // Il riconoscimento "del dispositivo" che rimanda a R1 Agents stesso (assistente digitale, nessun motore vero).
             else -> if (ownRecognizerOnly(ctx)) UnavailableMic(ctx, R.string.ui_369029220d, onEnd) else Voice(ctx, onStatus, onFinal, onEnd)
         }

@@ -768,6 +768,7 @@ internal object UiCatalog {
         UiEntry(R.string.ui_1abf09acd4, "Se lo schermo si spegne mentre sei in R1 Agents, riaccendendolo vedi l'orologio; per entrare serve lo sblocco di Android. In carica, dopo un minuto senza tocchi, l'orologio resta acceso con la luce bassa."),
         UiEntry(R.string.ui_efb328b323, "voce e audio"),
         UiEntry(R.string.ui_4963571d41, "riconoscimento: %1\$s"),
+        UiEntry(R.string.ui_702651a8e2, "invio quando smetti di parlare"),
     )
     val exact = entries.filter { !uiPlaceholder.containsMatchIn(it.source) }.associateBy { it.source }
     val formatted = entries.filter { uiPlaceholder.containsMatchIn(it.source) }.sortedByDescending { uiPlaceholder.replace(it.source, "").length }

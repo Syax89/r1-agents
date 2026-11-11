@@ -42,6 +42,8 @@ internal class VoiceConversation(
     private var generation = 0
     private var alive = true
     private var recording = false
+    /** Ascolto dal tasto laterale: si invia da solo al silenzio (il rilascio del tasto non arriva all'app). */
+    var autoSend = false
     /** Vero mentre registra: il tasto laterale tenuto di nuovo chiude e invia. */
     val isRecording get() = recording
     private var transcribing = false
@@ -132,7 +134,7 @@ internal class VoiceConversation(
         silence(); generation++; val token = generation
         recording = true
         showPhase("listening", R.string.voice_listening)
-        hold.text = tr(R.string.voice_release); hold.setTextColor(Theme.accent)
+        hold.text = if (autoSend) UiText.text(act, R.string.ui_702651a8e2) else tr(R.string.voice_release); hold.setTextColor(Theme.accent)
         performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
         mic = microphone({}, { text ->
             if (alive && token == generation) {
