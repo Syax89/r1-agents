@@ -117,3 +117,5 @@ Colonna «agenti», puntini di rotazione solo sugli agenti, «impostazioni andro
 0.5.47 (code 54): gli agenti possono anche regolare volume e luminosità, comandare la musica, mettere un promemoria a un orario e proporre un evento da confermare nel calendario. Routine a evento: partono quando il Rabbit va in carica, si scollega, trova il wifi o si collegano le cuffie. Esportazione con password (AES-256): senza la password il file non si legge. MainActivity più snella (azioni, multitasking, pagina dell agente in file propri).
 
 0.5.48 (code 55): anteprime vere nel multitasking, se le attivi (Sicurezza, anteprime nel multitasking): l ultima schermata di ogni app, salvata solo sul telefono, con icona e nome in basso; le app protette restano escluse e spegnendo il servizio le immagini si cancellano. Con il servizio attivo anche le app aperte da fuori entrano nei recenti. Nei timer il testo dei promemoria accanto all orario.
+
+0.5.49 (code 56): Indietro passa dal nuovo sistema di Android (OnBackInvokedCallback), pronto per le prossime versioni; esportazione, importazione e scossa in file propri, MainActivity sotto le 2100 righe.

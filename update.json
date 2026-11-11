@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "packageName": "dev.r1agents",
-  "versionCode": 55,
-  "versionName": "0.5.48",
-  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.48/r1agents-release-signed.apk",
-  "sha256": "225493bf55e687706ba11071d6406080e91259687755898f77a117d0cb78fe54",
+  "versionCode": 56,
+  "versionName": "0.5.49",
+  "apkUrl": "https://github.com/Syax89/r1-agents/releases/download/v0.5.49/r1agents-release-signed.apk",
+  "sha256": "c2c3d899375faee2e726d07fecd4184ffb566389610a74824ccd3bd62253d18d",
   "sizeBytes": 1431935,
-  "notes": "0.5.48 (code 55): anteprime vere nel multitasking, se le attivi (Sicurezza, anteprime nel multitasking): l ultima schermata di ogni app, salvata solo sul telefono, con icona e nome in basso; le app protette restano escluse e spegnendo il servizio le immagini si cancellano. Con il servizio attivo anche le app aperte da fuori entrano nei recenti. Nei timer il testo dei promemoria accanto all orario.",
+  "notes": "0.5.49 (code 56): Indietro passa dal nuovo sistema di Android (OnBackInvokedCallback), pronto per le prossime versioni; esportazione, importazione e scossa in file propri, MainActivity sotto le 2100 righe.",
   "signerSha256": "7420d6880aeea02133468ab8419ecc96132f8886e6480be7ab1f8073642732b3"
 }
